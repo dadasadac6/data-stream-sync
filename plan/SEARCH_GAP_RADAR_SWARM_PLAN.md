@@ -1,26 +1,111 @@
-# Autonomous Niche Swarm & Evergreen Frontier Radar (Plan v4.0)
+# Universal Search Gap Radar & Stealth Swarm (Plan v5.0)
 
 > **Document Location:** `plan/SEARCH_GAP_RADAR_SWARM_PLAN.md`  
-> **Target Execution:** GitHub Actions Stealth Swarms + Local FastAPI Dashboard  
-> **Budget Constraint:** **$0.00 Hard Rule** (Zero paid APIs, zero paid hosting, zero paid proxies)  
-> **Focus:** 100% Durable, Evergreen Developer Search Gaps (No ephemeral 7-day hype)
+> **Core Mission:** Discover, evaluate, and monetize high-demand, low-competition search voids across **ANY audience or industry** (Utilities, Calculators, Finance, Legal, Health, B2B, Lifestyle, and Developer Tools).  
+> **Budget Constraint:** **$0.00 Hard Rule** (Zero paid APIs, zero paid hosting, zero paid proxies).  
+> **Guiding Principle:** **Macro Root Terms in Trends (`today 12-m`) -> Long-Tail Organic Voids -> Free SERP Sieve.**
 
 ---
 
-## 1. Core Architectural Pillars
+## 1. The "Macro-to-Micro" Funnel Philosophy
 
-### Pillar 1: Evergreen Macro Timeframe (`today 12-m`)
-* **The Principle:** Ephemeral trends (viral 7-day social media tools, one-off crypto news, temporary cloud outages) are discarded.
-* **The Configuration:** All Google Trends requests are pinned to **`today 12-m` (Past 12 Months Web Search)**.
-* **The Value:** Yields queries with sustained, year-long volume, recurring developer workflow friction, permanent library migration voids, and evergreen micro-tool opportunities.
+### Why Broad Root Terms Beat Long-Tail Querying in Trends:
+1. **The Volume Problem:** Searching obscure, 5-word phrases directly on Google Trends often returns *"Not enough search volume to show results"*.
+2. **The Discovery Goldmine:** Searching a **broad root anchor** (e.g. `calculator`, `converter`, `template`, `salary`, `tax`, `generator`, `tracker`, `docker`, `visa`, `invoice`) unleashes Google's real organic search graph:
+   * **Top 25 Queries:** What the global market consistently searches over the past 12 months.
+   * **Rising Breakouts:** Emerging pain points, shifting consumer behaviors, and unserved voids surging by $>5,000\%$.
+3. **8x Request Efficiency:** 
+   * A single 8-term Trends comparison batch yields up to:
+     $$\text{8 root terms} \times 25 \text{ related queries} \times 2 \text{ (Top + Rising)} = \mathbf{400\text{ raw organic queries per request!}}$$
+   * At 400 queries per single 3-second request, a 4-runner GitHub swarm can extract **10,000+ real search queries in under 5 minutes** without rate limits!
+
+```mermaid
+flowchart TD
+    subgraph S1["1. Macro Layer: Google Trends (12-Cookie Stealth Swarm)"]
+        R["Broad Root Terms (8 per batch)<br/>e.g. 'mortgage calculator', 'invoice generator', 'budget template', 'docker'"]
+        T["Google Trends Engine (Past 12 Months: 'today 12-m')<br/>• Delimiter: %2C | Spaces: %2520<br/>• Rotates 12 login cookies from isdownnow.com"]
+        R --> T
+    end
+
+    subgraph S2["2. Raw Organic Query Harvest"]
+        T --> RAW["200–400 Real User Queries per Batch<br/>(100% verified demand; zero synthetic guessing)"]
+    end
+
+    subgraph S3["3. Micro Layer: Free Dual-Evidence SERP Sieve"]
+        EX["Universal Exclusion Shield<br/>(Drops gov/edu/mil & brand navigational pages)"]
+        SERP["DuckDuckGo HTML SERP Auditor<br/>• Exact &lt;title&gt; match void count (0 or 1 = Untouched Void)<br/>• Root-domain homepage leak on deep queries<br/>• Forum weak-spots (Reddit, Quora, Medium) in Top 5"]
+        DEV["Audience & Sentiment Signals<br/>• Stack Exchange, GitHub, Hacker News for technical niches<br/>• Community discussion volume for consumer/B2B niches"]
+        RAW --> EX --> SERP --> DEV
+    end
+
+    subgraph S4["4. Scoring & Universal Product Archetypes"]
+        DEV --> SC["0–100 Composite Opportunity Score"]
+        SC --> ARCH["Universal Deliverable Archetypes:<br/>1. Micro-Tools & Web Utilities (Calculators, Converters, Formatters)<br/>2. Workarounds & Troubleshooting (Bug fixes, guides, bypasses)<br/>3. Templates, Checklists & Cheatsheets (Notion, Sheets, Scaffolds)<br/>4. Data Comparisons & Alternative Directories (X vs Y, Alternatives)"]
+    end
+
+    subgraph S5["5. Anti-Waste State Machine & Dashboard"]
+        SC --> DB[("storage/niche_gaps.db (WAL Mode)")]
+        DB --> DASH["Localhost & LAN Dashboard (http://localhost:8080)"]
+        DB --> COOLDOWN["90-Day Root Term Cooldown & Signature Cache<br/>(Guarantees zero repeat queries)"]
+    end
+```
 
 ---
 
-### Pillar 2: Stealth Swarm Architecture & 12-Cookie Rotation Pool
-To query thousands of terms on Google Trends from GitHub Actions without rate limits or bot detection:
+## 2. Universal Audience Taxonomy (12 High-Yield Verticals)
+
+To find profitable gaps across any industry, the root catalog is organized across **12 evergreen verticals**:
+
+| Vertical | High-Yield Macro Root Term Patterns | Example Monetizable Deliverables |
+|---|---|---|
+| **1. Finance & Wealth** | `loan calculator`, `tax calculator`, `mortgage`, `salary after tax`, `roi calculator`, `crypto tax`, `compound interest`, `car payment` | Simple, ad-supported or affiliate finance calculators (high CPC: \$5–\$50). |
+| **2. Small Business & B2B** | `invoice generator`, `receipt maker`, `contract template`, `bill of sale`, `nda generator`, `profit margin`, `paystub generator` | Programmatic single-page PDF generator utilities with pro exports. |
+| **3. Productivity & Work** | `budget template`, `timesheet`, `habit tracker`, `meeting notes`, `cron generator`, `markdown editor`, `pomodoro timer` | Notion templates, downloadable Google Sheets, lightweight web tools. |
+| **4. Media & Converters** | `heic to jpg`, `mp4 to gif`, `pdf to word`, `compress png`, `webp converter`, `audio extractor`, `svg to png`, `watermark remover` | Client-side WebAssembly browser utilities (fast, zero server cost). |
+| **5. Health & Fitness** | `calorie calculator`, `macro calculator`, `bmi chart`, `running pace`, `tdee calculator`, `water intake`, `intermittent fasting` | Mobile-friendly health utility calculators with health newsletter capture. |
+| **6. Real Estate & Living** | `rent vs buy`, `closing cost calculator`, `square footage`, `moving checklist`, `lease agreement`, `sublet agreement` | Lead-gen widgets for local real estate brokers and moving services. |
+| **7. Legal & Compliance** | `privacy policy generator`, `terms of service template`, `cookie consent banner`, `power of attorney`, `llc operating agreement` | Automated legal document builders and compliance checklists. |
+| **8. Academic & Education** | `gpa calculator`, `citation generator`, `word count`, `grade calculator`, `percentage increase`, `scientific notation` | Student tools with heavy organic traffic and backlink potential. |
+| **9. Developer & Cloud** | `docker compose`, `fastapi`, `supabase`, `jwt refresh token`, `ollama`, `kubernetes yaml`, `sql query builder`, `regex tester` | Developer boilerplates, starter kits, troubleshooting recipes. |
+| **10. Gaming & Entertainment** | `damage calculator`, `stat calculator`, `tier list maker`, `wordle solver`, `pokemon weakness`, `sensitivity converter` | High-traffic community utility websites with programmatic SEO. |
+| **11. E-Commerce & Shopping** | `etsy fee calculator`, `ebay fee calculator`, `shopify margin`, `amazon fba fees`, `shipping calculator`, `barcode generator` | Seller tools with affiliate tie-ins to bookkeeping and inventory software. |
+| **12. Travel & Visas** | `visa requirements for`, `schengen 90 180 calculator`, `flight compensation`, `currency converter`, `packing checklist` | Travel calculators and visa requirement trackers with travel affiliate revenue. |
+
+---
+
+## 3. Where We Source Massive Root Niches (Zero Hardcoding)
+
+To feed the swarm continuously without manual human input, the system harvests broad root terms from **7 free, automated sources**:
+
+1. **Google Trends Native Category Taxonomy:**
+   * Google Trends exposes **1,400+ official categories** with standard category IDs (`7` = Finance, `45` = Health, `67` = Real Estate, `18` = Shopping, `5` = Computers, etc.).
+   * Querying top terms inside these official categories yields the true search anchors of each industry.
+2. **Wikipedia Universal Classification Tree:**
+   * Uses the free Wikipedia MediaWiki API to traverse sub-categories under `Category:Calculators`, `Category:Converters`, `Category:Business_software`, `Category:Self-care`, `Category:Finance_tools`.
+3. **Wikidata Structured Entity Taxonomy:**
+   * Free SPARQL queries extracting every named unit of measurement, tax type, financial instrument, document type, and software tool.
+4. **Curated "Awesome" Repositories (Universal):**
+   * Curated lists spanning:
+     * `sindresorhus/awesome` (All categories)
+     * `awesome-selfhosted` (Web tools)
+     * `awesome-creative-technology`
+     * `awesome-math` & `awesome-finance`
+5. **Stack Overflow Popular Tags (Developer & Systems):**
+   * 65,000+ vetted technical tags via Stack Exchange `/2.3/tags`.
+6. **Product Hunt & G2 Category Taxonomies:**
+   * Public category taxonomies covering 800+ SaaS and utility sectors.
+7. **Government & Bureaucracy Document Taxonomies:**
+   * Standard government forms, IRS schedules, visa classes, and court document types (massive recurring search gaps).
+
+---
+
+## 4. Stealth Multi-Runner Swarm & 12-Cookie Rotation Pool
+
+### The isdownnow.com Pattern
+To query thousands of terms on Google Trends without rate limits or bot detection:
 
 1. **Cookie Management & Secret Storage:**
-   * **GitHub Actions:** Stored in a GitHub repository secret named `TRENDS_COOKIE_POOL`. It contains a JSON array of the 12 Google login cookies / session cookies (imported from the `isdownnow.com` project):
+   * **GitHub Actions Secret (`TRENDS_COOKIE_POOL`):** JSON array containing the 12 Google login cookies / session cookies:
      ```json
      [
        { "id": 1, "cookie": "__Secure-3PSID=...; SID=...; HSID=..." },
@@ -29,12 +114,14 @@ To query thousands of terms on Google Trends from GitHub Actions without rate li
        { "id": 12, "cookie": "__Secure-3PSID=...; SID=...; HSID=..." }
      ]
      ```
-   * **Local / Daemon Environment:** Stored in `config/cookies.json` (strictly added to `.gitignore`), or in `.env` as `GOOGLE_COOKIE_POOL='[...]'`.
-   * **Shard Rotation:** Swarm shards rotate through cookies using `shard_id % 12` with automatic round-robin fallback if an individual cookie expires.
+   * **Local Environment:** Stored in `config/cookies.json` or `.env` as `GOOGLE_COOKIE_POOL='[...]'` (strictly gitignored).
+   * **Shard Rotation:** Swarm shards distribute the 12 cookies using `shard_id % 12` with automatic round-robin fallback.
 
-2. **Stealth & Obfuscation Measures:**
-   * **Camouflaged CI/CD Workflow:** The workflow file `.github/workflows/telemetry.yml` and job names are titled generically as routine project health checks (e.g. `name: "Ecosystem Telemetry & Matrix Dependency Audit"`, `step: "Verify ecosystem integration vectors"`).
-   * **Camouflaged Git Commits:** Automated SQLite delta commits use generic messages: `chore(ci): update ecosystem telemetry matrix [skip ci]`.
+2. **Stealth & Camouflage:**
+   * **Camouflaged CI/CD Workflow:** The workflow file `.github/workflows/telemetry.yml` and job names are titled generically as routine project health checks:
+     * Workflow Name: `Ecosystem Telemetry & Matrix Dependency Audit`
+     * Step Name: `Verify ecosystem integration vectors`
+   * **Camouflaged Git Commits:** Automated updates use generic commit titles: `chore(ci): sync ecosystem telemetry shard-X [skip ci]`.
    * **Anti-Fingerprinting:**
      * Rotates real browser `User-Agent` strings across modern Chrome and Safari on macOS/Windows.
      * Inserts randomized jitter delays (2.5s to 6.5s) between batch requests.
@@ -42,209 +129,46 @@ To query thousands of terms on Google Trends from GitHub Actions without rate li
 
 ---
 
-### Pillar 3: Research on Sourcing Massive Developer Root Niches
+## 5. Anti-Waste State Machine & Frequency Management
 
-To power continuous expansion without manual hardcoding, the radar taps into **6 massive, free, programmatic sources**:
+Because we cannot query Google Trends repeatedly on the same terms, the system implements a strict state machine:
 
-| Source | Ingestion Mechanism | Yield | Description |
-|---|---|---|---|
-| **1. Stack Overflow Tags API** | REST API (`/2.3/tags?sort=popular`) | **65,000+** vetted tech tags | Canonical programming languages, frameworks, libraries, databases, and DevOps tools with usage counts. |
-| **2. GitHub Curated "Awesome" Lists** | Raw GitHub Markdown parser | **40,000+** categorized libraries | Curated community lists (`sindresorhus/awesome`, `vinta/awesome-python`, `enaqx/awesome-react`, `avelino/awesome-go`, `dhamaniasad/awesome-postgres`, etc.). |
-| **3. GitHub Topics API** | GitHub Search API (`/search/topics`) | **50,000+** developer topics | Official GitHub repository topics covering AI, cloud, WebAssembly, security, and mobile. |
-| **4. Top Package Registries** | Public registry APIs & BigQuery exports | **25,000+** active packages | Top 2,000 downloaded packages from PyPI, npm (`registry.npmjs.org`), Crates.io (Rust), and Go pkg. |
-| **5. CNCF Cloud Native Landscape** | Raw YAML/JSON from `cncf/landscape` | **1,500+** cloud & DevOps tools | Every enterprise cloud, Kubernetes, database, observability, and networking project. |
-| **6. Hacker News Algolia Discussions** | Free unmetered Algolia API | Continuous stream | "Ask HN" and "Show HN" developer launch topics with high comment engagement. |
-
----
-
-### Pillar 4: Dynamic Frontier Graph & Recursive Sub-Niche Breeding
-
-```mermaid
-flowchart TD
-    ROOT["Root Niche Ingestor<br/>(SO Tags, Awesome Lists, CNCF, PyPI, npm)"]
-    Q[("Frontier Queue Table<br/>frontier_niches (SQLite)")]
-    SEEN[("Explored Signatures Table<br/>explored_signatures (SQLite)")]
-
-    ROOT -->|Queue Root Seeds (Depth 0)| Q
-
-    subgraph SWARM["GitHub Actions Stealth Swarm (4 Shards)"]
-        S1["Shard 1 (AI/LLM)"]
-        S2["Shard 2 (Cloud/DevOps)"]
-        S3["Shard 3 (Databases/APIs)"]
-        S4["Shard 4 (Frameworks/Tools)"]
-    end
-
-    Q -->|Claim Unexplored Batches| SWARM
-    SEEN -.->|Anti-Duplication Shield| SWARM
-
-    SWARM --> T["Google Trends (12-Cookie Rotation, 'today 12-m')"]
-    T --> RAW["Raw Related Queries (Top & Rising)"]
-
-    subgraph PIPELINE["Dual-Evidence Sieve Pipeline"]
-        EX["Exclusion Shield (Drops corporate/navigational noise)"]
-        SERP["DuckDuckGo HTML SERP Screen (Exact title voids, root leaks)"]
-        DEV["Dev Evidence (GitHub Issues vs Repos, Stack Overflow, HN)"]
-        SCORE["Scorer (0-100) -> 4 Developable Archetypes"]
-        EX --> SERP --> DEV --> SCORE
-    end
-
-    RAW --> PIPELINE
-    SCORE --> DB[("storage/niche_gaps.db")]
-    SCORE -->|Extract Sub-Niches (Depth + 1 <= 3)| Q
-    PIPELINE -->|Mark Signature Done| SEEN
-```
-
-#### Rules for Recursive Sub-Niche Breeding:
-1. **Depth Cap:** Recursive expansion is capped at `depth_level <= 3` to ensure relevance does not drift into broad consumer topics.
-2. **Sub-Niche Qualification:** A related query yielded from Trends is promoted into `frontier_niches` if:
-   * It contains at least one technical token (`api`, `sdk`, `docker`, `orm`, `hook`, `rag`, `wasm`, `auth`, `cli`, `engine`, `cluster`).
-   * It is not already in `explored_signatures`.
-   * It has sufficient search interest ($>20\%$ relative interest).
-3. **Strict Deduplication:**
-   * Before querying, hashes of normalized queries are verified against `explored_signatures`.
-   * Even after restarts or multiple daily runs, **the radar will never re-crawl an already analyzed term within 30 days**.
+1. **`frontier_niches` Table (The Discovery Queue):**
+   * Stores every root term, its vertical category, its depth level (0 = broad root, 1 = sub-niche, 2 = granular micro-niche), and its exploration status (`pending`, `claimed`, `completed`).
+2. **`explored_signatures` Table (The 90-Day Memory):**
+   * Stores cryptographic hashes of all processed root terms and search queries.
+   * **90-Day Cooldown:** Any root term explored on `today 12-m` is locked for 90 days. Subsequent runs automatically skip it and explore fresh pending terms.
+3. **Atomic Shard Claiming:**
+   * Shards in GitHub Actions claim work partitions using hash modular arithmetic (`WHERE id % 4 == shard_id - 1`), preventing duplicate scraping between parallel workers.
 
 ---
 
-## 2. Updated SQLite Database Schema
+## 6. Universal Deliverable Archetypes
 
-```sql
--- 1. Dynamic Frontier Queue
-CREATE TABLE IF NOT EXISTS frontier_niches (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    niche_term TEXT UNIQUE NOT NULL,
-    category TEXT NOT NULL,
-    parent_niche TEXT DEFAULT NULL,
-    depth_level INTEGER DEFAULT 0,
-    status TEXT DEFAULT 'pending', -- 'pending', 'claimed', 'completed', 'failed'
-    queries_extracted INTEGER DEFAULT 0,
-    claimed_by_shard TEXT DEFAULT NULL,
-    last_explored_at TIMESTAMP DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+Every qualified opportunity (Gap Score $\ge 65$) is mapped to one of **4 actionable product models**:
 
-CREATE INDEX IF NOT EXISTS idx_frontier_status ON frontier_niches(status, depth_level);
-CREATE INDEX IF NOT EXISTS idx_frontier_category ON frontier_niches(category);
-
--- 2. Explored Signatures Anti-Duplication Cache
-CREATE TABLE IF NOT EXISTS explored_signatures (
-    signature_hash TEXT PRIMARY KEY,
-    normalized_term TEXT NOT NULL,
-    explored_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 3. Core Opportunities Table (Enhanced)
-CREATE TABLE IF NOT EXISTS queries (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    keyword TEXT UNIQUE NOT NULL,
-    category TEXT NOT NULL,
-    source_niche TEXT,
-    depth_level INTEGER DEFAULT 0,
-    trend_type TEXT NOT NULL,          -- 'BREAKOUT', 'RISING', 'TOP'
-    trend_velocity TEXT,               -- e.g. '+3,200%', 'Breakout'
-    gap_score INTEGER NOT NULL,        -- 0 to 100
-    archetype TEXT NOT NULL,           -- 'Micro-Tool', 'Workaround', 'Recipe', 'Breaking News'
-    exact_title_matches INTEGER DEFAULT 0,
-    has_github_issues BOOLEAN DEFAULT 0,
-    has_stack_questions BOOLEAN DEFAULT 0,
-    top_competitor_title TEXT,
-    top_competitor_url TEXT,
-    human_verdict TEXT DEFAULT 'pending', -- 'confirmed_gold', 'already_served', 'pending'
-    evidence_json TEXT,
-    first_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_gap_score ON queries(gap_score DESC);
-CREATE INDEX IF NOT EXISTS idx_archetype ON queries(archetype);
-CREATE INDEX IF NOT EXISTS idx_verdict ON queries(human_verdict);
-CREATE INDEX IF NOT EXISTS idx_category ON queries(category);
-```
+1. **Archetype 1: Micro-Tools & Web Utilities (Calculators, Converters, Generators)**
+   * *Examples:* `closing cost calculator ontario`, `heic to pdf`, `etsy profit margin calculator`, `cron schedule visualizer`
+   * *Deliverable:* Single-page responsive web app (Next.js/Tailwind or static HTML/Wasm on Cloudflare Pages/Vercel) with programmatic SEO and zero login required.
+2. **Archetype 2: Workarounds & Troubleshooters**
+   * *Examples:* `how to bypass cors in local dev`, `ollama cuda out of memory fix`, `cancel adobe subscription without fee`
+   * *Deliverable:* Definitive, minimal step-by-step resolution guide with copy-paste snippets or scripts.
+3. **Archetype 3: Templates, Checklists & Cheatsheets**
+   * *Examples:* `commercial lease agreement template word`, `docker compose postgres pgvector`, `quarterly tax checklist`
+   * *Deliverable:* Downloadable Google Sheets/Notion template, GitHub starter repo, or printable reference.
+4. **Archetype 4: Comparison & Alternative Directories**
+   * *Examples:* `victoria metrics vs prometheus`, `free alternatives to quickbooks`, `open source docuSign`
+   * *Deliverable:* Programmatic directory comparing pricing, features, and self-hosted alternatives.
 
 ---
 
-## 3. GitHub Actions Stealth Swarm Workflow (`.github/workflows/telemetry.yml`)
+## 7. Phased Implementation Roadmap
 
-```yaml
-name: Ecosystem Telemetry & Matrix Dependency Audit
-
-on:
-  schedule:
-    # Runs 4 times daily (00:00, 06:00, 12:00, 18:00 UTC)
-    - cron: '0 0,6,12,18 * * *'
-  workflow_dispatch:
-    inputs:
-      target_depth:
-        description: 'Target frontier exploration depth (0-3)'
-        required: false
-        default: '1'
-
-jobs:
-  audit-shard:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    strategy:
-      fail-fast: false
-      max-parallel: 4
-      matrix:
-        shard_id: [0, 1, 2, 3]
-        total_shards: [4]
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Execute Swarm Shard Sweep
-        env:
-          SHARD_ID: ${{ matrix.shard_id }}
-          TOTAL_SHARDS: ${{ matrix.total_shards }}
-          TRENDS_COOKIE_POOL: ${{ secrets.TRENDS_COOKIE_POOL }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python -m engines.swarm_worker --shard-id ${{ matrix.shard_id }} --total-shards ${{ matrix.total_shards }}
-
-      - name: Commit Shard Delta & Sync State
-        run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin main || true
-          git add storage/niche_gaps.db reports/
-          git diff --quiet && git diff --staged --quiet || git commit -m "chore(ci): sync ecosystem telemetry shard-${{ matrix.shard_id }} [skip ci]"
-          git push origin main || true
-```
-
----
-
-## 4. Implementation Steps & Milestones
-
-1. **Phase 1: DB Migration & Anti-Duplication Cache**
-   * Update `storage/db.py` to create `frontier_niches` and `explored_signatures` tables.
-   * Implement atomic batch claiming and signature verification functions.
-
-2. **Phase 2: Multi-Source Root Niche Ingestor (`engines/niche_ingestor.py`)**
-   * Build free ingestors for Stack Overflow Top Tags, GitHub Awesome lists, and PyPI/npm top packages to seed thousands of technical root niches automatically.
-
-3. **Phase 3: Cookie Pool & Trends Engine Update (`engines/trends_batch.py`)**
-   * Add support for `config/cookies.json` and the `TRENDS_COOKIE_POOL` secret.
-   * Lock timeframe parameter to `today 12-m` (Past 12 months) for all requests.
-   * Implement automatic round-robin cookie rotation across the 12 sessions.
-
-4. **Phase 4: Swarm Worker & Recursive Sub-Niche Breeder (`engines/swarm_worker.py`)**
-   * Implement `swarm_worker.py` taking `--shard-id` and `--total-shards`.
-   * Automatically promote qualifying related queries to `frontier_niches` with `depth_level + 1 <= 3`.
-
-5. **Phase 5: Stealth GitHub Actions Workflow (`.github/workflows/telemetry.yml`)**
-   * Configure 4-shard matrix execution with obfuscated job names and atomic rebase commits.
-
-6. **Phase 6: Dashboard Frontier Telemetry**
-   * Add a "Frontier & Swarm" panel to the dashboard displaying queue size, unvisited niches, depth distribution, and cookie pool health.
+| Phase | Milestone | Deliverable |
+|---|---|---|
+| **Phase 1** | **Database Schema Upgrade** | Update `storage/db.py` to create `frontier_niches` and `explored_signatures` with 90-day cooldown logic. |
+| **Phase 2** | **Universal Root Taxonomy Ingestor** | Implement `engines/niche_ingestor.py` seeding broad root terms across the 12 universal verticals (Wikidata, Wikipedia, SO tags, Awesome lists). |
+| **Phase 3** | **Stealth Swarm Engine & Cookie Rotation** | Update `engines/trends_batch.py` to support `config/cookies.json` / secret rotation, `today 12-m` timeframe, and stealth anti-429 jitter. |
+| **Phase 4** | **Swarm Shard Runner** | Build `engines/swarm_worker.py` taking `--shard-id` and `--total-shards` to execute atomic matrix partitions. |
+| **Phase 5** | **Camouflaged GitHub Actions Workflow** | Deploy `.github/workflows/telemetry.yml` with 4 parallel shards and atomic rebase sync. |
+| **Phase 6** | **Dashboard Frontier & Taxonomy Explorer** | Add Frontier Queue tracking, category breakdowns, and export to the FastAPI dashboard. |
