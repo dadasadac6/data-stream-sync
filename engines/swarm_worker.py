@@ -12,7 +12,7 @@ import random
 import sys
 import time
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -35,7 +35,7 @@ REPORTS_DIR = os.path.join(BASE_DIR, "reports")
 def generate_daily_report(top_items: List[Dict[str, Any]], shard_id: int = 0) -> str:
     """Appends newly discovered high-value opportunities to the daily report."""
     os.makedirs(REPORTS_DIR, exist_ok=True)
-    today_str = datetime.utcnow().strftime("%Y-%m-%d")
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     report_filename = f"{today_str}-goldmines.md"
     report_path = os.path.join(REPORTS_DIR, report_filename)
 
@@ -47,7 +47,7 @@ def generate_daily_report(top_items: List[Dict[str, Any]], shard_id: int = 0) ->
             f"# ⛏️ Search Gap Radar — Daily Intelligence Brief ({today_str})",
             "",
             "> **Budget Spent:** $0.00 (Hard Rule) | **Protocol:** Pure HTTP Dual-Evidence Sieve",
-            f"> **Generated At:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}",
+            f"> **Generated At:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}",
             "",
             "---",
             "",

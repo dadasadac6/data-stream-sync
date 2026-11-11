@@ -41,31 +41,45 @@ FORUM_AND_WEAK_DOMAINS = [
 
 USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
 ]
 
 
 class SerpSieve:
     def __init__(self):
-        self.headers = {
+        pass
+
+    def _get_headers(self) -> Dict[str, str]:
+        return {
             "User-Agent": random.choice(USER_AGENTS),
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://duckduckgo.com/",
         }
 
     def fetch_serp(self, query: str) -> List[Dict[str, str]]:
-        """Fetches top 10 organic results from DuckDuckGo HTML endpoint."""
+        """Fetches top 10 organic results from DuckDuckGo HTML endpoint with anti-rate-limit jitter."""
+        time.sleep(random.uniform(0.4, 0.9))
         url = f"https://html.duckduckgo.com/html/?q={urllib.parse.quote(query)}"
-        req = urllib.request.Request(url, headers=self.headers)
+        req = urllib.request.Request(url, headers=self._get_headers())
         html = ""
 
         try:
-            with urllib.request.urlopen(req, context=SSL_CTX, timeout=8) as resp:
+            with urllib.request.urlopen(req, context=SSL_CTX, timeout=6) as resp:
                 html = resp.read().decode("utf-8", errors="ignore")
         except Exception as e:
-            logger.warning(f"DuckDuckGo HTML SERP fetch failed for '{query}': {e}")
-            return []
+            logger.debug(f"DuckDuckGo HTML SERP fetch failed for '{query}': {e}. Trying lite endpoint.")
+            # Fallback to lite.duckduckgo.com
+            try:
+                lite_url = f"https://lite.duckduckgo.com/lite/?q={urllib.parse.quote(query)}"
+                lite_req = urllib.request.Request(lite_url, headers=self._get_headers())
+                with urllib.request.urlopen(lite_req, context=SSL_CTX, timeout=6) as resp:
+                    html = resp.read().decode("utf-8", errors="ignore")
+            except Exception:
+                return []
 
         # Parse result blocks
         blocks = re.findall(r'<div class="result results_links.*?\">(.*?)</div>\s*</div>', html, re.DOTALL)
