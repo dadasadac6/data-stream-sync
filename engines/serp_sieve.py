@@ -187,6 +187,9 @@ class SerpSieve:
             "raw_results": results,
         }
 
+    # Alias for convenience
+    audit = audit_serp
+
 
 if __name__ == "__main__":
     sieve = SerpSieve()

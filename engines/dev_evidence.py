@@ -180,6 +180,9 @@ class DevEvidenceCollector:
             "has_github_issues": gh.get("has_github_issues", False),
         }
 
+    # Alias for convenience
+    collect = collect_evidence
+
 
 if __name__ == "__main__":
     collector = DevEvidenceCollector()

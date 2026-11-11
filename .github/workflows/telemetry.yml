@@ -1,0 +1,63 @@
+name: Ecosystem Telemetry & Matrix Dependency Audit
+
+on:
+  schedule:
+    # 4x daily telemetry verification
+    - cron: '0 0,6,12,18 * * *'
+  workflow_dispatch:
+    inputs:
+      max_batches:
+        description: 'Matrix batch exploration limit'
+        required: false
+        default: '3'
+
+jobs:
+  telemetry-probe:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard_id: [0, 1, 2, 3]
+      max-parallel: 4
+      fail-fast: false
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout telemetry ecosystem
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Execute ecosystem integration probe
+        env:
+          TRENDS_COOKIE_POOL: ${{ secrets.TRENDS_COOKIE_POOL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STACKAPPS_KEY: ${{ secrets.STACKAPPS_KEY }}
+          SHARD_ID: ${{ matrix.shard_id }}
+          TOTAL_SHARDS: 4
+        run: |
+          python3 -m engines.swarm_worker \
+            --shard-id $SHARD_ID \
+            --total-shards $TOTAL_SHARDS \
+            --max-batches ${{ github.event.inputs.max_batches || '3' }}
+
+      - name: Sync telemetry artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --local user.name "Ecosystem Telemetry CI"
+          git config --local user.email "ci@ecosystem-telemetry.local"
+          git add storage/niche_gaps.db reports/
+          git diff --quiet && git diff --staged --quiet || git commit -m "chore(ci): sync ecosystem telemetry shard-${{ matrix.shard_id }} [skip ci]"
+          git pull --rebase origin main || true
+          git push || true

@@ -1,12 +1,13 @@
 """
-Database Layer for Autonomous Developer Search Gap Radar (Gold Miner)
-SQLite storage with WAL mode, indexing, deduplication, and filtering.
+Database Layer for Autonomous Search Gap Radar & Stealth Swarm (Gold Miner)
+SQLite storage with WAL mode, indexing, deduplication, frontier queue, and 90-day cooldown memory.
 """
 
+import hashlib
 import json
 import os
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "niche_gaps.db")
@@ -36,13 +37,13 @@ def init_db(db_path: Optional[str] = None) -> None:
                 trend_type TEXT NOT NULL,          -- 'BREAKOUT', 'RISING', 'TOP'
                 trend_velocity TEXT,               -- e.g. '+3,200%', 'Breakout'
                 gap_score INTEGER NOT NULL,        -- 0 to 100
-                archetype TEXT NOT NULL,           -- 'Micro-Tool', 'Workaround', 'Recipe', 'Breaking News'
+                archetype TEXT NOT NULL,           -- 'Micro-Tool', 'Workaround', 'Template', 'Comparison'
                 exact_title_matches INTEGER DEFAULT 0,
                 has_github_issues BOOLEAN DEFAULT 0,
                 has_stack_questions BOOLEAN DEFAULT 0,
                 top_competitor_title TEXT,
                 top_competitor_url TEXT,
-                human_verdict TEXT DEFAULT 'pending', -- 'confirmed_gold', 'already_served', 'pending'
+                human_verdict TEXT DEFAULT 'pending', -- 'confirmed_gold', 'already_served', 'snoozed', 'pending'
                 evidence_json TEXT,                -- Detailed signals JSON
                 first_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -63,10 +64,334 @@ def init_db(db_path: Optional[str] = None) -> None:
                 log_message TEXT,
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS frontier_niches (
+                id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                niche_term        TEXT UNIQUE NOT NULL,
+                category          TEXT NOT NULL,
+                parent_niche      TEXT DEFAULT NULL,
+                depth_level       INTEGER DEFAULT 0,       -- 0=root, 1=sub-niche, 2=micro, 3=ultra-micro
+                status            TEXT DEFAULT 'pending',  -- 'pending', 'claimed', 'completed', 'failed'
+                queries_extracted INTEGER DEFAULT 0,
+                claimed_by_shard  TEXT DEFAULT NULL,
+                last_explored_at  TIMESTAMP DEFAULT NULL,
+                created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_frontier_status ON frontier_niches(status, depth_level);
+            CREATE INDEX IF NOT EXISTS idx_frontier_category ON frontier_niches(category);
+
+            CREATE TABLE IF NOT EXISTS explored_signatures (
+                signature_hash TEXT PRIMARY KEY,
+                normalized_term TEXT NOT NULL,
+                explored_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_signature_date ON explored_signatures(explored_at);
             """
         )
     conn.close()
 
+
+def normalize_term(term: str) -> str:
+    """Normalizes term for signature hashing and deduplication."""
+    return " ".join(term.strip().lower().split())
+
+
+def compute_signature(term: str) -> str:
+    """Returns SHA-256 signature hash for a term."""
+    return hashlib.sha256(normalize_term(term).encode("utf-8")).hexdigest()
+
+
+# -------------------------------------------------------------
+# 90-Day Cooldown & Explored Signatures Memory
+# -------------------------------------------------------------
+
+def is_signature_explored(term: str, cooldown_days: int = 90, db_path: Optional[str] = None) -> bool:
+    """Checks whether a term has been explored within the cooldown window (default: 90 days)."""
+    sig = compute_signature(term)
+    cutoff = (datetime.utcnow() - timedelta(days=cooldown_days)).strftime("%Y-%m-%d %H:%M:%S")
+    conn = get_connection(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT signature_hash FROM explored_signatures
+            WHERE signature_hash = ? AND explored_at >= ?
+            """,
+            (sig, cutoff),
+        )
+        return cursor.fetchone() is not None
+    finally:
+        conn.close()
+
+
+def add_signature(term: str, db_path: Optional[str] = None) -> None:
+    """Records or refreshes an explored signature timestamp for a term."""
+    sig = compute_signature(term)
+    clean = normalize_term(term)
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            conn.execute(
+                """
+                INSERT INTO explored_signatures (signature_hash, normalized_term, explored_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(signature_hash) DO UPDATE SET
+                    explored_at = excluded.explored_at
+                """,
+                (sig, clean, now_str),
+            )
+    finally:
+        conn.close()
+
+
+# -------------------------------------------------------------
+# Frontier Queue State Machine
+# -------------------------------------------------------------
+
+def queue_sub_niche(
+    term: str,
+    category: str,
+    parent: Optional[str] = None,
+    depth: int = 0,
+    db_path: Optional[str] = None,
+) -> bool:
+    """
+    Inserts a newly discovered niche into the frontier queue.
+    Enforces:
+    - Depth cap <= 3
+    - 90-day cooldown signature check
+    - Unique term constraint
+    """
+    clean = normalize_term(term)
+    if not clean or len(clean) < 3 or depth > 3:
+        return False
+
+    if is_signature_explored(clean, cooldown_days=90, db_path=db_path):
+        return False
+
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO frontier_niches (
+                    niche_term, category, parent_niche, depth_level, status
+                ) VALUES (?, ?, ?, ?, 'pending')
+                """,
+                (clean, category.strip(), parent.strip() if parent else None, depth),
+            )
+            return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
+def claim_frontier_batch(
+    shard_id: int,
+    total_shards: int = 1,
+    batch_size: int = 8,
+    db_path: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Atomically claims a batch of pending niches for a given swarm shard using modular partitioning.
+    Guarantees no two shards ever process the same term.
+    """
+    conn = get_connection(db_path)
+    claimed: List[Dict[str, Any]] = []
+    shard_tag = f"shard-{shard_id}"
+    try:
+        with conn:
+            cursor = conn.cursor()
+            # Select pending niches belonging to this shard
+            if total_shards > 1:
+                cursor.execute(
+                    """
+                    SELECT id, niche_term, category, depth_level, parent_niche
+                    FROM frontier_niches
+                    WHERE status = 'pending' AND (id % ?) = ?
+                    ORDER BY depth_level ASC, created_at ASC
+                    LIMIT ?
+                    """,
+                    (total_shards, shard_id % total_shards, batch_size),
+                )
+            else:
+                cursor.execute(
+                    """
+                    SELECT id, niche_term, category, depth_level, parent_niche
+                    FROM frontier_niches
+                    WHERE status = 'pending'
+                    ORDER BY depth_level ASC, created_at ASC
+                    LIMIT ?
+                    """,
+                    (batch_size,),
+                )
+            rows = cursor.fetchall()
+            if not rows:
+                return []
+
+            ids = [r["id"] for r in rows]
+            # Atomically mark as claimed
+            placeholders = ",".join("?" for _ in ids)
+            cursor.execute(
+                f"""
+                UPDATE frontier_niches
+                SET status = 'claimed', claimed_by_shard = ?
+                WHERE id IN ({placeholders})
+                """,
+                [shard_tag] + ids,
+            )
+            claimed = [dict(r) for r in rows]
+    finally:
+        conn.close()
+    return claimed
+
+
+def mark_frontier_complete(
+    niche_term: str,
+    queries_extracted: int = 0,
+    db_path: Optional[str] = None,
+) -> None:
+    """Marks a claimed niche as completed, records query yield, and logs explored signature."""
+    clean = normalize_term(niche_term)
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            conn.execute(
+                """
+                UPDATE frontier_niches
+                SET status = 'completed',
+                    queries_extracted = ?,
+                    last_explored_at = ?
+                WHERE niche_term = ? COLLATE NOCASE
+                """,
+                (queries_extracted, now_str, clean),
+            )
+    finally:
+        conn.close()
+    add_signature(clean, db_path=db_path)
+
+
+def mark_frontier_failed(
+    niche_term: str,
+    error_msg: str = "",
+    db_path: Optional[str] = None,
+) -> None:
+    """Marks a claimed niche as failed to allow later retry or inspection."""
+    clean = normalize_term(niche_term)
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            conn.execute(
+                """
+                UPDATE frontier_niches
+                SET status = 'failed'
+                WHERE niche_term = ? COLLATE NOCASE
+                """,
+                (clean,),
+            )
+    finally:
+        conn.close()
+
+
+def get_frontier_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
+    """Returns real-time telemetry metrics for the frontier discovery queue."""
+    conn = get_connection(db_path)
+    stats: Dict[str, Any] = {
+        "total": 0,
+        "pending": 0,
+        "claimed": 0,
+        "completed": 0,
+        "failed": 0,
+        "cooldown_active": 0,
+        "by_category": {},
+        "by_depth": {},
+    }
+    cutoff = (datetime.utcnow() - timedelta(days=90)).strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) as c FROM frontier_niches")
+            stats["total"] = cursor.fetchone()["c"]
+
+            cursor.execute("SELECT status, COUNT(*) as c FROM frontier_niches GROUP BY status")
+            for r in cursor.fetchall():
+                st = r["status"]
+                if st in stats:
+                    stats[st] = r["c"]
+
+            cursor.execute("SELECT COUNT(*) as c FROM explored_signatures WHERE explored_at >= ?", (cutoff,))
+            stats["cooldown_active"] = cursor.fetchone()["c"]
+
+            cursor.execute("SELECT category, COUNT(*) as c FROM frontier_niches GROUP BY category")
+            for r in cursor.fetchall():
+                stats["by_category"][r["category"]] = r["c"]
+
+            cursor.execute("SELECT depth_level, COUNT(*) as c FROM frontier_niches GROUP BY depth_level")
+            for r in cursor.fetchall():
+                stats["by_depth"][str(r["depth_level"])] = r["c"]
+    finally:
+        conn.close()
+    return stats
+
+
+def get_frontier_page(
+    category: Optional[str] = None,
+    status: Optional[str] = None,
+    depth_level: Optional[int] = None,
+    search: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    db_path: Optional[str] = None,
+) -> Tuple[List[Dict[str, Any]], int]:
+    """Retrieves paginated frontier niches with filtering."""
+    conn = get_connection(db_path)
+    conditions: List[str] = []
+    params: List[Any] = []
+
+    if category and category.lower() != "all":
+        conditions.append("category = ?")
+        params.append(category)
+
+    if status and status.lower() != "all":
+        conditions.append("status = ?")
+        params.append(status)
+
+    if depth_level is not None:
+        conditions.append("depth_level = ?")
+        params.append(depth_level)
+
+    if search:
+        conditions.append("niche_term LIKE ?")
+        params.append(f"%{search}%")
+
+    where_clause = (" WHERE " + " AND ".join(conditions)) if conditions else ""
+
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT COUNT(*) as c FROM frontier_niches {where_clause}", params)
+            total = cursor.fetchone()["c"]
+
+            query = f"""
+                SELECT * FROM frontier_niches
+                {where_clause}
+                ORDER BY depth_level ASC, created_at DESC
+                LIMIT ? OFFSET ?
+            """
+            cursor.execute(query, params + [limit, offset])
+            rows = [dict(r) for r in cursor.fetchall()]
+    finally:
+        conn.close()
+    return rows, total
+
+
+# -------------------------------------------------------------
+# Queries & Opportunities Operations
+# -------------------------------------------------------------
 
 def upsert_query(data: Dict[str, Any], db_path: Optional[str] = None) -> int:
     """
@@ -81,51 +406,53 @@ def upsert_query(data: Dict[str, Any], db_path: Optional[str] = None) -> int:
         else data.get("evidence_json", "{}")
     )
 
-    with conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            INSERT INTO queries (
-                keyword, category, trend_type, trend_velocity, gap_score,
-                archetype, exact_title_matches, has_github_issues, has_stack_questions,
-                top_competitor_title, top_competitor_url, human_verdict, evidence_json,
-                first_seen, last_updated
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(keyword) DO UPDATE SET
-                category = excluded.category,
-                trend_type = excluded.trend_type,
-                trend_velocity = excluded.trend_velocity,
-                gap_score = excluded.gap_score,
-                archetype = excluded.archetype,
-                exact_title_matches = excluded.exact_title_matches,
-                has_github_issues = excluded.has_github_issues,
-                has_stack_questions = excluded.has_stack_questions,
-                top_competitor_title = excluded.top_competitor_title,
-                top_competitor_url = excluded.top_competitor_url,
-                evidence_json = excluded.evidence_json,
-                last_updated = excluded.last_updated
-            """,
-            (
-                data["keyword"].strip(),
-                data.get("category", "General"),
-                data.get("trend_type", "TOP"),
-                data.get("trend_velocity", "Stable"),
-                int(data.get("gap_score", 0)),
-                data.get("archetype", "Recipe"),
-                int(data.get("exact_title_matches", 0)),
-                1 if data.get("has_github_issues") else 0,
-                1 if data.get("has_stack_questions") else 0,
-                data.get("top_competitor_title", ""),
-                data.get("top_competitor_url", ""),
-                data.get("human_verdict", "pending"),
-                evidence_json,
-                now_str,
-                now_str,
-            ),
-        )
-        row_id = cursor.lastrowid
-    conn.close()
-    return row_id
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO queries (
+                    keyword, category, trend_type, trend_velocity, gap_score,
+                    archetype, exact_title_matches, has_github_issues, has_stack_questions,
+                    top_competitor_title, top_competitor_url, human_verdict, evidence_json,
+                    first_seen, last_updated
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(keyword) DO UPDATE SET
+                    category = excluded.category,
+                    trend_type = excluded.trend_type,
+                    trend_velocity = excluded.trend_velocity,
+                    gap_score = excluded.gap_score,
+                    archetype = excluded.archetype,
+                    exact_title_matches = excluded.exact_title_matches,
+                    has_github_issues = excluded.has_github_issues,
+                    has_stack_questions = excluded.has_stack_questions,
+                    top_competitor_title = excluded.top_competitor_title,
+                    top_competitor_url = excluded.top_competitor_url,
+                    evidence_json = excluded.evidence_json,
+                    last_updated = excluded.last_updated
+                """,
+                (
+                    data["keyword"].strip(),
+                    data.get("category", "General"),
+                    data.get("trend_type", "TOP"),
+                    data.get("trend_velocity", "Stable"),
+                    int(data.get("gap_score", 0)),
+                    data.get("archetype", "Recipe"),
+                    int(data.get("exact_title_matches", 0)),
+                    1 if data.get("has_github_issues") else 0,
+                    1 if data.get("has_stack_questions") else 0,
+                    data.get("top_competitor_title", ""),
+                    data.get("top_competitor_url", ""),
+                    data.get("human_verdict", "pending"),
+                    evidence_json,
+                    now_str,
+                    now_str,
+                ),
+            )
+            row_id = cursor.lastrowid
+        return row_id
+    finally:
+        conn.close()
 
 
 def is_keyword_processed(keyword: str, max_age_days: int = 7, db_path: Optional[str] = None) -> bool:
@@ -143,7 +470,6 @@ def is_keyword_processed(keyword: str, max_age_days: int = 7, db_path: Optional[
         row = cursor.fetchone()
         if not row:
             return False
-        # If exists, check age
         last_updated = row["last_updated"]
         try:
             dt = datetime.strptime(last_updated, "%Y-%m-%d %H:%M:%S")
@@ -156,25 +482,52 @@ def is_keyword_processed(keyword: str, max_age_days: int = 7, db_path: Optional[
 
 
 def update_verdict(query_id: int, verdict: str, db_path: Optional[str] = None) -> bool:
-    """Updates the human verdict for an opportunity ('confirmed_gold', 'already_served', 'pending')."""
-    valid = {"confirmed_gold", "already_served", "pending"}
+    """Updates human verdict for an opportunity ('confirmed_gold', 'already_served', 'snoozed', 'pending')."""
+    valid = {"confirmed_gold", "already_served", "snoozed", "pending"}
     if verdict not in valid:
         raise ValueError(f"Invalid verdict '{verdict}'. Must be one of {valid}")
 
     conn = get_connection(db_path)
-    with conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            UPDATE queries 
-            SET human_verdict = ?, last_updated = CURRENT_TIMESTAMP
-            WHERE id = ?
-            """,
-            (verdict, query_id),
-        )
-        updated = cursor.rowcount > 0
-    conn.close()
-    return updated
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE queries 
+                SET human_verdict = ?, last_updated = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                (verdict, query_id),
+            )
+            return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
+def bulk_update_verdict(query_ids: List[int], verdict: str, db_path: Optional[str] = None) -> int:
+    """Bulk updates human verdict across a list of query IDs."""
+    valid = {"confirmed_gold", "already_served", "snoozed", "pending"}
+    if verdict not in valid:
+        raise ValueError(f"Invalid verdict '{verdict}'. Must be one of {valid}")
+    if not query_ids:
+        return 0
+
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            cursor = conn.cursor()
+            placeholders = ",".join("?" for _ in query_ids)
+            cursor.execute(
+                f"""
+                UPDATE queries
+                SET human_verdict = ?, last_updated = CURRENT_TIMESTAMP
+                WHERE id IN ({placeholders})
+                """,
+                [verdict] + query_ids,
+            )
+            return cursor.rowcount
+    finally:
+        conn.close()
 
 
 def get_queries(
@@ -212,7 +565,6 @@ def get_queries(
 
     where_clause = " WHERE " + " AND ".join(conditions)
 
-    # Valid sort columns
     allowed_sorts = {
         "gap_score": "gap_score",
         "last_updated": "last_updated",
@@ -223,24 +575,23 @@ def get_queries(
     sort_col = allowed_sorts.get(sort_by, "gap_score")
     order = "ASC" if sort_order.upper() == "ASC" else "DESC"
 
-    with conn:
-        cursor = conn.cursor()
-        # Count total
-        cursor.execute(f"SELECT COUNT(*) as count FROM queries {where_clause}", params)
-        total = cursor.fetchone()["count"]
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT COUNT(*) as count FROM queries {where_clause}", params)
+            total = cursor.fetchone()["count"]
 
-        # Fetch page
-        query = f"""
-            SELECT * FROM queries 
-            {where_clause} 
-            ORDER BY {sort_col} {order} 
-            LIMIT ? OFFSET ?
-        """
-        cursor.execute(query, params + [limit, offset])
-        rows = [dict(row) for row in cursor.fetchall()]
-
-    conn.close()
-    return rows, total
+            query = f"""
+                SELECT * FROM queries 
+                {where_clause} 
+                ORDER BY {sort_col} {order} 
+                LIMIT ? OFFSET ?
+            """
+            cursor.execute(query, params + [limit, offset])
+            rows = [dict(row) for row in cursor.fetchall()]
+        return rows, total
+    finally:
+        conn.close()
 
 
 def get_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
@@ -251,38 +602,52 @@ def get_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
         "critical_gold": 0,
         "high_opportunity": 0,
         "confirmed_gold": 0,
+        "snoozed": 0,
         "breakouts": 0,
+        "frontier_total": 0,
+        "frontier_pending": 0,
         "by_archetype": {},
         "by_category": {},
     }
 
-    with conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) as c FROM queries")
-        stats["total_queries"] = cursor.fetchone()["c"]
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) as c FROM queries")
+            stats["total_queries"] = cursor.fetchone()["c"]
 
-        cursor.execute("SELECT COUNT(*) as c FROM queries WHERE gap_score >= 85")
-        stats["critical_gold"] = cursor.fetchone()["c"]
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE gap_score >= 85")
+            stats["critical_gold"] = cursor.fetchone()["c"]
 
-        cursor.execute("SELECT COUNT(*) as c FROM queries WHERE gap_score >= 65 AND gap_score < 85")
-        stats["high_opportunity"] = cursor.fetchone()["c"]
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE gap_score >= 65 AND gap_score < 85")
+            stats["high_opportunity"] = cursor.fetchone()["c"]
 
-        cursor.execute("SELECT COUNT(*) as c FROM queries WHERE human_verdict = 'confirmed_gold'")
-        stats["confirmed_gold"] = cursor.fetchone()["c"]
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE human_verdict = 'confirmed_gold'")
+            stats["confirmed_gold"] = cursor.fetchone()["c"]
 
-        cursor.execute("SELECT COUNT(*) as c FROM queries WHERE trend_type = 'BREAKOUT'")
-        stats["breakouts"] = cursor.fetchone()["c"]
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE human_verdict = 'snoozed'")
+            stats["snoozed"] = cursor.fetchone()["c"]
 
-        cursor.execute("SELECT archetype, COUNT(*) as c FROM queries GROUP BY archetype")
-        for r in cursor.fetchall():
-            stats["by_archetype"][r["archetype"]] = r["c"]
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE trend_type = 'BREAKOUT'")
+            stats["breakouts"] = cursor.fetchone()["c"]
 
-        cursor.execute("SELECT category, COUNT(*) as c FROM queries GROUP BY category")
-        for r in cursor.fetchall():
-            stats["by_category"][r["category"]] = r["c"]
+            cursor.execute("SELECT archetype, COUNT(*) as c FROM queries GROUP BY archetype")
+            for r in cursor.fetchall():
+                stats["by_archetype"][r["archetype"]] = r["c"]
 
-    conn.close()
-    return stats
+            cursor.execute("SELECT category, COUNT(*) as c FROM queries GROUP BY category")
+            for r in cursor.fetchall():
+                stats["by_category"][r["category"]] = r["c"]
+
+            # Frontier stats
+            cursor.execute("SELECT COUNT(*) as c FROM frontier_niches")
+            stats["frontier_total"] = cursor.fetchone()["c"]
+
+            cursor.execute("SELECT COUNT(*) as c FROM frontier_niches WHERE status = 'pending'")
+            stats["frontier_pending"] = cursor.fetchone()["c"]
+        return stats
+    finally:
+        conn.close()
 
 
 def log_scan_event(
@@ -294,30 +659,34 @@ def log_scan_event(
     db_path: Optional[str] = None,
 ) -> None:
     conn = get_connection(db_path)
-    with conn:
-        conn.execute(
-            """
-            INSERT INTO scan_logs (batch_name, category, queries_found, gold_found, log_message)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (batch_name, category, queries_found, gold_found, log_message),
-        )
-    conn.close()
+    try:
+        with conn:
+            conn.execute(
+                """
+                INSERT INTO scan_logs (batch_name, category, queries_found, gold_found, log_message)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (batch_name, category, queries_found, gold_found, log_message),
+            )
+    finally:
+        conn.close()
 
 
 def get_recent_logs(limit: int = 50, db_path: Optional[str] = None) -> List[Dict[str, Any]]:
     conn = get_connection(db_path)
-    with conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT * FROM scan_logs ORDER BY timestamp DESC LIMIT ?
-            """,
-            (limit,),
-        )
-        logs = [dict(r) for r in cursor.fetchall()]
-    conn.close()
-    return logs
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT * FROM scan_logs ORDER BY timestamp DESC LIMIT ?
+                """,
+                (limit,),
+            )
+            logs = [dict(r) for r in cursor.fetchall()]
+        return logs
+    finally:
+        conn.close()
 
 
 # Auto-initialize DB on import

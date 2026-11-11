@@ -1,7 +1,7 @@
 """
-FastAPI Dashboard Server for Autonomous Developer Search Gap Radar
+FastAPI Dashboard Server for Search Gap Radar & Stealth Swarm (Gold Miner)
 Serves on http://localhost:8080 (and LAN http://0.0.0.0:8080).
-Provides REST endpoints for live opportunities, verdicts, reports, export, and scan controls.
+Provides REST endpoints for live opportunities, verdicts, reports, export, frontier queue, and swarm controls.
 """
 
 import csv
@@ -23,14 +23,15 @@ from pydantic import BaseModel
 import storage.db as db
 from engines.dev_evidence import DevEvidenceCollector
 from engines.exclusion_shield import ExclusionShield
+from engines.niche_ingestor import VERTICALS
 from engines.scorer import compute_composite_score
 from engines.serp_sieve import SerpSieve
-from engines.trends_batch import TrendsBatchHTTP
+from engines.trends_batch import TrendsBatchHTTP, load_cookie_pool
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("dashboard")
 
-app = FastAPI(title="Developer Search Gap Radar", version="3.0")
+app = FastAPI(title="Search Gap Radar & Stealth Swarm", version="5.0")
 
 # Enable CORS for LAN access
 app.add_middleware(
@@ -45,7 +46,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "ui", "templates")
 STATIC_DIR = os.path.join(BASE_DIR, "ui", "static")
 REPORTS_DIR = os.path.join(BASE_DIR, "reports")
-CONFIG_PATH = os.path.join(BASE_DIR, "config", "dev_niches.json")
 
 os.makedirs(TEMPLATES_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
@@ -67,135 +67,112 @@ scan_state = {
 
 class VerdictRequest(BaseModel):
     id: int
-    verdict: str  # 'confirmed_gold', 'already_served', 'pending'
+    verdict: str  # 'confirmed_gold', 'already_served', 'snoozed', 'pending'
+
+
+class BulkVerdictRequest(BaseModel):
+    ids: List[int]
+    verdict: str
+
+
+class AddFrontierRequest(BaseModel):
+    term: str
+    category: str
 
 
 class ScanRequest(BaseModel):
     category: Optional[str] = "All"
-    limit_batches: Optional[int] = 1
+    limit_batches: Optional[int] = 2
 
 
-def run_pipeline_scan(category_filter: str = "All", limit_batches: int = 1):
-    """Background task to run trends batch extraction, exclusion shield, serp sieve, and scoring."""
+def run_pipeline_scan(category_filter: str = "All", limit_batches: int = 2):
+    """Background task to run trends batch extraction from frontier queue."""
     global scan_state
     if scan_state["is_scanning"]:
         return
 
     scan_state["is_scanning"] = True
     scan_state["progress"] = 0
-    scan_state["message"] = "Loading seed configurations..."
+    scan_state["message"] = "Claiming frontier niches..."
 
     try:
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
-
-        categories = cfg.get("categories", {})
-        target_cats = (
-            {category_filter: categories[category_filter]}
-            if category_filter != "All" and category_filter in categories
-            else categories
-        )
-
-        trends_engine = TrendsBatchHTTP(time_window="now 1-d")
+        trends_engine = TrendsBatchHTTP(time_window="today 12-m")
         shield = ExclusionShield()
         sieve = SerpSieve()
         evidence_collector = DevEvidenceCollector()
 
-        # Calculate total batches
-        all_batches: List[tuple] = []
-        for cat_name, cat_data in target_cats.items():
-            batches = cat_data.get("batches", [])[:limit_batches]
-            for b in batches:
-                all_batches.append((cat_name, b))
-
-        scan_state["total"] = len(all_batches)
-        logger.info(f"Starting scan across {len(all_batches)} batches...")
-
         queries_discovered = 0
         gold_discovered = 0
 
-        for b_idx, (cat_name, batch_terms) in enumerate(all_batches, 1):
-            scan_state["current_category"] = cat_name
+        for b_idx in range(1, limit_batches + 1):
+            claimed = db.claim_frontier_batch(shard_id=0, total_shards=1, batch_size=8)
+            if not claimed:
+                scan_state["message"] = "Frontier queue empty. Run niche ingestor to harvest roots."
+                break
+
+            terms = [c["niche_term"] for c in claimed]
+            scan_state["current_category"] = claimed[0]["category"]
             scan_state["progress"] = b_idx
-            scan_state["message"] = f"Extracting 8-term Trends for [{cat_name}]: {', '.join(batch_terms[:3])}..."
-            logger.info(f"[{b_idx}/{len(all_batches)}] Batch {cat_name}: {batch_terms}")
+            scan_state["total"] = limit_batches
+            scan_state["message"] = f"Extracting 8-term Trends for: {', '.join(terms[:3])}..."
 
-            batch_data = trends_engine.extract_batch(batch_terms)
+            batch_results = trends_engine.extract_batch(terms)
 
-            # Process all raw queries returned (Top and Rising Breakouts)
-            for seed_term, stream in batch_data.items():
-                all_extracted = []
-                for item in stream.get("rising", []):
-                    item["trend_type"] = "BREAKOUT" if item.get("isBreakout") else "RISING"
-                    all_extracted.append(item)
-                for item in stream.get("top", []):
-                    item["trend_type"] = "TOP"
-                    all_extracted.append(item)
+            for niche_info in claimed:
+                niche_term = niche_info["niche_term"]
+                category = niche_info["category"]
+                term_data = batch_results.get(niche_term, {})
 
-                for item in all_extracted:
-                    kw = item.get("query", "").strip()
-                    if not kw or len(kw) < 4:
+                candidates = []
+                for item in term_data.get("rising", []):
+                    candidates.append({**item, "trend_type": "BREAKOUT" if item.get("isBreakout") else "RISING"})
+                for item in term_data.get("top", []):
+                    candidates.append({**item, "trend_type": "TOP"})
+
+                evaluated_for_niche = 0
+                for cand in candidates:
+                    query = cand.get("query", "").strip()
+                    if not query:
                         continue
 
-                    # Exclusion Shield: pre-SERP check
-                    passed, reason = shield.evaluate(kw)
-                    if not passed:
+                    should_drop, _ = shield.should_drop(query, category=category)
+                    if should_drop:
                         continue
 
-                    scan_state["current_keyword"] = kw
-                    queries_discovered += 1
-
-                    # Sieve & Developer Evidence
-                    serp_audit = sieve.audit_serp(kw)
-
-                    # Post-SERP Exclusion check
-                    passed_serp, s_reason = shield.evaluate(kw, serp_audit.get("raw_results"))
-                    if not passed_serp:
-                        continue
-
-                    dev_evidence = evidence_collector.collect_evidence(kw)
-
-                    # Composite scoring & archetype classification
-                    scored = compute_composite_score(
-                        query=kw,
-                        trend_type=item.get("trend_type", "TOP"),
-                        trend_velocity=item.get("change", "Stable"),
-                        serp_audit=serp_audit,
-                        dev_evidence=dev_evidence,
+                    serp_res = sieve.audit(query)
+                    dev_res = evidence_collector.collect(query)
+                    score_data = compute_composite_score(
+                        serp_score=serp_res["serp_score"],
+                        dev_score=dev_res["dev_score"],
+                        trend_type=cand.get("trend_type", "TOP"),
+                        trend_velocity=cand.get("change", "Stable"),
+                        keyword=query,
+                        serp_data=serp_res,
                     )
 
-                    scored["category"] = cat_name
-                    scored["trend_velocity"] = str(item.get("change", "Stable"))
-                    scored["trend_type"] = item.get("trend_type", "TOP")
-                    scored["evidence"] = {
-                        "serp": {
-                            "top_competitor_title": serp_audit.get("top_competitor_title"),
-                            "top_competitor_url": serp_audit.get("top_competitor_url"),
-                            "exact_title_matches": serp_audit.get("exact_title_matches"),
-                            "forum_count": serp_audit.get("forum_count"),
-                            "root_domain_in_top5": serp_audit.get("root_domain_in_top5"),
-                        },
-                        "dev": {
-                            "github": dev_evidence.get("github"),
-                            "stack_exchange": dev_evidence.get("stack_exchange"),
-                            "hacker_news": dev_evidence.get("hacker_news"),
-                        },
-                    }
+                    gap_score = score_data["gap_score"]
+                    if gap_score >= 40:
+                        db.upsert_query({
+                            "keyword": query,
+                            "category": category,
+                            "trend_type": cand.get("trend_type", "TOP"),
+                            "trend_velocity": cand.get("change", "Stable"),
+                            "gap_score": gap_score,
+                            "archetype": score_data["archetype"],
+                            "exact_title_matches": serp_res.get("exact_title_matches", 0),
+                            "has_github_issues": dev_res.get("has_github_issues", False),
+                            "has_stack_questions": dev_res.get("has_stack_questions", False),
+                            "top_competitor_title": serp_res.get("top_competitor_title", ""),
+                            "top_competitor_url": serp_res.get("top_competitor_url", ""),
+                            "evidence": {"serp": serp_res, "dev": dev_res, "score_breakdown": score_data["breakdown"]},
+                        })
+                        queries_discovered += 1
+                        if gap_score >= 75:
+                            gold_discovered += 1
 
-                    # Upsert into SQLite
-                    db.upsert_query(scored)
+                    evaluated_for_niche += 1
 
-                    if scored["gap_score"] >= 85:
-                        gold_discovered += 1
-                        logger.info(f"💎 CRITICAL GOLD MINE [{scored['gap_score']}/100]: '{kw}' ({scored['archetype']})")
-
-            db.log_scan_event(
-                batch_name=f"{cat_name} Batch {b_idx}",
-                category=cat_name,
-                queries_found=queries_discovered,
-                gold_found=gold_discovered,
-                log_message=f"Completed batch with {queries_discovered} candidates evaluated, {gold_discovered} Gold.",
-            )
+                db.mark_frontier_complete(niche_term, queries_extracted=evaluated_for_niche)
 
         scan_state["message"] = f"Scan complete! Discovered {queries_discovered} queries ({gold_discovered} Gold Mines)."
         scan_state["last_run"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
@@ -248,10 +225,13 @@ def get_queries(
         offset=offset,
     )
 
-    # Augment with Google verification link
+    # Augment with 3-way verification links & evidence
     for item in items:
         q_enc = urllib.parse.quote(item["keyword"])
         item["google_verify_url"] = f"https://www.google.com/search?q={q_enc}"
+        item["ddg_verify_url"] = f"https://duckduckgo.com/?q={q_enc}"
+        item["trends_verify_url"] = f"https://trends.google.com/trends/explore?q={q_enc}&date=today%2012-m"
+
         if item.get("evidence_json"):
             try:
                 item["evidence"] = json.loads(item["evidence_json"])
@@ -275,12 +255,68 @@ def set_verdict(req: VerdictRequest):
     return {"status": "ok", "id": req.id, "verdict": req.verdict}
 
 
+@app.post("/api/bulk-verdict")
+def bulk_verdict(req: BulkVerdictRequest):
+    updated = db.bulk_update_verdict(req.ids, req.verdict)
+    return {"status": "ok", "updated_count": updated, "verdict": req.verdict}
+
+
+@app.get("/api/frontier")
+def get_frontier(
+    category: Optional[str] = "all",
+    status: Optional[str] = "all",
+    depth_level: Optional[int] = None,
+    search: Optional[str] = None,
+    page: int = 1,
+    limit: int = 40,
+):
+    offset = (page - 1) * limit
+    items, total = db.get_frontier_page(
+        category=category,
+        status=status,
+        depth_level=depth_level,
+        search=search,
+        limit=limit,
+        offset=offset,
+    )
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": (total + limit - 1) // limit if limit > 0 else 1,
+    }
+
+
+@app.get("/api/frontier/stats")
+def get_frontier_stats():
+    return db.get_frontier_stats()
+
+
+@app.post("/api/frontier/add")
+def add_frontier_seed(req: AddFrontierRequest):
+    if not req.term.strip():
+        raise HTTPException(status_code=400, detail="Seed term cannot be empty")
+    added = db.queue_sub_niche(req.term, category=req.category, depth=0)
+    return {"status": "ok" if added else "exists_or_cooldown", "term": req.term, "added": added}
+
+
+@app.get("/api/cookies/status")
+def get_cookies_status():
+    pool = load_cookie_pool()
+    return {
+        "active_count": len(pool),
+        "status": "ready" if pool else "anonymous_fallback",
+        "shards_supported": len(pool) if pool else 1,
+    }
+
+
 @app.post("/api/scan")
 def trigger_scan(req: ScanRequest, background_tasks: BackgroundTasks):
     if scan_state["is_scanning"]:
         return {"status": "busy", "message": "Scan already in progress", "scan_state": scan_state}
 
-    background_tasks.add_task(run_pipeline_scan, req.category or "All", req.limit_batches or 1)
+    background_tasks.add_task(run_pipeline_scan, req.category or "All", req.limit_batches or 2)
     return {"status": "started", "message": f"Scan triggered for category: {req.category}"}
 
 
@@ -290,17 +326,13 @@ def get_scan_status():
 
 
 @app.get("/api/logs")
-def get_logs(limit: int = 30):
+def get_logs(limit: int = 40):
     return db.get_recent_logs(limit=limit)
 
 
 @app.get("/api/categories")
 def get_categories():
-    if os.path.exists(CONFIG_PATH):
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
-            return list(cfg.get("categories", {}).keys())
-    return []
+    return VERTICALS
 
 
 @app.get("/api/export")
@@ -323,6 +355,29 @@ def export_data(format: str = "json", category: str = "all", min_score: int = 0)
             content=output.getvalue(),
             media_type="text/csv",
             headers={"Content-Disposition": "attachment; filename=gold_miner_export.csv"},
+        )
+
+    if format.lower() == "markdown":
+        lines = [
+            f"# 💎 Gold Mine Action Checklist ({datetime.utcnow().strftime('%Y-%m-%d')})",
+            "",
+            "> Exported from Autonomous Search Gap Radar",
+            "",
+            "## 💎 Critical Gold Mines (Score >= 85)",
+        ]
+        for it in items:
+            if it.get("gap_score", 0) >= 85:
+                lines.append(f"- [ ] **{it['keyword']}** [{it['category']} / {it['archetype']}] — Score: {it['gap_score']}/100")
+
+        lines.extend(["", "## ⚡ High Opportunities (Score 65-84)"])
+        for it in items:
+            if 65 <= it.get("gap_score", 0) < 85:
+                lines.append(f"- [ ] **{it['keyword']}** [{it['category']} / {it['archetype']}] — Score: {it['gap_score']}/100")
+
+        return Response(
+            content="\n".join(lines),
+            media_type="text/markdown",
+            headers={"Content-Disposition": "attachment; filename=gold_mine_checklist.md"},
         )
 
     return JSONResponse(content=items)

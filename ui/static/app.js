@@ -1,48 +1,72 @@
 /**
- * Gold Miner Radar UI Application (Alpine.js State Manager)
+ * Gold Miner Radar UI Application (Alpine.js State Manager v6.0)
+ * Manages Live Feed (Cards & Compact), Frontier Queue, Bulk Actions, 
+ * AI Builder Blueprint Generator, and Swarm Telemetry.
  */
 
 function radarApp() {
   return {
     activeTab: 'feed',
+    feedView: 'cards',
     queries: [],
     stats: {},
     categories: [],
     reports: [],
     logs: [],
     loading: false,
-    selectedReport: '',
-    selectedReportContent: '',
+
+    // Pagination
     page: 1,
     limit: 20,
     totalItems: 0,
     totalPages: 1,
-    
+
     // Filters
     filters: {
       search: '',
       category: 'all',
       archetype: 'all',
       verdict: 'all',
-      min_score: 0
+      min_score: 0,
     },
 
-    // Admin & Scan controls
-    adminScanCategory: 'All',
-    adminBatchDepth: 1,
+    // Frontier Queue state
+    frontierStats: {},
+    frontierItems: [],
+    frontierPage: 1,
+    frontierTotalPages: 1,
+    newSeedTerm: '',
+    newSeedCategory: 'Developer & Cloud',
+
+    // Bulk selection
+    selectedRows: [],
+
+    // AI Blueprint Modal
+    showBlueprintModal: false,
+    activeBlueprint: {},
+    copiedPrompt: false,
+
+    // Cookie & Swarm Status
+    cookieStatus: {},
     scanState: {
       is_scanning: false,
       progress: 0,
       total: 0,
       message: 'Idle',
-      last_run: null
+      last_run: null,
     },
-    pollInterval: null,
+
+    // Daily Reports
+    selectedReport: '',
+    selectedReportContent: '',
 
     async initApp() {
       await this.loadCategories();
       await this.loadStats();
-      await this.loadQueries();
+      await this.loadQueries(1);
+      await this.loadFrontierStats();
+      await this.loadFrontier(1);
+      await this.loadCookieStatus();
       await this.loadReports();
       await this.loadLogs();
 
@@ -50,7 +74,8 @@ function radarApp() {
       setInterval(() => {
         this.loadStats();
         if (this.scanState.is_scanning) {
-          this.loadQueries();
+          this.loadQueries(this.page);
+          this.loadFrontierStats();
           this.loadLogs();
         }
       }, 4000);
@@ -58,184 +83,281 @@ function radarApp() {
 
     async loadCategories() {
       try {
-        const res = await fetch('/api/categories');
-        if (res.ok) {
-          this.categories = await res.json();
+        const resp = await fetch('/api/categories');
+        this.categories = await resp.json();
+        if (this.categories.length) {
+          this.newSeedCategory = this.categories[0];
         }
-      } catch (err) {
-        console.error("Failed to load categories:", err);
+      } catch (e) {
+        console.error('Failed to load categories', e);
+      }
+    },
+
+    async setCategory(cat) {
+      this.filters.category = cat;
+      await this.loadQueries(1);
+      if (this.activeTab === 'frontier') {
+        await this.loadFrontier(1);
       }
     },
 
     async loadStats() {
       try {
-        const res = await fetch('/api/stats');
-        if (res.ok) {
-          const data = await res.json();
-          this.stats = data;
-          if (data.scan_state) {
-            this.scanState = data.scan_state;
-          }
+        const resp = await fetch('/api/stats');
+        const data = await resp.json();
+        this.stats = data;
+        if (data.scan_state) {
+          this.scanState = data.scan_state;
         }
-      } catch (err) {
-        console.error("Failed to load stats:", err);
+      } catch (e) {
+        console.error('Failed to load stats', e);
       }
     },
 
-    async loadQueries() {
+    async loadQueries(targetPage = 1) {
       this.loading = true;
-      try {
-        const params = new URLSearchParams({
-          category: this.filters.category,
-          archetype: this.filters.archetype,
-          verdict: this.filters.verdict,
-          min_score: this.filters.min_score,
-          search: this.filters.search,
-          page: this.page,
-          limit: this.limit
-        });
+      this.page = targetPage;
+      const params = new URLSearchParams({
+        category: this.filters.category,
+        archetype: this.filters.archetype,
+        verdict: this.filters.verdict,
+        min_score: this.filters.min_score,
+        search: this.filters.search,
+        page: this.page,
+        limit: this.limit,
+      });
 
-        const res = await fetch(`/api/queries?${params.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          this.queries = data.items || [];
-          this.totalItems = data.total || 0;
-          this.totalPages = data.total_pages || 1;
-        }
-      } catch (err) {
-        console.error("Failed to load queries:", err);
+      try {
+        const resp = await fetch(`/api/queries?${params.toString()}`);
+        const data = await resp.json();
+        this.queries = data.items || [];
+        this.totalItems = data.total || 0;
+        this.totalPages = data.total_pages || 1;
+      } catch (e) {
+        console.error('Failed to load queries', e);
       } finally {
         this.loading = false;
       }
     },
 
-    changePage(newPage) {
-      if (newPage >= 1 && newPage <= this.totalPages) {
-        this.page = newPage;
-        this.loadQueries();
-      }
-    },
-
-    async setVerdict(queryId, verdict) {
+    async setVerdict(id, verdict) {
       try {
-        const res = await fetch('/api/verdict', {
+        const resp = await fetch('/api/verdict', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: queryId, verdict })
+          body: JSON.stringify({ id, verdict }),
         });
-        if (res.ok) {
-          // Update item in local list instantly
-          const item = this.queries.find(q => q.id === queryId);
-          if (item) {
-            item.human_verdict = verdict;
-          }
-          this.loadStats();
+        if (resp.ok) {
+          // Update in-memory
+          const item = this.queries.find((q) => q.id === id);
+          if (item) item.human_verdict = verdict;
+          await this.loadStats();
         }
-      } catch (err) {
-        console.error("Failed to update verdict:", err);
+      } catch (e) {
+        console.error('Failed to set verdict', e);
       }
     },
 
-    async triggerScan() {
+    // Bulk Actions
+    toggleSelectAll(e) {
+      if (e.target.checked) {
+        this.selectedRows = this.queries.map((q) => q.id);
+      } else {
+        this.selectedRows = [];
+      }
+    },
+
+    async bulkSetVerdict(verdict) {
+      if (!this.selectedRows.length) return;
       try {
-        const res = await fetch('/api/scan', {
+        const resp = await fetch('/api/bulk-verdict', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ category: 'All', limit_batches: 1 })
+          body: JSON.stringify({ ids: this.selectedRows, verdict }),
         });
-        if (res.ok) {
-          const data = await res.json();
-          this.scanState.is_scanning = true;
-          this.scanState.message = 'Scan initialized...';
+        if (resp.ok) {
+          await this.loadQueries(this.page);
+          await this.loadStats();
+          this.selectedRows = [];
         }
-      } catch (err) {
-        console.error("Scan trigger error:", err);
+      } catch (e) {
+        console.error('Failed to bulk set verdict', e);
       }
     },
 
-    async triggerCustomScan() {
+    // Frontier Queue
+    async loadFrontierStats() {
       try {
-        const res = await fetch('/api/scan', {
+        const resp = await fetch('/api/frontier/stats');
+        this.frontierStats = await resp.json();
+      } catch (e) {
+        console.error('Failed to load frontier stats', e);
+      }
+    },
+
+    async loadFrontier(targetPage = 1) {
+      this.frontierPage = targetPage;
+      const params = new URLSearchParams({
+        category: this.filters.category,
+        page: this.frontierPage,
+        limit: 30,
+      });
+
+      try {
+        const resp = await fetch(`/api/frontier?${params.toString()}`);
+        const data = await resp.json();
+        this.frontierItems = data.items || [];
+        this.frontierTotalPages = data.total_pages || 1;
+      } catch (e) {
+        console.error('Failed to load frontier page', e);
+      }
+    },
+
+    async addSeed() {
+      if (!this.newSeedTerm.trim()) return;
+      try {
+        const resp = await fetch('/api/frontier/add', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            category: this.adminScanCategory,
-            limit_batches: parseInt(this.adminBatchDepth, 10)
-          })
+            term: this.newSeedTerm.trim(),
+            category: this.newSeedCategory,
+          }),
         });
-        if (res.ok) {
-          this.scanState.is_scanning = true;
-          this.scanState.message = `Scan started for ${this.adminScanCategory}...`;
-          this.activeTab = 'feed';
-        }
-      } catch (err) {
-        console.error("Custom scan trigger error:", err);
+        const res = await resp.json();
+        this.newSeedTerm = '';
+        await this.loadFrontierStats();
+        await this.loadFrontier(1);
+      } catch (e) {
+        console.error('Failed to add seed', e);
       }
     },
 
+    // Cookie Status
+    async loadCookieStatus() {
+      try {
+        const resp = await fetch('/api/cookies/status');
+        this.cookieStatus = await resp.json();
+      } catch (e) {
+        console.error('Failed to load cookie status', e);
+      }
+    },
+
+    // 1-Click AI Builder Blueprint Generator
+    openBlueprint(item) {
+      const q = item.keyword;
+      const arch = item.archetype || 'Micro-Tool';
+      const cat = item.category || 'General';
+
+      let stack = 'Static HTML + Alpine.js + Tailwind CSS (Cloudflare Pages)';
+      let seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Free Online Tool (2025)`;
+      let prompt = '';
+
+      if (arch === 'Micro-Tool') {
+        stack = 'Static Single-Page HTML/Wasm + Tailwind (Zero Backend)';
+        seoTitle = `Free ${q.charAt(0).toUpperCase() + q.slice(1)} — Instant & No Signup`;
+        prompt = `Act as an expert frontend engineer. Build a lightweight, responsive, single-page web utility for: "${q}".
+- Target User: People searching for "${q}" needing immediate results.
+- Architecture: Pure clientside JavaScript/Wasm with dark mode styling using Tailwind CSS.
+- Key Features:
+  1. Instant input slider/fields with zero required login.
+  2. Live recalculation on change.
+  3. One-click copy/export to clipboard or PDF.
+  4. Structured JSON-LD FAQ Schema markup for programmatic SEO.
+Make it production-ready in a single self-contained index.html file.`;
+      } else if (arch === 'Workaround') {
+        stack = 'Astro / Next.js Static Markdown Guide with Copy Snippets';
+        seoTitle = `How to Fix ${q} — Step-by-Step Workaround (2025)`;
+        prompt = `Act as a senior technical documentation engineer. Write a definitive, minimal, high-ranking troubleshooting guide for: "${q}".
+- Exact Problem: Why does "${q}" happen in practice?
+- Quick Fix: 30-second copy-paste solution for 80% of users.
+- Deep Dive: Root cause explanation with step-by-step verified instructions.
+- Edge Cases: Alternative OS/environment configurations.
+Format in clean Markdown with copyable syntax-highlighted code blocks.`;
+      } else if (arch === 'Template') {
+        stack = 'Downloadable Template (Google Sheets / Notion / GitHub Scaffold)';
+        seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Free Download & Template`;
+        prompt = `Design a comprehensive, professional template and boilerplate for: "${q}".
+- Target Persona: Teams and indie makers looking for "${q}".
+- Core Structure: Clean layout, pre-filled formulas/configs, and instructions.
+- Provide both a copyable raw config/scaffold and a printable checklist.`;
+      } else {
+        stack = 'Programmatic Comparison Table (Next.js / Astro)';
+        seoTitle = `${q} — In-Depth Feature & Pricing Comparison`;
+        prompt = `Build a high-converting, objective comparison matrix for: "${q}".
+- Compare core features, pricing, open source vs hosted tradeoffs, and real-world benchmarks.
+- Provide a summary verdict recommendation matrix.`;
+      }
+
+      this.activeBlueprint = {
+        keyword: q,
+        archetype: arch,
+        category: cat,
+        stack,
+        seo_title: seoTitle,
+        prompt,
+      };
+      this.copiedPrompt = false;
+      this.showBlueprintModal = true;
+    },
+
+    copyBlueprintPrompt() {
+      if (this.activeBlueprint && this.activeBlueprint.prompt) {
+        navigator.clipboard.writeText(this.activeBlueprint.prompt);
+        this.copiedPrompt = true;
+        setTimeout(() => {
+          this.copiedPrompt = false;
+        }, 3000);
+      }
+    },
+
+    // Daily Reports
     async loadReports() {
       try {
-        const res = await fetch('/api/reports');
-        if (res.ok) {
-          this.reports = await res.json();
-          if (this.reports.length > 0 && !this.selectedReport) {
-            this.loadReportContent(this.reports[0].filename);
-          }
+        const resp = await fetch('/api/reports');
+        this.reports = await resp.json();
+        if (this.reports.length && !this.selectedReport) {
+          await this.loadReport(this.reports[0].filename);
         }
-      } catch (err) {
-        console.error("Failed to load reports list:", err);
+      } catch (e) {
+        console.error('Failed to load reports', e);
       }
     },
 
-    async loadReportContent(filename) {
+    async loadReport(filename) {
       this.selectedReport = filename;
       try {
-        const res = await fetch(`/api/reports/${encodeURIComponent(filename)}`);
-        if (res.ok) {
-          const mdText = await res.text();
-          this.selectedReportContent = mdText;
-          const container = document.getElementById('report-view');
-          if (container && window.marked) {
-            container.innerHTML = window.marked.parse(mdText);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to read report:", err);
+        const resp = await fetch(`/api/reports/${encodeURIComponent(filename)}`);
+        const mdText = await resp.text();
+        this.selectedReportContent = marked.parse(mdText);
+      } catch (e) {
+        this.selectedReportContent = '<p class="text-red-400">Error loading report.</p>';
       }
     },
 
+    // Live Logs
     async loadLogs() {
       try {
-        const res = await fetch('/api/logs?limit=40');
-        if (res.ok) {
-          this.logs = await res.json();
-        }
-      } catch (err) {
-        console.error("Failed to load logs:", err);
+        const resp = await fetch('/api/logs');
+        this.logs = await resp.json();
+      } catch (e) {
+        console.error('Failed to load logs', e);
       }
     },
 
-    exportData(format) {
-      const url = `/api/export?format=${format}&category=${encodeURIComponent(this.filters.category)}&min_score=${this.filters.min_score}`;
-      window.open(url, '_blank');
-    },
-
-    getArchetypeIcon(archetype) {
-      switch (archetype) {
-        case 'Micro-Tool': return '🛠️';
-        case 'Workaround': return '🐛';
-        case 'Recipe': return '📋';
-        case 'Breaking News': return '⚡';
-        default: return '💡';
+    // Manual Scan Trigger
+    async triggerScan() {
+      try {
+        const resp = await fetch('/api/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category: this.filters.category, limit_batches: 2 }),
+        });
+        const data = await resp.json();
+        await this.loadStats();
+      } catch (e) {
+        console.error('Failed to trigger scan', e);
       }
     },
-
-    formatBytes(bytes) {
-      if (!bytes) return '0 B';
-      const k = 1024;
-      const sizes = ['B', 'KB', 'MB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-    }
   };
 }

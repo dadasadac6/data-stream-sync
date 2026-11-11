@@ -10,7 +10,7 @@ Maps qualified opportunities into 4 Developable Archetypes:
 """
 
 import re
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 # Archetype keyword trigger mappings
 ARCHETYPE_RULES = [
@@ -108,21 +108,31 @@ def calculate_velocity_score(trend_type: str, trend_velocity: str) -> int:
 
 
 def compute_composite_score(
-    query: str,
-    trend_type: str,
-    trend_velocity: str,
-    serp_audit: Dict[str, Any],
-    dev_evidence: Dict[str, Any],
+    query: Optional[str] = None,
+    trend_type: str = "TOP",
+    trend_velocity: str = "Stable",
+    serp_audit: Optional[Dict[str, Any]] = None,
+    dev_evidence: Optional[Dict[str, Any]] = None,
+    keyword: Optional[str] = None,
+    serp_score: Optional[int] = None,
+    dev_score: Optional[int] = None,
+    serp_data: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ) -> Dict[str, Any]:
     """
     Computes composite gap score (0 to 100) and maps archetype.
+    Accepts both standard and legacy keyword arguments.
     """
-    s_serp = serp_audit.get("serp_score", 0)  # Max 40
-    s_dev = dev_evidence.get("dev_score", 0)   # Max 30
-    s_velocity = calculate_velocity_score(trend_type, trend_velocity)  # Max 30
+    q = query or keyword or ""
+    audit = serp_audit or serp_data or {}
+    evidence = dev_evidence or {}
+
+    s_serp = serp_score if serp_score is not None else audit.get("serp_score", 0)
+    s_dev = dev_score if dev_score is not None else evidence.get("dev_score", 0)
+    s_velocity = calculate_velocity_score(trend_type, trend_velocity)
 
     final_score = min(100, s_serp + s_dev + s_velocity)
-    archetype, deliverable = classify_archetype(query)
+    archetype, deliverable = classify_archetype(q)
 
     # Opportunity level classification
     if final_score >= 85:
@@ -133,7 +143,7 @@ def compute_composite_score(
         tier = "Pass / Saturated"
 
     return {
-        "keyword": query,
+        "keyword": q,
         "gap_score": final_score,
         "serp_score": s_serp,
         "dev_score": s_dev,
@@ -141,11 +151,16 @@ def compute_composite_score(
         "opportunity_tier": tier,
         "archetype": archetype,
         "deliverable_desc": deliverable,
-        "exact_title_matches": serp_audit.get("exact_title_matches", 0),
-        "has_github_issues": dev_evidence.get("has_github_issues", False),
-        "has_stack_questions": dev_evidence.get("has_stack_questions", False),
-        "top_competitor_title": serp_audit.get("top_competitor_title", ""),
-        "top_competitor_url": serp_audit.get("top_competitor_url", ""),
+        "exact_title_matches": audit.get("exact_title_matches", 0),
+        "has_github_issues": evidence.get("has_github_issues", False),
+        "has_stack_questions": evidence.get("has_stack_questions", False),
+        "top_competitor_title": audit.get("top_competitor_title", ""),
+        "top_competitor_url": audit.get("top_competitor_url", ""),
+        "breakdown": {
+            "serp": s_serp,
+            "dev": s_dev,
+            "velocity": s_velocity,
+        },
     }
 
 

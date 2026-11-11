@@ -1,11 +1,13 @@
 """
-Google Trends Multi-Keyword 8-Batch Extractor (Lightweight HTTP Engine)
-Zero-cost, browserless HTTP client with Blueprint B in-session fallback
-and Google Suggest tree fallback.
+Google Trends Multi-Keyword 8-Batch Extractor (Stealth HTTP Engine)
+Zero-cost, browserless HTTP client with Blueprint B in-session fallback,
+12-cookie rotation pool, and Google Suggest tree fallback.
+Locked to 'today 12-m' timeframe for evergreen demand discovery.
 """
 
 import json
 import logging
+import os
 import random
 import re
 import ssl
@@ -21,26 +23,80 @@ SSL_CTX = ssl._create_unverified_context()
 
 USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
 ]
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def load_cookie_pool() -> List[str]:
+    """
+    Loads Google session cookies from:
+    1. config/cookies.json (local development)
+    2. TRENDS_COOKIE_POOL environment variable (GitHub Actions secret)
+    Returns list of cookie strings.
+    """
+    local_path = os.path.join(BASE_DIR, "config", "cookies.json")
+    if os.path.exists(local_path):
+        try:
+            with open(local_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    cookies = [item.get("cookie", "") for item in data if isinstance(item, dict) and item.get("cookie")]
+                    if cookies:
+                        return cookies
+        except Exception as e:
+            logger.debug(f"Failed to load cookies from {local_path}: {e}")
+
+    env_val = os.getenv("TRENDS_COOKIE_POOL", "").strip()
+    if env_val:
+        try:
+            data = json.loads(env_val)
+            if isinstance(data, list):
+                cookies = [item.get("cookie", "") for item in data if isinstance(item, dict) and item.get("cookie")]
+                if cookies:
+                    return cookies
+        except Exception:
+            # Maybe single raw cookie string
+            return [env_val]
+
+    return []
+
+
+def select_cookie(shard_id: int, pool: Optional[List[str]] = None) -> Optional[str]:
+    """Selects cookie string for a shard using modulo distribution."""
+    active_pool = pool if pool is not None else load_cookie_pool()
+    if not active_pool:
+        return None
+    return active_pool[shard_id % len(active_pool)]
 
 
 class TrendsBatchHTTP:
     """
     Lightweight HTTP client for Google Trends 8-term batch extraction.
-    Works without any browser binaries.
+    Supports cookie rotation, 'today 12-m' timeframe, and fallback trees.
     """
 
-    def __init__(self, time_window: str = "now 1-d", geo: str = ""):
+    def __init__(self, time_window: str = "today 12-m", geo: str = "", shard_id: int = 0):
         self.time_window = time_window
         self.geo = geo
-        self.headers = {
+        self.shard_id = shard_id
+        self.cookie_pool = load_cookie_pool()
+        self.active_cookie = select_cookie(shard_id, self.cookie_pool)
+
+        self.headers: Dict[str, str] = {
             "User-Agent": random.choice(USER_AGENTS),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://trends.google.com/trends/explore",
         }
-        self.cookie_jar: Dict[str, str] = {}
+        if self.active_cookie:
+            self.headers["Cookie"] = self.active_cookie
+            logger.info(f"Initialized Trends engine with session cookie (shard {shard_id})")
 
     def _strip_garbage(self, text: str) -> str:
         """Strips Google API security prefix: )]}'"""
@@ -55,7 +111,6 @@ class TrendsBatchHTTP:
         encoded_terms = []
         for t in terms[:8]:
             clean = t.strip()
-            # Double encode space: %20 -> %2520
             enc = urllib.parse.quote(clean).replace("%20", "%2520")
             encoded_terms.append(enc)
         q_param = "%2C".join(encoded_terms)
@@ -63,13 +118,13 @@ class TrendsBatchHTTP:
         geo_param = f"&geo={self.geo}" if self.geo else ""
         return f"https://trends.google.com/explore?q={q_param}&date={date_param}{geo_param}"
 
-    def _get_google_suggest(self, term: str) -> List[Dict[str, Any]]:
+    def _get_google_suggest(self, term: str) -> List[str]:
         """
         Zero-cost Google Suggest query tree.
         Generates real search variations without rate limits.
         """
-        queries = []
-        modifiers = ["", " vs", " error", " workaround", " tool", " fix", " tutorial", " alternative"]
+        queries: List[str] = []
+        modifiers = ["", " vs", " error", " workaround", " tool", " fix", " tutorial", " alternative", " template", " calculator", " generator"]
         for mod in modifiers:
             query = f"{term}{mod}".strip()
             url = f"http://suggestqueries.google.com/complete/search?client=chrome&q={urllib.parse.quote(query)}"
@@ -85,23 +140,33 @@ class TrendsBatchHTTP:
                 logger.debug(f"Suggest check failed for {query}: {e}")
             time.sleep(random.uniform(0.1, 0.25))
 
-        # Deduplicate
-        unique = list(dict.fromkeys(queries))
-        return unique
+        # Deduplicate while preserving order
+        return list(dict.fromkeys(queries))
 
-    def extract_batch(self, terms: List[str]) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
+    def extract_batch(
+        self,
+        terms: List[str],
+        shard_id: Optional[int] = None,
+    ) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
         """
         Main extraction entry point.
         Attempts Trends API exploration first.
         If blocked or empty, smoothly degrades to Google Suggest query tree.
+        Inserts randomized stealth jitter.
         """
         if not terms:
             return {}
 
+        if shard_id is not None and shard_id != self.shard_id:
+            self.shard_id = shard_id
+            self.active_cookie = select_cookie(shard_id, self.cookie_pool)
+            if self.active_cookie:
+                self.headers["Cookie"] = self.active_cookie
+
         results: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
         batch = [t.strip() for t in terms[:8] if t.strip()]
 
-        logger.info(f"Initiating 8-term batch exploration for: {batch}")
+        logger.info(f"Initiating 8-term batch exploration for ({self.time_window}): {batch}")
 
         # Try Google Trends API
         try:
@@ -135,18 +200,18 @@ class TrendsBatchHTTP:
                     "rising": rising_items[:15],
                 }
 
+        # Anti-detection stealth jitter
+        time.sleep(random.uniform(1.5, 3.5))
         return results
 
     def _fetch_trends_api(self, batch: List[str]) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
         """Classic in-session explore API fallback (max 5 keywords per chunk)."""
         results: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
-
-        # Chunk into groups of 5
         chunks = [batch[i : i + 5] for i in range(0, len(batch), 5)]
 
         for chunk in chunks:
             comparison_items = [
-                {"keyword": kw, "geo": self.geo, "time": self.time_window.replace("now 1-d", "now 1-d")}
+                {"keyword": kw, "geo": self.geo, "time": self.time_window}
                 for kw in chunk
             ]
             explore_req = {
@@ -177,8 +242,8 @@ class TrendsBatchHTTP:
                         if not widget or "token" not in widget or "request" not in widget:
                             continue
 
-                        # 350-500ms anti-429 jitter
-                        time.sleep(random.uniform(0.35, 0.50))
+                        # Jitter between widget requests
+                        time.sleep(random.uniform(0.35, 0.65))
 
                         widget_url = (
                             f"https://trends.google.com/trends/api/widgetdata/relatedsearches?"
@@ -215,7 +280,7 @@ class TrendsBatchHTTP:
 
                             results[kw] = {"top": top_list, "rising": rising_list}
             except Exception as e:
-                logger.debug(f"Chunk explore exception: {e}")
+                logger.debug(f"Chunk explore exception for {chunk}: {e}")
 
         return results
 
@@ -223,11 +288,11 @@ class TrendsBatchHTTP:
 if __name__ == "__main__":
     import sys
 
-    sample_terms = ["docker", "supabase", "ollama", "tailwind", "postgres", "redis", "fastapi", "nextjs"]
+    sample_terms = ["mortgage calculator", "invoice generator", "closing cost", "docker compose"]
     if len(sys.argv) > 1:
         sample_terms = [t.strip() for t in sys.argv[1].split(",")]
 
-    extractor = TrendsBatchHTTP(time_window="now 1-d")
+    extractor = TrendsBatchHTTP(time_window="today 12-m")
     data = extractor.extract_batch(sample_terms)
     print(f"Extracted terms: {list(data.keys())}")
     for k, v in list(data.items())[:2]:
