@@ -162,7 +162,70 @@ Every qualified opportunity (Gap Score $\ge 65$) is mapped to one of **4 actiona
 
 ---
 
-## 7. Phased Implementation Roadmap
+## 7. Next-Gen UI/UX Architecture & Feature Specification
+
+The dashboard is engineered as a high-density, real-time command center for indie makers and programmatic SEO builders:
+
+```mermaid
+flowchart LR
+    subgraph UI["FastAPI + Tailwind CSS + Alpine.js Dashboard"]
+        M1["1. Command Ribbon & KPIs"]
+        M2["2. Live Opportunity Feed (Card & Grid View)"]
+        M3["3. Frontier & Niche Tree Explorer"]
+        M4["4. Data Table Explorer & Bulk Export"]
+        M5["5. 1-Click Builder Spec & Daily Briefs"]
+        M6["6. Swarm Telemetry & Live Terminal"]
+    end
+```
+
+### Module 1: Telemetry Command Ribbon & Global Filters
+* **Live System Status:** Visual pulse indicator (Daemon Active, Swarm Running on GitHub Actions, Idle).
+* **Real-Time KPI Strip:**
+  * Total Search Gaps Evaluated
+  * 💎 Critical Gold Mines ($\ge 85$)
+  * ⚡ High Opportunities ($65 - 84$)
+  * ✅ Human Confirmed Opportunities
+  * 🌐 Total Frontier Pool & 90-Day Memory
+* **Universal Vertical Filter Pills:** 1-Click filters for all 12 verticals (*Finance, B2B, Media, Health, Real Estate, Dev, Legal, Education, Gaming, E-Commerce, Travel, Productivity*).
+
+### Module 2: Live Universal Feed (Card & Compact View)
+* **View Mode Switcher:** Toggle between **Deep-Dive Cards** (rich signals) and **Compact Row Grid** (high-speed scanning).
+* **Card Anatomy:**
+  * **Score Pill:** High-contrast gradient badge ($85+$ Gold Amber, $65-84$ Emerald, $<65$ Slate).
+  * **Velocity Surge Badge:** `🔥 BREAKOUT +5,000%` or `⚡ RISING +450%` or `🟢 STABLE HIGH VOLUME`.
+  * **Vertical & Archetype Tag:** Identifies intent (`🛠️ Micro-Tool`, `🐛 Workaround`, `📋 Template`, `⚖️ Comparison`).
+  * **Exact `<title>` Match Void Meter:** Visual indicator showing `0/10 Untouched Void 🛡️`, `1/10 Vulnerable`, or `4+/10 Saturated`.
+  * **SERP Weakness Flags:** Highlights when a homepage (naked root domain) ranks in the top 5, or when Reddit/Quora/Forums rank #1–#3.
+  * **Multi-Platform Evidence:** Displays counts for Stack Overflow unresolved questions, GitHub open issues vs. repos, and Hacker News sentiment.
+* **1-Click Verification Suite (3 Direct Links):**
+  1. `Google Live SERP ↗` (opens live Google search in new tab).
+  2. `DuckDuckGo Live SERP ↗` (alternative clean search verification).
+  3. `Google Trends 12-Month Chart ↗` (opens `trends.google.com` with `today 12-m` pre-filled).
+* **Decisions & Triage:** `[💎 Confirm Gold]` | `[❌ Saturated / Reject]` | `[⏳ Snooze / Later]`.
+* **1-Click AI Builder Blueprint:** Generates a copy-paste product spec with recommended tech stack (Next.js/Tailwind/Wasm), SEO title formula, meta description, and implementation prompt!
+
+### Module 3: Frontier Queue & Dynamic Niche Explorer
+* **Hierarchy Tree View:** Displays Root Niches (Depth 0) $\to$ Sub-Niches (Depth 1) $\to$ Micro-Voids (Depth 2/3).
+* **Queue Telemetry:** Pending vs. Claimed vs. Completed vs. 90-Day Cooldown niches.
+* **"+ Add Seed Root Term" Action:** Allows instant injection of new broad root keywords into any category on the fly.
+
+### Module 4: Data Table Explorer & Bulk Operations
+* Full-text search with instant client-side filtering.
+* Checkbox multi-selection for bulk actions: `Bulk Confirm Gold`, `Bulk Reject`, `Bulk Export`.
+* **Export Options:** **Export to CSV**, **Export to JSON**, and **Export to Markdown Action Checklist**.
+
+### Module 5: Daily Briefs & Spec Reader
+* Embedded Markdown reader (via Marked.js) rendering daily briefs from `/reports/*.md`.
+* Syntax-highlighted code snippets, copyable developer templates, and date navigation.
+
+### Module 6: Swarm Telemetry & Live Terminal Logs
+* **4-Shard Worker Monitor:** Visual status for GitHub Actions shards 0, 1, 2, 3.
+* **12-Cookie Health Bar:** Real-time active status of the rotating Google session cookie pool.
+* **Streaming Terminal:** Filterable log output (`ALL`, `GOLD MINES`, `SERP SIEVE`, `ERRORS`).
+
+---
+
+## 8. Phased Implementation Roadmap
 
 | Phase | Milestone | Deliverable |
 |---|---|---|
@@ -171,4 +234,4 @@ Every qualified opportunity (Gap Score $\ge 65$) is mapped to one of **4 actiona
 | **Phase 3** | **Stealth Swarm Engine & Cookie Rotation** | Update `engines/trends_batch.py` to support `config/cookies.json` / secret rotation, `today 12-m` timeframe, and stealth anti-429 jitter. |
 | **Phase 4** | **Swarm Shard Runner** | Build `engines/swarm_worker.py` taking `--shard-id` and `--total-shards` to execute atomic matrix partitions. |
 | **Phase 5** | **Camouflaged GitHub Actions Workflow** | Deploy `.github/workflows/telemetry.yml` with 4 parallel shards and atomic rebase sync. |
-| **Phase 6** | **Dashboard Frontier & Taxonomy Explorer** | Add Frontier Queue tracking, category breakdowns, and export to the FastAPI dashboard. |
+| **Phase 6** | **Next-Gen Dashboard & UI Redesign** | Implement the full UI specification in `ui/templates/index.html` and `ui/static/app.js` with Card/Grid view, 3-way verify links, Frontier Tree, and AI Blueprint generator. |
