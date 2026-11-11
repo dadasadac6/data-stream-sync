@@ -1,34 +1,82 @@
 """
-Authority & Navigational Exclusion Shield
-Protects the radar against unwinnable competition by filtering out:
-1. Institutional domains (.gov, .edu, .mil, standards bodies)
-2. Navigational brand queries (login, portal, careers, support, pricing)
-3. Canonical primary vendor documentation rankings
+Authority & Navigational Exclusion Shield (Enhanced v3.1)
+Filters out:
+1. Brand navigational queries (login, pricing, download, careers, support)
+2. Corporate gossip / informational queries (founders, valuation, ceo, salary, revenue)
+3. Consumer hardware & shopping queries (best laptop, buy, coupon, store)
+4. Institutional domains (.gov, .edu, .mil, standards bodies)
+5. Vendor monopolies (e.g. brand.com/docs ranking #1 with exact match)
+Ensures only authentic technical developer gaps pass through.
 """
 
 import re
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
-# Navigational intent tokens that signal official account/portal searches
-NAVIGATIONAL_TOKENS = [
+# Navigational, corporate, and consumer intent patterns to drop
+EXCLUSION_PATTERNS = [
+    # Auth & Account Navigation
     r"\blogin\b",
     r"\bsignin\b",
     r"\bsign up\b",
     r"\bportal\b",
+    r"\bmy account\b",
+    r"\bdashboard login\b",
+
+    # Corporate & Financial Info (Non-developable)
+    r"\bpricing\b",
+    r"\bprice\b",
+    r"\bplans?\b",
+    r"\bcost\b",
+    r"\bvaluation\b",
+    r"\bnet worth\b",
+    r"\brevenue\b",
+    r"\bfounding\b",
+    r"\bfounders?\b",
+    r"\bowner\b",
+    r"\bceo\b",
+    r"\bwho owns\b",
+    r"\bsalary\b",
+    r"\bstock\b",
+    r"\bmarket cap\b",
+    r"\bcompetitors analysis\b",
+    r"\bheadquarters\b",
+
+    # Jobs & HR
     r"\bcareers?\b",
     r"\bjobs?\b",
+    r"\bhiring\b",
+    r"\binternships?\b",
+    r"\bglassdoor\b",
+
+    # Official Support & Contacts
     r"\bsupport number\b",
-    r"\bcustomer care\b",
-    r"\bofficial site\b",
-    r"\bofficial website\b",
-    r"\bterms of service\b",
+    r"\bcustomer (service|care|support)\b",
+    r"\bphone number\b",
+    r"\bofficial (site|website)\b",
+    r"\bterms of (service|use)\b",
     r"\bprivacy policy\b",
     r"\bcontact us\b",
-    r"\bpricing plans?\b",
     r"\bstatus page\b",
-    r"\bheadquarters\b",
+
+    # Binary Downloads / Consumer Store
+    r"\bdownloads?\b",
+    r"\binstaller\b",
+    r"\bcrack\b",
+    r"\btorrent\b",
+    r"\bcoupon\b",
+    r"\bpromo code\b",
+    r"\bdiscount\b",
+    r"\bbuy\b",
+    r"\blaptop\b",
+    r"\bpc\b",
+    r"\bfree trial\b",
+    r"\bapp store\b",
+    r"\bgoogle play\b",
+
+    # External Portals
     r"\bwikipedia\b",
+    r"\byoutube\b",
 ]
 
 # Institutional TLDs where official authority dominates SERPs
@@ -46,6 +94,17 @@ STANDARDS_BODIES = [
     "rfc-editor.org",
 ]
 
+# Positive developer technical intent tokens (at least one should match or length >= 3 tokens)
+DEV_INTENT_TOKENS = [
+    "api", "sdk", "fix", "error", "failed", "cannot", "issue", "bug", "workaround",
+    "boilerplate", "template", "docker", "config", "setup", "guide", "tutorial",
+    "vs", "difference", "alternative", "benchmark", "middleware", "hook", "component",
+    "auth", "token", "jwt", "oauth", "migration", "orm", "query", "database", "stream",
+    "cli", "plugin", "extension", "library", "package", "memory", "leak", "timeout",
+    "crash", "model", "agent", "rag", "vector", "embed", "llm", "pipeline", "schema",
+    "deploy", "cluster", "compose", "server", "cors", "ssl", "cert", "env", "proxy"
+]
+
 
 class ExclusionShield:
     """
@@ -54,21 +113,30 @@ class ExclusionShield:
     """
 
     def __init__(self):
-        self.nav_patterns = [re.compile(p, re.IGNORECASE) for p in NAVIGATIONAL_TOKENS]
+        self.exclusion_regexes = [re.compile(p, re.IGNORECASE) for p in EXCLUSION_PATTERNS]
 
-    def is_navigational_query(self, query: str) -> Tuple[bool, Optional[str]]:
-        """Checks if the query contains brand navigational tokens."""
+    def is_navigational_or_corporate(self, query: str) -> Tuple[bool, Optional[str]]:
+        """Checks if the query contains navigational, corporate, or shopping tokens."""
         q_lower = query.strip().lower()
 
-        # Check for navigational tokens
-        for pat in self.nav_patterns:
+        # Check exclusion patterns
+        for pat in self.exclusion_regexes:
             if pat.search(q_lower):
-                return True, f"Navigational intent detected matching pattern '{pat.pattern}'"
+                return True, f"Excluded pattern match: '{pat.pattern}'"
 
-        # Check single-word queries (too broad / informational brand)
+        # Check single-word queries (e.g. 'docker', 'groq', 'stripe')
         tokens = [t for t in q_lower.split() if len(t) > 1]
         if len(tokens) <= 1:
-            return True, "Query too short / generic single token"
+            return True, "Query too short / single generic brand token"
+
+        # Check developer relevance: query must have technical relevance or >= 3 words
+        has_dev_token = any(t in q_lower for t in DEV_INTENT_TOKENS)
+        if not has_dev_token and len(tokens) < 3:
+            return True, "Lacks developer technical intent"
+
+        # Check for non-ASCII noise (e.g. Chinese characters if unexpected)
+        if re.search(r"[\u4e00-\u9fff]", query):
+            return True, "Non-English token detected"
 
         return False, None
 
@@ -112,7 +180,6 @@ class ExclusionShield:
         top_title = top.get("title", "").lower()
         q_tokens = [t for t in query.lower().split() if len(t) > 2]
 
-        # If query has primary brand name in top URL host and top title has exact query
         if len(q_tokens) >= 2:
             brand_token = q_tokens[0]
             if brand_token in top_url and all(t in top_title for t in q_tokens[:3]):
@@ -125,12 +192,10 @@ class ExclusionShield:
         Runs the full exclusion shield pipeline.
         Returns (is_passed: bool, reason: str).
         """
-        # Step 1: Navigational check
-        is_nav, reason = self.is_navigational_query(query)
-        if is_nav:
+        is_bad, reason = self.is_navigational_or_corporate(query)
+        if is_bad:
             return False, f"EXCLUDED: {reason}"
 
-        # Step 2: SERP Institutional check (if SERP is provided)
         if serp_results:
             is_inst, reason = self.is_institutional_serp(serp_results)
             if is_inst:
@@ -140,17 +205,21 @@ class ExclusionShield:
             if is_vendor:
                 return False, f"EXCLUDED: {reason}"
 
-        return True, "PASSED: Query represents open user intent"
+        return True, "PASSED: Query represents authentic developer gap intent"
 
 
 if __name__ == "__main__":
     shield = ExclusionShield()
     test_queries = [
+        "cursor ai pricing",
+        "cursor ai founders",
+        "best laptop for work",
+        "huggingface 事件",
         "docker login error",
-        "supabase login",
-        "stripe",
         "fastapi jwt refresh token boilerplate",
-        "how to fix ollama cuda out of memory",
+        "difference between langchain and langgraph",
+        "ollama cuda out of memory fix",
+        "victoria metrics vs prometheus"
     ]
     for q in test_queries:
         passed, reason = shield.evaluate(q)
