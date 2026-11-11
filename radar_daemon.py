@@ -123,7 +123,7 @@ def run_radar_sweep(limit_batches_per_cat: int = 2) -> List[Dict[str, Any]]:
         cfg = json.load(f)
 
     categories = cfg.get("categories", {})
-    trends_engine = TrendsBatchHTTP(time_window="now 1-d")
+    trends_engine = TrendsBatchHTTP(time_window="today 12-m")
     shield = ExclusionShield()
     sieve = SerpSieve()
     evidence_collector = DevEvidenceCollector()
