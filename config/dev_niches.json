@@ -1,0 +1,60 @@
+{
+  "categories": {
+    "AI/LLM": {
+      "description": "Local models, inference engines, vector stores, and agentic workflows",
+      "batches": [
+        ["ollama", "vllm", "langchain", "llamaindex", "huggingface", "groq", "cursor ai", "openrouter"],
+        ["whisper ai", "stable diffusion", "chromadb", "qdrant", "deepseek", "cohere", "litellm", "crewai"]
+      ]
+    },
+    "Cloud/DevOps": {
+      "description": "Containers, orchestrators, cloud infra, CI/CD, and telemetry",
+      "batches": [
+        ["docker", "kubernetes", "terraform", "ansible", "helm", "prometheus", "grafana", "nginx"],
+        ["github actions", "argocd", "traefik", "caddy server", "wireguard", "cloudflare tunnels", "portainer", "datadog"]
+      ]
+    },
+    "Databases": {
+      "description": "Relational, vector, real-time, analytical, and edge databases",
+      "batches": [
+        ["postgresql", "supabase", "redis", "clickhouse", "mongodb", "duckdb", "sqlite", "neo4j"],
+        ["prisma orm", "drizzle orm", "pgvector", "turborepo", "surrealdb", "cassandra", "meilisearch", "typesense"]
+      ]
+    },
+    "Frameworks": {
+      "description": "Full-stack web and backend app frameworks",
+      "batches": [
+        ["nextjs", "fastapi", "sveltekit", "astro", "nuxt", "django", "remix", "nestjs"],
+        ["hono", "elysia js", "express js", "gin golang", "axum rust", "laravel", "spring boot", "ruby on rails"]
+      ]
+    },
+    "APIs": {
+      "description": "API protocols, integrations, gateways, and webhooks",
+      "batches": [
+        ["trpc", "graphql", "openapi", "stripe api", "resend", "twilio", "websockets", "grpc"],
+        ["postman", "swagger", "webhook", "fastapi swagger", "sse", "socket io", "algolia", "pusher"]
+      ]
+    },
+    "Auth/Security": {
+      "description": "Authentication, authorization, secrets management, and cryptography",
+      "batches": [
+        ["clerk auth", "nextauth", "auth0", "supabase auth", "passkeys", "oauth2", "jwt token", "keycloak"],
+        ["lucia auth", "kinde auth", "hashicorp vault", "tailscale", "letsencrypt", "cors error", "session cookie", "csrf"]
+      ]
+    },
+    "Data Tools": {
+      "description": "Data processing, pipelines, streaming, and modern data stack",
+      "batches": [
+        ["polars", "pandas", "dbt", "apache spark", "apache kafka", "airflow", "snowflake", "bigquery"],
+        ["dagster", "prefect", "arrow", "duckdb wasm", "cube js", "metabase", "superset", "databend"]
+      ]
+    },
+    "Mobile/Cross-platform": {
+      "description": "Mobile, desktop, and cross-platform native frameworks",
+      "batches": [
+        ["react native", "flutter", "expo", "tauri", "electron", "capacitor", "swiftui", "jetpack compose"],
+        ["tamagui", "react native reanimated", "kotlin multiplatform", "solito", "ionic", "wails", "flutter bloc", "pwa"]
+      ]
+    }
+  }
+}

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autonomous Developer Search Gap Radar | Gold Miner v3.0</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+  <!-- Marked.js for Reports -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              900: '#064e3b',
+            },
+            gold: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    [x-cloak] { display: none !important; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-emerald-500 selection:text-white"
+      x-data="radarApp()" x-init="initApp()" x-cloak>
+
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+          <span class="text-xl">⛏️</span>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-amber-300 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+              Gold Miner Radar
+            </h1>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">v3.0 Free</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Autonomous Developer Search Gap & Breakout Intelligence</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex space-x-1 sm:space-x-2 bg-slate-950/60 p-1 rounded-xl border border-slate-800">
+        <button @click="activeTab = 'feed'" 
+                :class="activeTab === 'feed' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-white'"
+                class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-1.5">
+          <span>💎</span>
+          <span>Radar Feed</span>
+        </button>
+        <button @click="activeTab = 'table'" 
+                :class="activeTab === 'table' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-white'"
+                class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-1.5">
+          <span>📊</span>
+          <span>Data Explorer</span>
+        </button>
+        <button @click="activeTab = 'reports'" 
+                :class="activeTab === 'reports' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-white'"
+                class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-1.5">
+          <span>📄</span>
+          <span>Daily Reports</span>
+        </button>
+        <button @click="activeTab = 'admin'" 
+                :class="activeTab === 'admin' ? 'bg-slate-800 text-white shadow' : 'text-slate-400 hover:text-white'"
+                class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-1.5">
+          <span>⚙️</span>
+          <span>Admin & Logs</span>
+        </button>
+      </nav>
+
+      <!-- Instant Scan & LAN indicator -->
+      <div class="flex items-center space-x-3">
+        <div class="hidden md:flex flex-col text-right">
+          <span class="text-xs text-slate-400 font-mono">LAN: 192.168.100.75:8080</span>
+          <span class="text-[10px] text-emerald-400 flex items-center justify-end space-x-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span x-text="scanState.is_scanning ? 'Scanning...' : 'Daemon Active'"></span>
+          </span>
+        </div>
+        <button @click="triggerScan()" :disabled="scanState.is_scanning"
+                class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-lg shadow-emerald-500/20 transition flex items-center space-x-1.5">
+          <svg class="w-4 h-4" :class="scanState.is_scanning ? 'animate-spin' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span x-text="scanState.is_scanning ? 'Scanning...' : 'Scan Now'"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Live Telemetry KPI Metrics Bar -->
+  <section class="border-b border-slate-800 bg-slate-900/40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <!-- Total Queries -->
+        <div class="bg-slate-900/60 border border-slate-800/80 p-3 rounded-xl">
+          <div class="text-xs text-slate-400 font-medium">Total Evaluated</div>
+          <div class="text-xl font-bold text-white mt-1" x-text="stats.total_queries || 0"></div>
+        </div>
+        <!-- Critical Gold -->
+        <div class="bg-amber-950/20 border border-amber-500/30 p-3 rounded-xl">
+          <div class="text-xs text-amber-300 font-medium flex items-center space-x-1">
+            <span>💎</span><span>Critical Gold (85+)</span>
+          </div>
+          <div class="text-xl font-bold text-amber-400 mt-1" x-text="stats.critical_gold || 0"></div>
+        </div>
+        <!-- High Opportunity -->
+        <div class="bg-emerald-950/20 border border-emerald-500/30 p-3 rounded-xl">
+          <div class="text-xs text-emerald-300 font-medium flex items-center space-x-1">
+            <span>⚡</span><span>High Opp (65-84)</span>
+          </div>
+          <div class="text-xl font-bold text-emerald-400 mt-1" x-text="stats.high_opportunity || 0"></div>
+        </div>
+        <!-- Confirmed Gold -->
+        <div class="bg-purple-950/20 border border-purple-500/30 p-3 rounded-xl">
+          <div class="text-xs text-purple-300 font-medium flex items-center space-x-1">
+            <span>✅</span><span>Human Confirmed</span>
+          </div>
+          <div class="text-xl font-bold text-purple-400 mt-1" x-text="stats.confirmed_gold || 0"></div>
+        </div>
+        <!-- Breakouts -->
+        <div class="bg-cyan-950/20 border border-cyan-500/30 p-3 rounded-xl">
+          <div class="text-xs text-cyan-300 font-medium flex items-center space-x-1">
+            <span>🔥</span><span>Breakout Surges</span>
+          </div>
+          <div class="text-xl font-bold text-cyan-400 mt-1" x-text="stats.breakouts || 0"></div>
+        </div>
+      </div>
+
+      <!-- Live Scan Progress Alert -->
+      <div x-show="scanState.is_scanning" class="mt-3 bg-slate-900 border border-emerald-500/40 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-2 transition animate-fade-in">
+        <div class="flex items-center space-x-3 text-xs sm:text-sm">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+          <span class="font-mono text-emerald-300" x-text="scanState.message"></span>
+        </div>
+        <div class="w-full sm:w-64 bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
+          <div class="bg-emerald-500 h-2 transition-all duration-300" :style="`width: ${Math.min(100, (scanState.progress / (scanState.total || 1)) * 100)}%`"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ==================== TAB 1: RADAR FEED ==================== -->
+    <div x-show="activeTab === 'feed'">
+      <!-- Filter Bar -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 mb-6 backdrop-blur">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <!-- Search Input -->
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Search Keywords</label>
+            <input type="text" x-model="filters.search" @input.debounce.300ms="loadQueries()"
+                   placeholder="e.g. docker, jwt, cuda, ollama..."
+                   class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-emerald-500">
+          </div>
+          <!-- Category Filter -->
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Category</label>
+            <select x-model="filters.category" @change="loadQueries()"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-emerald-500">
+              <option value="all">All Categories</option>
+              <template x-for="cat in categories" :key="cat">
+                <option :value="cat" x-text="cat"></option>
+              </template>
+            </select>
+          </div>
+          <!-- Archetype Filter -->
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Deliverable Archetype</label>
+            <select x-model="filters.archetype" @change="loadQueries()"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-emerald-500">
+              <option value="all">All 4 Archetypes</option>
+              <option value="Micro-Tool">🛠️ Micro-Tool / Utility</option>
+              <option value="Workaround">🐛 Workaround / Bug Fix</option>
+              <option value="Recipe">📋 Recipe / Boilerplate</option>
+              <option value="Breaking News">⚡ Breaking News / Update</option>
+            </select>
+          </div>
+          <!-- Human Verdict Filter -->
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Human Verdict</label>
+            <select x-model="filters.verdict" @change="loadQueries()"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-emerald-500">
+              <option value="all">All Statuses</option>
+              <option value="pending">⏳ Pending Verification</option>
+              <option value="confirmed_gold">💎 Confirmed Gold Gap</option>
+              <option value="already_served">❌ Saturated / Rejected</option>
+            </select>
+          </div>
+          <!-- Min Score Slider -->
+          <div>
+            <div class="flex justify-between text-xs text-slate-400 mb-1">
+              <span>Min Gap Score</span>
+              <span class="font-bold text-emerald-400" x-text="`${filters.min_score}/100`"></span>
+            </div>
+            <input type="range" min="0" max="95" step="5" x-model="filters.min_score" @change="loadQueries()"
+                   class="w-full accent-emerald-500">
+          </div>
+        </div>
+      </div>
+
+      <!-- Opportunities Card Feed -->
+      <div x-show="loading" class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+        <p class="mt-2 text-xs text-slate-400 font-mono">Querying intelligence repository...</p>
+      </div>
+
+      <div x-show="!loading && queries.length === 0" class="text-center py-16 bg-slate-900/40 border border-slate-800 rounded-2xl">
+        <span class="text-4xl">📡</span>
+        <h3 class="mt-3 text-lg font-semibold text-white">No opportunities match criteria</h3>
+        <p class="text-sm text-slate-400 mt-1 max-w-md mx-auto">Trigger a scan or adjust your filters to see raw Google Trends breakout gaps.</p>
+        <button @click="triggerScan()" class="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-sm font-medium transition">
+          Run 8-Term Scan Now
+        </button>
+      </div>
+
+      <div x-show="!loading && queries.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <template x-for="item in queries" :key="item.id">
+          <div class="bg-slate-900/80 border rounded-2xl p-5 flex flex-col justify-between transition hover:border-slate-700 shadow-lg relative group"
+               :class="{
+                 'border-amber-500/50 bg-gradient-to-b from-amber-950/10 to-slate-900/90': item.gap_score >= 85,
+                 'border-emerald-500/40': item.gap_score >= 65 && item.gap_score < 85,
+                 'border-slate-800': item.gap_score < 65
+               }">
+            
+            <!-- Top Badges Row -->
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                  <!-- Archetype Badge -->
+                  <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full border"
+                        :class="{
+                          'bg-blue-500/10 text-blue-400 border-blue-500/20': item.archetype === 'Micro-Tool',
+                          'bg-rose-500/10 text-rose-400 border-rose-500/20': item.archetype === 'Workaround',
+                          'bg-amber-500/10 text-amber-400 border-amber-500/20': item.archetype === 'Recipe',
+                          'bg-purple-500/10 text-purple-400 border-purple-500/20': item.archetype === 'Breaking News'
+                        }">
+                    <span x-text="getArchetypeIcon(item.archetype) + ' ' + item.archetype"></span>
+                  </span>
+
+                  <!-- Trend Velocity Badge -->
+                  <span class="text-[11px] font-mono px-2 py-0.5 rounded-full"
+                        :class="item.trend_type === 'BREAKOUT' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-slate-800 text-slate-300'">
+                    <span x-text="item.trend_type === 'BREAKOUT' ? '🔥 BREAKOUT' : '⚡ ' + (item.trend_velocity || 'Rising')"></span>
+                  </span>
+
+                  <!-- Category Tag -->
+                  <span class="text-[11px] text-slate-400 font-mono" x-text="item.category"></span>
+                </div>
+
+                <!-- Composite Gap Score -->
+                <div class="flex items-center space-x-1.5">
+                  <div class="text-right">
+                    <div class="text-xs text-slate-400 leading-none">Gap Score</div>
+                    <div class="text-lg font-black"
+                         :class="{
+                           'text-amber-400': item.gap_score >= 85,
+                           'text-emerald-400': item.gap_score >= 65 && item.gap_score < 85,
+                           'text-slate-400': item.gap_score < 65
+                         }" x-text="`${item.gap_score}/100`"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Keyword & Google Link -->
+              <div class="mt-2">
+                <a :href="item.google_verify_url" target="_blank" rel="noopener noreferrer"
+                   class="text-base sm:text-lg font-bold text-white hover:text-emerald-400 transition flex items-center group-hover:underline">
+                  <span x-text="item.keyword"></span>
+                  <svg class="w-4 h-4 ml-1.5 text-slate-500 group-hover:text-emerald-400 opacity-60 group-hover:opacity-100 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+
+              <!-- Evidence Signals Grid -->
+              <div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-800/80 text-xs">
+                <!-- Exact Title Matches -->
+                <div class="bg-slate-950/50 p-2 rounded-lg">
+                  <span class="text-slate-400 block text-[10px]">Exact &lt;title&gt; Matches</span>
+                  <span class="font-semibold"
+                        :class="item.exact_title_matches === 0 ? 'text-emerald-400 font-bold' : (item.exact_title_matches <= 2 ? 'text-amber-400' : 'text-slate-400')"
+                        x-text="item.exact_title_matches === 0 ? '0/10 (Void 🛡️)' : `${item.exact_title_matches}/10`"></span>
+                </div>
+
+                <!-- GitHub Issues -->
+                <div class="bg-slate-950/50 p-2 rounded-lg">
+                  <span class="text-slate-400 block text-[10px]">GitHub Signals</span>
+                  <span class="font-semibold"
+                        :class="item.has_github_issues ? 'text-emerald-400' : 'text-slate-500'"
+                        x-text="item.has_github_issues ? 'Open Issues Found' : 'None Detected'"></span>
+                </div>
+
+                <!-- Stack Overflow -->
+                <div class="bg-slate-950/50 p-2 rounded-lg">
+                  <span class="text-slate-400 block text-[10px]">Stack Overflow</span>
+                  <span class="font-semibold"
+                        :class="item.has_stack_questions ? 'text-emerald-400' : 'text-slate-500'"
+                        x-text="item.has_stack_questions ? 'Unresolved Pain' : 'Answered'"></span>
+                </div>
+              </div>
+
+              <!-- Competitor Snippet if available -->
+              <div x-show="item.top_competitor_title" class="mt-2 text-xs text-slate-400 truncate">
+                <span class="text-slate-500">Top Competitor:</span>
+                <span class="text-slate-300" x-text="item.top_competitor_title"></span>
+              </div>
+            </div>
+
+            <!-- Bottom Action Row: Human Verdict & 1-Click Verification -->
+            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
+              <div class="flex items-center space-x-1.5">
+                <!-- 1-Click Google Verify Button -->
+                <a :href="item.google_verify_url" target="_blank" rel="noopener noreferrer"
+                   class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition flex items-center space-x-1">
+                  <span>Verify Google</span>
+                  <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </a>
+              </div>
+
+              <!-- Decision Buttons -->
+              <div class="flex items-center space-x-1">
+                <button @click="setVerdict(item.id, 'confirmed_gold')"
+                        :class="item.human_verdict === 'confirmed_gold' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 hover:bg-amber-500/20 text-amber-400'"
+                        class="px-2.5 py-1.5 rounded-lg text-xs transition flex items-center space-x-1">
+                  <span>💎 Confirm Gold</span>
+                </button>
+                <button @click="setVerdict(item.id, 'already_served')"
+                        :class="item.human_verdict === 'already_served' ? 'bg-rose-600 text-white font-bold' : 'bg-slate-800 hover:bg-rose-500/20 text-rose-400'"
+                        class="px-2.5 py-1.5 rounded-lg text-xs transition flex items-center space-x-1">
+                  <span>❌ Saturated</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </template>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div x-show="!loading && totalPages > 1" class="mt-8 flex items-center justify-between bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+        <span class="text-xs text-slate-400" x-text="`Showing page ${page} of ${totalPages} (${totalItems} total queries)`"></span>
+        <div class="flex space-x-2">
+          <button @click="changePage(page - 1)" :disabled="page <= 1"
+                  class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 rounded-lg text-xs font-medium transition">
+            Previous
+          </button>
+          <button @click="changePage(page + 1)" :disabled="page >= totalPages"
+                  class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 rounded-lg text-xs font-medium transition">
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 2: DATA EXPLORER ==================== -->
+    <div x-show="activeTab === 'table'">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+        <!-- Table Toolbar -->
+        <div class="p-4 border-b border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="text-sm font-semibold text-white flex items-center space-x-2">
+            <span>Repository Data Explorer</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-mono" x-text="`${totalItems} rows`"></span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button @click="exportData('csv')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center space-x-1">
+              <span>📥 Export CSV</span>
+            </button>
+            <button @click="exportData('json')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center space-x-1">
+              <span>📥 Export JSON</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Table View -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-950 text-slate-400 uppercase font-mono tracking-wider border-b border-slate-800">
+              <tr>
+                <th class="p-3">Keyword</th>
+                <th class="p-3">Category</th>
+                <th class="p-3">Score</th>
+                <th class="p-3">Archetype</th>
+                <th class="p-3">Velocity</th>
+                <th class="p-3">Title Matches</th>
+                <th class="p-3">Verdict</th>
+                <th class="p-3">Verify</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 font-mono">
+              <template x-for="r in queries" :key="r.id">
+                <tr class="hover:bg-slate-800/40 transition">
+                  <td class="p-3 font-semibold text-white font-sans max-w-xs truncate" x-text="r.keyword"></td>
+                  <td class="p-3 text-slate-400" x-text="r.category"></td>
+                  <td class="p-3">
+                    <span class="font-bold px-2 py-0.5 rounded"
+                          :class="r.gap_score >= 85 ? 'bg-amber-500/20 text-amber-400' : (r.gap_score >= 65 ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400')"
+                          x-text="r.gap_score"></span>
+                  </td>
+                  <td class="p-3 text-slate-300 font-sans" x-text="r.archetype"></td>
+                  <td class="p-3" :class="r.trend_type === 'BREAKOUT' ? 'text-rose-400 font-bold' : 'text-slate-400'" x-text="r.trend_velocity || r.trend_type"></td>
+                  <td class="p-3 text-slate-400" x-text="r.exact_title_matches + '/10'"></td>
+                  <td class="p-3">
+                    <span class="text-[10px] px-2 py-0.5 rounded-full"
+                          :class="{
+                            'bg-amber-500/20 text-amber-400': r.human_verdict === 'confirmed_gold',
+                            'bg-rose-500/20 text-rose-400': r.human_verdict === 'already_served',
+                            'bg-slate-800 text-slate-400': r.human_verdict === 'pending'
+                          }" x-text="r.human_verdict"></span>
+                  </td>
+                  <td class="p-3">
+                    <a :href="r.google_verify_url" target="_blank" class="text-emerald-400 hover:underline">Google ↗</a>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 3: DAILY REPORTS ==================== -->
+    <div x-show="activeTab === 'reports'">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- Reports Sidebar List -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+          <h3 class="text-sm font-bold text-white mb-3 flex items-center space-x-1.5">
+            <span>📄</span><span>Available Reports</span>
+          </h3>
+          <div x-show="reports.length === 0" class="text-xs text-slate-400">
+            No daily Markdown reports generated yet. Run a scan to generate today's briefing!
+          </div>
+          <div class="space-y-1">
+            <template x-for="rep in reports" :key="rep.filename">
+              <button @click="loadReportContent(rep.filename)"
+                      :class="selectedReport === rep.filename ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/40' : 'text-slate-400 hover:bg-slate-800 hover:text-white border-transparent'"
+                      class="w-full text-left p-2.5 rounded-xl border text-xs font-mono transition flex justify-between items-center">
+                <span x-text="rep.filename"></span>
+                <span class="text-[10px] text-slate-500" x-text="formatBytes(rep.size_bytes)"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Report Content Markdown Rendered View -->
+        <div class="md:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-6 min-h-[500px]">
+          <div x-show="!selectedReportContent" class="text-center py-24 text-slate-500">
+            Select a report from the sidebar to view the actionable product specs and cheatsheets.
+          </div>
+          <div x-show="selectedReportContent" class="prose prose-invert max-w-none prose-emerald" id="report-view">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 4: ADMIN CONTROLS & LOGS ==================== -->
+    <div x-show="activeTab === 'admin'">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Controls Column -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <h3 class="text-base font-bold text-white mb-4 flex items-center space-x-2">
+            <span>⚙️</span><span>Scan Execution Controls</span>
+          </h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Target Category</label>
+              <select x-model="adminScanCategory" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                <option value="All">All Categories (Comprehensive)</option>
+                <template x-for="cat in categories" :key="cat">
+                  <option :value="cat" x-text="cat"></option>
+                </template>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Batch Exploration Depth</label>
+              <select x-model="adminBatchDepth" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                <option value="1">1 Batch (8 seed terms per category - Fast)</option>
+                <option value="2">2 Batches (16 seed terms per category - Deep)</option>
+              </select>
+            </div>
+            <button @click="triggerCustomScan()" :disabled="scanState.is_scanning"
+                    class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition flex items-center justify-center space-x-2">
+              <span x-text="scanState.is_scanning ? 'Scan In Progress...' : 'Start Intelligence Scan'"></span>
+            </button>
+          </div>
+
+          <!-- Daemon Status Box -->
+          <div class="mt-6 pt-6 border-t border-slate-800 text-xs">
+            <div class="text-slate-400 font-medium mb-2">Daemon Engine Health</div>
+            <div class="space-y-1 font-mono text-[11px]">
+              <div class="flex justify-between">
+                <span class="text-slate-500">Engine Protocol:</span>
+                <span class="text-emerald-400">Pure HTTP (Zero Browser)</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-500">Anti-429 Jitter:</span>
+                <span class="text-slate-300">350ms - 500ms</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-500">Budget Spent:</span>
+                <span class="text-emerald-400 font-bold">$0.00 (Hard Rule)</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-500">Last Scan:</span>
+                <span class="text-slate-300" x-text="scanState.last_run || 'Never'"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Scanner Logs Stream -->
+        <div class="md:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-white flex items-center space-x-2">
+              <span>📜</span><span>Live Scanner Activity Logs</span>
+            </h3>
+            <button @click="loadLogs()" class="text-xs text-emerald-400 hover:underline">Refresh</button>
+          </div>
+          <div class="flex-1 bg-slate-950 border border-slate-800/80 rounded-xl p-4 overflow-y-auto max-h-[420px] font-mono text-xs space-y-2">
+            <template x-for="log in logs" :key="log.id">
+              <div class="border-b border-slate-900 pb-2">
+                <div class="flex items-center justify-between text-slate-500 text-[10px]">
+                  <span x-text="log.timestamp"></span>
+                  <span class="text-emerald-400" x-text="log.category"></span>
+                </div>
+                <div class="text-slate-300 mt-0.5" x-text="log.log_message"></div>
+              </div>
+            </template>
+            <div x-show="logs.length === 0" class="text-slate-500 text-center py-8">
+              No logs recorded yet. Logs will appear here as batches are evaluated.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-900 py-4 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500">
+      Autonomous Developer Search Gap Radar &bull; $0.00 Spend Hard Rule &bull; Localhost:8080 &bull; LAN: 192.168.100.75:8080
+    </div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
