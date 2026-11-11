@@ -3,4 +3,6 @@ __pycache__/
 *.pyc
 storage/*.db-shm
 storage/*.db-wal
+config/cookies.json
+.env
 .DS_Store
