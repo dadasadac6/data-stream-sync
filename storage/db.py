@@ -539,6 +539,7 @@ def get_queries(
     verdict: Optional[str] = None,
     min_score: int = 0,
     search: Optional[str] = None,
+    root: Optional[str] = None,
     sort_by: str = "gap_score",
     sort_order: str = "DESC",
     limit: int = 50,
@@ -565,6 +566,10 @@ def get_queries(
     if search:
         conditions.append("keyword LIKE ?")
         params.append(f"%{search}%")
+
+    if root:
+        conditions.append("(keyword LIKE ? OR json_extract(evidence_json, '$.parent_niche') = ?)")
+        params.extend([f"%{root}%", root])
 
     where_clause = " WHERE " + " AND ".join(conditions)
 

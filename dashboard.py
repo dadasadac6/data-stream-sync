@@ -207,6 +207,7 @@ def get_queries(
     verdict: Optional[str] = "all",
     min_score: int = 0,
     search: Optional[str] = None,
+    root: Optional[str] = None,
     sort_by: str = "gap_score",
     sort_order: str = "DESC",
     page: int = 1,
@@ -219,6 +220,7 @@ def get_queries(
         verdict=verdict,
         min_score=min_score,
         search=search,
+        root=root,
         sort_by=sort_by,
         sort_order=sort_order,
         limit=limit,
@@ -245,6 +247,56 @@ def get_queries(
         "limit": limit,
         "total_pages": (total + limit - 1) // limit if limit > 0 else 1,
     }
+
+
+@app.get("/api/input-keywords")
+def get_input_keywords(
+    category: Optional[str] = "all",
+    status: Optional[str] = "all",
+    search: Optional[str] = None,
+    limit: int = 150,
+    offset: int = 0,
+):
+    conn = db.get_connection()
+    try:
+        cursor = conn.cursor()
+        conditions = []
+        params = []
+        if category and category.lower() != "all":
+            conditions.append("category = ?")
+            params.append(category)
+        if status and status.lower() != "all":
+            conditions.append("status = ?")
+            params.append(status)
+        if search:
+            conditions.append("niche_term LIKE ?")
+            params.append(f"%{search}%")
+
+        where_sql = (" WHERE " + " AND ".join(conditions)) if conditions else ""
+
+        cursor.execute(f"SELECT COUNT(*) as c FROM frontier_niches {where_sql}", params)
+        total = cursor.fetchone()["c"]
+
+        query = f"""
+            SELECT id, niche_term, category, status, queries_extracted, depth_level, created_at, last_explored_at
+            FROM frontier_niches
+            {where_sql}
+            ORDER BY queries_extracted DESC, last_explored_at DESC, id ASC
+            LIMIT ? OFFSET ?
+        """
+        cursor.execute(query, params + [limit, offset])
+        rows = [dict(r) for r in cursor.fetchall()]
+        return {"items": rows, "total": total}
+    finally:
+        conn.close()
+
+
+@app.post("/api/frontier/harvest")
+def trigger_harvester(background_tasks: BackgroundTasks):
+    from engines.taxonomy_loader import TaxonomyLoader
+    loader = TaxonomyLoader()
+    background_tasks.add_task(loader.run_all)
+    return {"status": "success", "message": "Multi-source taxonomy harvester started in background"}
 
 
 @app.post("/api/verdict")

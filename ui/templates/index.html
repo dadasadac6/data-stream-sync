@@ -6,6 +6,8 @@
   <title>🪙 Gold Miner — Universal Search Gap Radar & Stealth Swarm</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Application State & Logic -->
+  <script src="/static/app.js"></script>
   <!-- Alpine.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
   <!-- Marked.js for Markdown Reports -->
@@ -33,585 +35,745 @@
   </script>
   <style>
     [x-cloak] { display: none !important; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #070a12; }
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #334155; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-amber-500 selection:text-slate-950"
+<body class="bg-slate-950 text-slate-100 h-screen w-screen overflow-hidden flex flex-col font-sans antialiased selection:bg-amber-500 selection:text-slate-950"
       x-data="radarApp()" x-init="initApp()" x-cloak>
 
-  <!-- Top Navigation & Command Ribbon -->
-  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-emerald-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-amber-500/10">
-          <span class="text-xl">🪙</span>
-        </div>
-        <div>
-          <div class="flex items-center space-x-2">
-            <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-amber-300 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-              Gold Miner Radar
-            </h1>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">v6.0 Swarm</span>
-          </div>
-          <p class="text-xs text-slate-400">Universal Search Gap Discovery & Stealth Shards</p>
-        </div>
+  <!-- ======================================================== -->
+  <!-- 1. COMPACT TOP HEADER BAR (48px)                         -->
+  <!-- ======================================================== -->
+  <header class="h-12 border-b border-slate-800 bg-slate-900/90 backdrop-blur px-4 flex items-center justify-between shrink-0 z-40 select-none">
+    <!-- Brand & Runners Status -->
+    <div class="flex items-center space-x-3">
+      <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 via-emerald-500 to-indigo-500 flex items-center justify-center shadow-md shadow-amber-500/20 text-sm">
+        🪙
+      </div>
+      <div class="flex items-center space-x-2">
+        <h1 class="text-sm font-bold tracking-tight bg-gradient-to-r from-amber-300 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+          Gold Miner
+        </h1>
+        <span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-medium">v6.0</span>
       </div>
 
-      <!-- Live Pulse & Swarm Quick Action -->
-      <div class="flex items-center space-x-4">
-        <div class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-xs">
-          <span class="relative flex h-2 w-2">
-            <span :class="scanState.is_scanning ? 'animate-ping bg-amber-400' : 'bg-emerald-400'"
-                  class="absolute inline-flex h-full w-full rounded-full opacity-75"></span>
-            <span :class="scanState.is_scanning ? 'bg-amber-500' : 'bg-emerald-500'"
-                  class="relative inline-flex rounded-full h-2 w-2"></span>
-          </span>
-          <span class="text-slate-300 font-medium" x-text="scanState.is_scanning ? 'Swarm Sweeping...' : 'Swarm Idle'"></span>
-        </div>
-
-        <button @click="triggerScan()" :disabled="scanState.is_scanning"
-                class="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-semibold text-xs transition shadow-lg shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1.5">
-          <span>⚡ Run Sweep</span>
-        </button>
+      <div class="hidden sm:flex items-center space-x-1.5 text-xs text-slate-400 pl-2 border-l border-slate-800">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="font-mono text-[11px] text-emerald-400">20 Cloud Runners Ready</span>
       </div>
+    </div>
+
+    <!-- Inline Compact KPI Pills (Clickable Filters!) -->
+    <div class="hidden md:flex items-center space-x-2 text-xs">
+      <button @click="setQuickFilter('critical_85')"
+              class="px-2.5 py-1 rounded-lg border transition flex items-center space-x-1.5 cursor-pointer"
+              :class="quickFilter === 'critical_85' ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'">
+        <span>💎</span>
+        <span class="font-bold text-amber-400" x-text="stats.critical_gold || 0">0</span>
+        <span class="text-[11px] text-slate-400">Critical (85+)</span>
+      </button>
+
+      <button @click="setQuickFilter('high_65')"
+              class="px-2.5 py-1 rounded-lg border transition flex items-center space-x-1.5 cursor-pointer"
+              :class="quickFilter === 'high_65' ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'">
+        <span>⚡</span>
+        <span class="font-bold text-emerald-400" x-text="stats.high_opportunity || 0">0</span>
+        <span class="text-[11px] text-slate-400">High Gaps (65+)</span>
+      </button>
+
+      <button @click="setQuickFilter('breakouts')"
+              class="px-2.5 py-1 rounded-lg border transition flex items-center space-x-1.5 cursor-pointer"
+              :class="quickFilter === 'breakouts' ? 'bg-rose-500/20 border-rose-500/50 text-rose-300' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'">
+        <span>🔥</span>
+        <span class="font-bold text-rose-400" x-text="stats.breakouts || 0">0</span>
+        <span class="text-[11px] text-slate-400">Breakouts</span>
+      </button>
+
+      <button @click="activeTab = 'frontier'"
+              class="px-2.5 py-1 rounded-lg border transition flex items-center space-x-1.5 cursor-pointer"
+              :class="activeTab === 'frontier' ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'">
+        <span>🌐</span>
+        <span class="font-bold text-indigo-400" x-text="stats.frontier_total || 0">0</span>
+        <span class="text-[11px] text-slate-400">Frontier Pool</span>
+      </button>
+
+      <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center space-x-1.5">
+        <span>📊</span>
+        <span class="font-bold text-cyan-400" x-text="stats.total_queries || 0">0</span>
+        <span class="text-[11px] text-slate-400">Evaluated</span>
+      </div>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="flex items-center space-x-2">
+      <button @click="dispatchFleet(3)" :disabled="fleetDispatching"
+              class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer">
+        <span>⚡</span>
+        <span class="hidden sm:inline" x-show="!fleetDispatching">Dispatch Swarm</span>
+        <span x-show="fleetDispatching">Triggering...</span>
+      </button>
+
+      <button @click="syncFleet()" :disabled="fleetSyncing"
+              class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center space-x-1 transition disabled:opacity-50 cursor-pointer"
+              title="Pull reports from all 5 repos">
+        <span>🔄</span>
+        <span class="hidden sm:inline" x-show="!fleetSyncing">Sync Fleet</span>
+        <span x-show="fleetSyncing">...</span>
+      </button>
+
+      <button @click="showAddSeedModal = true"
+              class="px-2.5 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 text-xs font-semibold flex items-center space-x-1 transition cursor-pointer">
+        <span>➕</span>
+        <span class="hidden sm:inline">Add Seed</span>
+      </button>
     </div>
   </header>
 
-  <!-- Real-Time KPI Ribbon -->
-  <section class="border-b border-slate-800/80 bg-slate-900/40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <!-- KPI 1: Critical Gold Mines -->
-        <div class="bg-slate-900/60 border border-amber-500/20 rounded-xl p-3 flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400 text-base">💎</div>
-          <div>
-            <div class="text-xs text-slate-400 font-medium">Critical Gold (85+)</div>
-            <div class="text-lg font-bold text-amber-400 font-mono" x-text="stats.critical_gold || 0">0</div>
-          </div>
-        </div>
-
-        <!-- KPI 2: High Opportunities -->
-        <div class="bg-slate-900/60 border border-emerald-500/20 rounded-xl p-3 flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-base">⚡</div>
-          <div>
-            <div class="text-xs text-slate-400 font-medium">High Gaps (65-84)</div>
-            <div class="text-lg font-bold text-emerald-400 font-mono" x-text="stats.high_opportunity || 0">0</div>
-          </div>
-        </div>
-
-        <!-- KPI 3: Confirmed Gold -->
-        <div class="bg-slate-900/60 border border-cyan-500/20 rounded-xl p-3 flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400 text-base">✅</div>
-          <div>
-            <div class="text-xs text-slate-400 font-medium">Confirmed Gold</div>
-            <div class="text-lg font-bold text-cyan-400 font-mono" x-text="stats.confirmed_gold || 0">0</div>
-          </div>
-        </div>
-
-        <!-- KPI 4: Snoozed -->
-        <div class="bg-slate-900/60 border border-purple-500/20 rounded-xl p-3 flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 text-base">⏳</div>
-          <div>
-            <div class="text-xs text-slate-400 font-medium">Snoozed / Later</div>
-            <div class="text-lg font-bold text-purple-400 font-mono" x-text="stats.snoozed || 0">0</div>
-          </div>
-        </div>
-
-        <!-- KPI 5: Frontier Queue Pool -->
-        <div class="bg-slate-900/60 border border-indigo-500/20 rounded-xl p-3 flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 text-base">🌐</div>
-          <div>
-            <div class="text-xs text-slate-400 font-medium">Frontier Pool</div>
-            <div class="text-lg font-bold text-indigo-400 font-mono" x-text="stats.frontier_total || 0">0</div>
-          </div>
-        </div>
-
-        <!-- KPI 6: Total Evaluated -->
-        <div class="bg-slate-900/60 border border-slate-700/40 rounded-xl p-3 flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 text-base">📊</div>
-          <div>
-            <div class="text-xs text-slate-400 font-medium">Total Evaluated</div>
-            <div class="text-lg font-bold text-slate-200 font-mono" x-text="stats.total_queries || 0">0</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 12-Universal Vertical Filter Pills -->
-  <section class="border-b border-slate-800 bg-slate-950/80 sticky top-16 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 overflow-x-auto scrollbar-none flex items-center space-x-1.5">
-      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-1 shrink-0">Verticals:</span>
-      <button @click="setCategory('all')"
-              :class="filters.category === 'all' ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20' : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800'"
-              class="px-3 py-1 rounded-full text-xs transition shrink-0 border border-slate-800">
-        All Verticals
+  <!-- ======================================================== -->
+  <!-- 2. TAB NAVIGATION & VERTICAL SCOPE BAR (40px)            -->
+  <!-- ======================================================== -->
+  <nav class="h-10 border-b border-slate-800 bg-slate-900/60 px-4 flex items-center justify-between shrink-0 select-none z-30 text-xs">
+    <!-- Tab Links -->
+    <div class="flex items-center space-x-1 h-full">
+      <button @click="activeTab = 'feed'"
+              class="h-full px-3.5 flex items-center space-x-1.5 border-b-2 font-medium transition cursor-pointer"
+              :class="activeTab === 'feed' ? 'border-amber-400 text-amber-400 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-200'">
+        <span>⚡</span>
+        <span>Niche Radar</span>
+        <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300 font-mono" x-text="stats.total_queries || 0">0</span>
       </button>
-      <template x-for="cat in categories" :key="cat">
-        <button @click="setCategory(cat)"
-                :class="filters.category === cat ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20' : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800'"
-                class="px-3 py-1 rounded-full text-xs transition shrink-0 border border-slate-800 flex items-center space-x-1">
-          <span x-text="cat"></span>
-        </button>
-      </template>
+
+      <button @click="activeTab = 'frontier'; loadFrontier(1)"
+              class="h-full px-3.5 flex items-center space-x-1.5 border-b-2 font-medium transition cursor-pointer"
+              :class="activeTab === 'frontier' ? 'border-indigo-400 text-indigo-400 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-200'">
+        <span>🌐</span>
+        <span>Frontier Harvester</span>
+        <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-mono" x-text="stats.frontier_total || 0">0</span>
+      </button>
+
+      <button @click="activeTab = 'matrix'; loadQueries(1)"
+              class="h-full px-3.5 flex items-center space-x-1.5 border-b-2 font-medium transition cursor-pointer"
+              :class="activeTab === 'matrix' ? 'border-emerald-400 text-emerald-400 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-200'">
+        <span>📊</span>
+        <span>Data Matrix</span>
+      </button>
+
+      <button @click="activeTab = 'reports'; loadReports()"
+              class="h-full px-3.5 flex items-center space-x-1.5 border-b-2 font-medium transition cursor-pointer"
+              :class="activeTab === 'reports' ? 'border-cyan-400 text-cyan-400 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-200'">
+        <span>📝</span>
+        <span>Daily Briefs</span>
+        <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono" x-text="reports.length || 0">0</span>
+      </button>
+
+      <button @click="activeTab = 'fleet'; loadFleetStatus()"
+              class="h-full px-3.5 flex items-center space-x-1.5 border-b-2 font-medium transition cursor-pointer"
+              :class="activeTab === 'fleet' ? 'border-purple-400 text-purple-400 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-200'">
+        <span>🚀</span>
+        <span>Cloud Fleet</span>
+        <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-mono">20 Shards</span>
+      </button>
     </div>
-  </section>
 
-  <!-- Main Workspace & Tabs Navigation -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
-    <!-- Primary Tabs Bar -->
-    <div class="flex items-center justify-between border-b border-slate-800 mb-6">
-      <nav class="flex space-x-6">
-        <button @click="activeTab = 'feed'"
-                :class="activeTab === 'feed' ? 'border-amber-400 text-amber-400 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'"
-                class="py-3 px-1 border-b-2 text-sm flex items-center space-x-2 transition">
-          <span>📡 Radar Feed</span>
-          <span class="px-2 py-0.5 rounded-full text-xs bg-slate-800 text-slate-300" x-text="totalItems">0</span>
-        </button>
+    <!-- Right Controls: Vertical Filter & View Toggle -->
+    <div class="flex items-center space-x-3">
+      <!-- 12-Vertical Selector -->
+      <div class="flex items-center space-x-1.5">
+        <span class="text-slate-500 text-[11px] hidden lg:inline">Vertical:</span>
+        <select x-model="filters.category" @change="setCategory($event.target.value)"
+                class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-200 text-xs focus:outline-none focus:border-amber-500 cursor-pointer">
+          <option value="all">🌐 All 12 Universal Verticals</option>
+          <template x-for="cat in categories" :key="cat">
+            <option :value="cat" x-text="cat"></option>
+          </template>
+        </select>
+      </div>
 
-        <button @click="activeTab = 'frontier'"
-                :class="activeTab === 'frontier' ? 'border-indigo-400 text-indigo-400 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'"
-                class="py-3 px-1 border-b-2 text-sm flex items-center space-x-2 transition">
-          <span>🌐 Frontier Queue</span>
-          <span class="px-2 py-0.5 rounded-full text-xs bg-indigo-500/20 text-indigo-300" x-text="frontierStats.total || 0">0</span>
-        </button>
-
-        <button @click="activeTab = 'table'"
-                :class="activeTab === 'table' ? 'border-emerald-400 text-emerald-400 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'"
-                class="py-3 px-1 border-b-2 text-sm flex items-center space-x-2 transition">
-          <span>📊 Data Explorer & Bulk</span>
-        </button>
-
-        <button @click="activeTab = 'reports'"
-                :class="activeTab === 'reports' ? 'border-cyan-400 text-cyan-400 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'"
-                class="py-3 px-1 border-b-2 text-sm flex items-center space-x-2 transition">
-          <span>📝 Daily Briefs</span>
-        </button>
-
-        <button @click="activeTab = 'admin'"
-                :class="activeTab === 'admin' ? 'border-amber-400 text-amber-400 font-semibold' : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'"
-                class="py-3 px-1 border-b-2 text-sm flex items-center space-x-2 transition">
-          <span>⚙️ Swarm Monitor & Logs</span>
-        </button>
-      </nav>
-
-      <!-- View Switcher (For Feed Tab) -->
-      <div x-show="activeTab === 'feed'" class="flex items-center space-x-2 bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
+      <!-- Cards vs Compact toggle (only in feed tab) -->
+      <div x-show="activeTab === 'feed'" class="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800">
         <button @click="feedView = 'cards'"
-                :class="feedView === 'cards' ? 'bg-slate-800 text-amber-400 font-medium' : 'text-slate-400 hover:text-slate-200'"
-                class="px-2.5 py-1 rounded transition flex items-center space-x-1">
-          <span>🃏 Cards</span>
+                :class="feedView === 'cards' ? 'bg-slate-800 text-amber-400 font-semibold shadow' : 'text-slate-400 hover:text-slate-200'"
+                class="px-2 py-0.5 rounded text-[11px] transition flex items-center space-x-1 cursor-pointer">
+          <span>🗂️</span>
+          <span>Cards</span>
         </button>
         <button @click="feedView = 'compact'"
-                :class="feedView === 'compact' ? 'bg-slate-800 text-amber-400 font-medium' : 'text-slate-400 hover:text-slate-200'"
-                class="px-2.5 py-1 rounded transition flex items-center space-x-1">
-          <span>☰ Compact</span>
+                :class="feedView === 'compact' ? 'bg-slate-800 text-amber-400 font-semibold shadow' : 'text-slate-400 hover:text-slate-200'"
+                class="px-2 py-0.5 rounded text-[11px] transition flex items-center space-x-1 cursor-pointer">
+          <span>📑</span>
+          <span>Density</span>
         </button>
       </div>
     </div>
+  </nav>
+
+  <!-- ======================================================== -->
+  <!-- 3. MAIN WORKSPACE VIEWPORTS (FULLSCREEN NO-SCROLL)       -->
+  <!-- ======================================================== -->
+  <main class="flex-1 overflow-hidden relative">
 
     <!-- ======================================================== -->
-    <!-- TAB 1: RADAR FEED                                        -->
+    <!-- TAB 1: ⚡ NICHE RADAR (TWO-PANE INPUT/RESULTS EXPLORER)  -->
     <!-- ======================================================== -->
-    <div x-show="activeTab === 'feed'">
-      <!-- Filter Bar -->
-      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Search Keywords</label>
-            <input type="text" x-model.debounce.300ms="filters.search" @input="loadQueries(1)"
-                   placeholder="e.g. calculator, converter, docker..."
-                   class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500">
+    <div x-show="activeTab === 'feed'" class="h-full w-full flex overflow-hidden">
+
+      <!-- LEFT PANE: INPUT KEYWORDS & ROOT NICHES (340px) -->
+      <aside class="w-80 lg:w-96 border-r border-slate-800 bg-slate-900/40 flex flex-col shrink-0 overflow-hidden">
+        <!-- Input Keywords Header & Search -->
+        <div class="p-3 border-b border-slate-800 bg-slate-900/60 shrink-0 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-1.5">
+              <span class="text-xs font-bold text-slate-200">Input Root Keywords</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-mono" x-text="inputKeywords.length + ' shown'">0</span>
+            </div>
+            <button @click="loadInputKeywords()" class="text-slate-400 hover:text-amber-400 text-xs" title="Refresh input keywords">🔄</button>
           </div>
 
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Deliverable Archetype</label>
+          <!-- Search Input -->
+          <div class="relative">
+            <input type="text" x-model="inputSearch" @input.debounce.300ms="loadInputKeywords()"
+                   placeholder="Search input terms..."
+                   class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+            <span class="absolute left-2.5 top-1.5 text-slate-500 text-xs">🔍</span>
+          </div>
+
+          <!-- Filter & Sort Bar -->
+          <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+            <div class="flex items-center space-x-1">
+              <span>Status:</span>
+              <select x-model="inputStatus" @change="loadInputKeywords()"
+                      class="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-slate-300 text-[11px] focus:outline-none">
+                <option value="all">All</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+            <div class="flex items-center space-x-1">
+              <span>Sort:</span>
+              <select x-model="inputSort" @change="loadInputKeywords()"
+                      class="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-slate-300 text-[11px] focus:outline-none">
+                <option value="gaps">Gaps Found</option>
+                <option value="name">A-Z</option>
+                <option value="depth">Depth</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Master Item: All Input Keywords (Reset Filter) -->
+        <div class="p-2 border-b border-slate-800/80 bg-slate-950/40 shrink-0">
+          <button @click="clearRootTerm()"
+                  class="w-full text-left p-2.5 rounded-lg border transition flex items-center justify-between cursor-pointer"
+                  :class="!selectedRootTerm ? 'bg-amber-500/15 border-amber-500/50 text-amber-300 font-semibold' : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700'">
+            <div class="flex items-center space-x-2">
+              <span>⭐</span>
+              <span class="text-xs">All Input Keywords</span>
+            </div>
+            <span class="text-xs font-mono font-bold text-amber-400" x-text="stats.total_queries || 0">0</span>
+          </button>
+        </div>
+
+        <!-- Scrollable List of Input Keywords -->
+        <div class="flex-1 overflow-y-auto p-2 space-y-1.5">
+          <template x-for="item in inputKeywords" :key="item.id">
+            <div @click="selectRootTerm(item.niche_term)"
+                 class="p-2.5 rounded-lg border transition cursor-pointer relative group"
+                 :class="selectedRootTerm === item.niche_term ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200 shadow-md shadow-indigo-500/10' : 'bg-slate-950/70 border-slate-800/80 hover:border-slate-700 text-slate-300'">
+              
+              <div class="flex items-start justify-between gap-1 mb-1">
+                <h4 class="text-xs font-bold leading-tight line-clamp-1"
+                    :class="selectedRootTerm === item.niche_term ? 'text-amber-300 font-bold' : 'text-slate-200'"
+                    x-text="item.niche_term"></h4>
+                
+                <!-- Gaps Count Badge -->
+                <span class="shrink-0 text-[10px] font-mono px-1.5 py-0.2 rounded font-semibold"
+                      :class="item.queries_extracted > 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'"
+                      x-text="(item.queries_extracted || 0) + ' gaps'"></span>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px] text-slate-400">
+                <span class="truncate pr-1 text-slate-400 text-[10px]" x-text="item.category"></span>
+                <div class="flex items-center space-x-1 shrink-0">
+                  <span class="text-[9px] px-1 py-0.2 rounded bg-slate-800 font-mono text-slate-400" x-text="'D' + (item.depth_level || 0)"></span>
+                  <span x-show="item.status === 'completed'" class="text-emerald-400 text-[10px]">✓</span>
+                  <span x-show="item.status === 'pending'" class="text-slate-500 text-[10px]">⏳</span>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <div x-show="!inputKeywords.length" class="p-4 text-center text-xs text-slate-500 italic">
+            No matching input keywords found.
+          </div>
+        </div>
+
+        <!-- Left Pane Footer -->
+        <div class="p-2 border-t border-slate-800 bg-slate-900/80 text-[11px] text-slate-400 flex items-center justify-between shrink-0">
+          <span x-text="inputKeywordsTotal + ' total roots in pool'"></span>
+          <button @click="triggerHarvester()" class="text-indigo-400 hover:underline">Harvest More</button>
+        </div>
+      </aside>
+
+      <!-- RIGHT PANE: DISCOVERED SEARCH GAPS RESULTS (FLEX-1) -->
+      <section class="flex-1 flex flex-col overflow-hidden bg-slate-950">
+        
+        <!-- Filter & Search Command Strip (44px) -->
+        <div class="h-11 border-b border-slate-800 bg-slate-900/40 px-4 flex items-center justify-between shrink-0 gap-3 text-xs">
+          <!-- Active Scope Pill & Quick Score Filters -->
+          <div class="flex items-center space-x-2 overflow-x-auto py-1">
+            <!-- Active Input Term Scope Pill -->
+            <div x-show="selectedRootTerm" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 font-mono font-semibold shrink-0">
+              <span class="text-[10px] text-indigo-400 uppercase">Input:</span>
+              <span class="max-w-[140px] truncate" x-text="selectedRootTerm"></span>
+              <button @click="clearRootTerm()" class="hover:text-white ml-1 text-slate-400">✕</button>
+            </div>
+
+            <!-- Quick Score Filters -->
+            <button @click="setQuickFilter('all')"
+                    class="px-2.5 py-1 rounded-lg transition font-medium shrink-0 cursor-pointer"
+                    :class="quickFilter === 'all' ? 'bg-slate-800 text-amber-400 font-semibold' : 'text-slate-400 hover:text-slate-200'">
+              All Results
+            </button>
+            <button @click="setQuickFilter('critical_85')"
+                    class="px-2.5 py-1 rounded-lg transition font-medium shrink-0 cursor-pointer"
+                    :class="quickFilter === 'critical_85' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40' : 'text-slate-400 hover:text-slate-200'">
+              💎 Critical (85+)
+            </button>
+            <button @click="setQuickFilter('high_65')"
+                    class="px-2.5 py-1 rounded-lg transition font-medium shrink-0 cursor-pointer"
+                    :class="quickFilter === 'high_65' ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40' : 'text-slate-400 hover:text-slate-200'">
+              ⚡ High (65+)
+            </button>
+            <button @click="setQuickFilter('breakouts')"
+                    class="px-2.5 py-1 rounded-lg transition font-medium shrink-0 cursor-pointer"
+                    :class="quickFilter === 'breakouts' ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/40' : 'text-slate-400 hover:text-slate-200'">
+              🔥 Breakouts
+            </button>
+            <button @click="setQuickFilter('confirmed')"
+                    class="px-2.5 py-1 rounded-lg transition font-medium shrink-0 cursor-pointer"
+                    :class="quickFilter === 'confirmed' ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40' : 'text-slate-400 hover:text-slate-200'">
+              ⭐ Confirmed
+            </button>
+          </div>
+
+          <!-- Secondary Filter Controls -->
+          <div class="flex items-center space-x-2 shrink-0">
+            <!-- In-Results Keyword Search -->
+            <div class="relative w-44">
+              <input type="text" x-model="filters.search" @input.debounce.300ms="loadQueries(1)"
+                     placeholder="Search results..."
+                     class="w-full bg-slate-900 border border-slate-800 rounded-lg pl-7 pr-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500">
+              <span class="absolute left-2 top-1.5 text-slate-500 text-xs">🔍</span>
+            </div>
+
+            <!-- Archetype Dropdown -->
             <select x-model="filters.archetype" @change="loadQueries(1)"
-                    class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                    class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-slate-300 text-xs focus:outline-none">
               <option value="all">All Archetypes</option>
-              <option value="Micro-Tool">🛠️ Micro-Tool & Web Utility</option>
-              <option value="Workaround">🐛 Workaround & Troubleshooting</option>
-              <option value="Template">📋 Template, Checklist & Scaffold</option>
-              <option value="Comparison">⚖️ Comparison & Directory</option>
+              <option value="Micro-Tool">Micro-Tool</option>
+              <option value="Recipe">Recipe / Boilerplate</option>
+              <option value="Workaround">Workaround / Bug Fix</option>
+              <option value="Breaking News">Breaking News</option>
             </select>
-          </div>
 
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Human Triage</label>
-            <select x-model="filters.verdict" @change="loadQueries(1)"
-                    class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
-              <option value="all">All Verdicts</option>
-              <option value="pending">⏳ Pending Review</option>
-              <option value="confirmed_gold">💎 Confirmed Gold</option>
-              <option value="snoozed">⏰ Snoozed</option>
-              <option value="already_served">❌ Saturated / Rejected</option>
-            </select>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-              <span>Min Score: <span class="font-bold text-amber-400 font-mono" x-text="filters.min_score">0</span></span>
-            </div>
-            <input type="range" min="0" max="95" step="5" x-model="filters.min_score" @change="loadQueries(1)"
-                   class="w-full accent-amber-500 bg-slate-800 h-1.5 rounded-lg cursor-pointer">
+            <span class="text-slate-500 text-xs font-mono font-medium hidden xl:inline" x-text="totalItems + ' items'"></span>
           </div>
         </div>
-      </div>
 
-      <!-- Opportunity Cards Grid -->
-      <div x-show="feedView === 'cards'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <template x-for="item in queries" :key="item.id">
-          <div class="bg-slate-900/70 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-5 transition flex flex-col justify-between shadow-lg relative overflow-hidden group">
-            <!-- Top Gradient Accent -->
-            <div class="absolute top-0 left-0 right-0 h-1"
-                 :class="item.gap_score >= 85 ? 'bg-gradient-to-r from-amber-400 to-yellow-500' : (item.gap_score >= 65 ? 'bg-gradient-to-r from-emerald-400 to-teal-500' : 'bg-slate-700')"></div>
-
-            <div>
-              <!-- Header Badges -->
-              <div class="flex items-start justify-between gap-3 mb-2.5">
-                <div class="flex items-center flex-wrap gap-1.5">
-                  <!-- Score Badge -->
-                  <span class="px-2.5 py-0.5 rounded-md font-bold text-xs font-mono"
-                        :class="item.gap_score >= 85 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : (item.gap_score >= 65 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400')"
-                        x-text="item.gap_score + '/100'"></span>
-
-                  <!-- Velocity Badge -->
-                  <span class="px-2 py-0.5 rounded-md text-xs font-semibold"
-                        :class="item.trend_type === 'BREAKOUT' ? 'bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse' : 'bg-amber-500/10 text-amber-300 border border-amber-500/20'"
-                        x-text="item.trend_type === 'BREAKOUT' ? '🔥 BREAKOUT +5,000%' : '⚡ ' + item.trend_velocity"></span>
-
-                  <!-- Archetype Badge -->
-                  <span class="px-2 py-0.5 rounded-md text-xs bg-slate-800 text-slate-300 border border-slate-700/60"
-                        x-text="item.archetype"></span>
-                </div>
-
-                <span class="text-xs text-slate-500 shrink-0 font-medium" x-text="item.category"></span>
-              </div>
-
-              <!-- Main Keyword -->
-              <h3 class="text-base font-bold text-slate-100 tracking-tight group-hover:text-amber-300 transition my-2">
-                <span x-text="item.keyword"></span>
-              </h3>
-
-              <!-- SERP Void Meter -->
-              <div class="my-3 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
-                <div class="flex items-center justify-between text-xs mb-1">
-                  <span class="text-slate-400 font-medium">Exact &lt;title&gt; Matches in Top 10</span>
-                  <span class="font-bold"
-                        :class="item.exact_title_matches <= 1 ? 'text-emerald-400' : 'text-slate-400'"
-                        x-text="item.exact_title_matches + '/10 ' + (item.exact_title_matches === 0 ? '🛡️ Untouched Void' : (item.exact_title_matches <= 2 ? '⚡ Vulnerable' : 'Saturated'))"></span>
-                </div>
-                <!-- Visual progress bar -->
-                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                  <div class="h-full rounded-full transition-all"
-                       :style="'width: ' + Math.min(100, item.exact_title_matches * 10) + '%'"
-                       :class="item.exact_title_matches <= 1 ? 'bg-emerald-500' : (item.exact_title_matches <= 3 ? 'bg-amber-500' : 'bg-red-500')"></div>
-                </div>
-
-                <!-- Competitor Leak flag -->
-                <template x-if="item.top_competitor_title">
-                  <div class="mt-2 text-xs text-slate-400 truncate">
-                    <span class="text-slate-500">Top Competitor:</span>
-                    <a :href="item.top_competitor_url" target="_blank" class="hover:underline text-slate-300 ml-1"
-                       x-text="item.top_competitor_title"></a>
-                  </div>
-                </template>
-              </div>
-            </div>
-
-            <!-- Footer: 3-Way Verify Links & Actions -->
-            <div class="mt-4 pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-2.5">
-              <!-- 3-Way Links -->
-              <div class="flex items-center space-x-2 text-xs">
-                <a :href="item.google_verify_url" target="_blank"
-                   class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition flex items-center space-x-1">
-                  <span>Google ↗</span>
-                </a>
-                <a :href="item.ddg_verify_url" target="_blank"
-                   class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition flex items-center space-x-1">
-                  <span>DuckDuckGo ↗</span>
-                </a>
-                <a :href="item.trends_verify_url" target="_blank"
-                   class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition flex items-center space-x-1">
-                  <span>Trends 12m ↗</span>
-                </a>
-              </div>
-
-              <!-- Action Buttons -->
-              <div class="flex items-center space-x-1.5 w-full sm:w-auto justify-end">
-                <button @click="openBlueprint(item)"
-                        class="px-2 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 text-xs transition"
-                        title="1-Click AI Builder Blueprint">
-                  🤖 Blueprint
-                </button>
-
-                <button @click="setVerdict(item.id, 'confirmed_gold')"
-                        :class="item.human_verdict === 'confirmed_gold' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20'"
-                        class="px-2 py-1 rounded text-xs transition">
-                  💎 Confirm
-                </button>
-
-                <button @click="setVerdict(item.id, 'snoozed')"
-                        :class="item.human_verdict === 'snoozed' ? 'bg-purple-500 text-white font-bold' : 'bg-slate-800 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20'"
-                        class="px-2 py-1 rounded text-xs transition">
-                  ⏳
-                </button>
-
-                <button @click="setVerdict(item.id, 'already_served')"
-                        :class="item.human_verdict === 'already_served' ? 'bg-red-500 text-white font-bold' : 'bg-slate-800 hover:bg-red-500/20 text-slate-400 border border-slate-700'"
-                        class="px-2 py-1 rounded text-xs transition">
-                  ❌
-                </button>
-              </div>
-            </div>
+        <!-- RESULTS CONTENT VIEWPORT (SCROLLABLE INSIDE) -->
+        <div class="flex-1 overflow-y-auto p-4">
+          
+          <!-- Loading State -->
+          <div x-show="loading" class="flex items-center justify-center py-16 space-x-2 text-slate-400 text-xs">
+            <span class="w-3 h-3 rounded-full bg-amber-400 animate-ping"></span>
+            <span>Filtering search gaps...</span>
           </div>
-        </template>
-      </div>
 
-      <!-- Compact Row View -->
-      <div x-show="feedView === 'compact'" class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-        <table class="w-full text-xs text-left">
-          <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
-            <tr>
-              <th class="p-3">Score</th>
-              <th class="p-3">Keyword</th>
-              <th class="p-3">Category</th>
-              <th class="p-3">Archetype</th>
-              <th class="p-3">Velocity</th>
-              <th class="p-3">Voids</th>
-              <th class="p-3">1-Click Verify</th>
-              <th class="p-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-800/60">
+          <!-- ============================================== -->
+          <!-- CARDS VIEW MODE                                -->
+          <!-- ============================================== -->
+          <div x-show="!loading && feedView === 'cards'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             <template x-for="item in queries" :key="item.id">
-              <tr class="hover:bg-slate-800/40 transition">
-                <td class="p-3 font-mono font-bold"
-                    :class="item.gap_score >= 85 ? 'text-amber-400' : (item.gap_score >= 65 ? 'text-emerald-400' : 'text-slate-400')"
-                    x-text="item.gap_score"></td>
-                <td class="p-3 font-semibold text-slate-200" x-text="item.keyword"></td>
-                <td class="p-3 text-slate-400" x-text="item.category"></td>
-                <td class="p-3 text-slate-300" x-text="item.archetype"></td>
-                <td class="p-3">
-                  <span class="px-1.5 py-0.5 rounded text-[11px]"
-                        :class="item.trend_type === 'BREAKOUT' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/10 text-amber-300'"
-                        x-text="item.trend_velocity"></span>
-                </td>
-                <td class="p-3 font-mono" x-text="item.exact_title_matches + '/10'"></td>
-                <td class="p-3 space-x-1">
-                  <a :href="item.google_verify_url" target="_blank" class="text-amber-400 hover:underline">G↗</a>
-                  <a :href="item.ddg_verify_url" target="_blank" class="text-cyan-400 hover:underline">D↗</a>
-                  <a :href="item.trends_verify_url" target="_blank" class="text-purple-400 hover:underline">T↗</a>
-                </td>
-                <td class="p-3 text-right space-x-1">
-                  <button @click="openBlueprint(item)" class="text-indigo-400 hover:underline text-[11px]">Spec</button>
-                  <button @click="setVerdict(item.id, 'confirmed_gold')" class="text-amber-400 hover:underline text-[11px]">Gold</button>
-                  <button @click="setVerdict(item.id, 'snoozed')" class="text-purple-400 hover:underline text-[11px]">Snooze</button>
-                  <button @click="setVerdict(item.id, 'already_served')" class="text-slate-500 hover:underline text-[11px]">Drop</button>
-                </td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
+              <div class="p-4 rounded-xl border transition flex flex-col justify-between shadow-lg relative group"
+                   :class="{
+                     'bg-gradient-to-b from-amber-950/30 via-slate-900 to-slate-950 border-amber-500/40 shadow-amber-500/5': item.gap_score >= 85,
+                     'bg-slate-900/80 border-slate-800 hover:border-slate-700': item.gap_score < 85 && item.gap_score >= 65,
+                     'bg-slate-950/80 border-slate-800/60 opacity-80': item.gap_score < 65
+                   }">
 
-      <!-- Pagination Bar -->
-      <div class="mt-6 flex items-center justify-between text-xs text-slate-400">
-        <div>
-          Showing page <span class="text-slate-200 font-bold" x-text="page"></span> of <span class="text-slate-200 font-bold" x-text="totalPages"></span> (<span x-text="totalItems"></span> total)
+                <!-- Card Header: Badges & Category -->
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-1.5">
+                      <!-- Score Badge -->
+                      <span class="px-2 py-0.5 rounded-md font-mono font-bold text-xs shadow-sm"
+                            :class="{
+                              'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950': item.gap_score >= 85,
+                              'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30': item.gap_score >= 65 && item.gap_score < 85,
+                              'bg-slate-800 text-slate-400': item.gap_score < 65
+                            }" x-text="item.gap_score + '/100'"></span>
+
+                      <!-- Velocity Surge Badge -->
+                      <span class="px-2 py-0.5 rounded-md text-[11px] font-mono font-medium"
+                            :class="item.trend_type === 'BREAKOUT' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse' : 'bg-slate-800 text-slate-300'"
+                            x-text="item.trend_velocity"></span>
+
+                      <!-- Archetype Badge -->
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-mono bg-indigo-500/10 text-indigo-300 border border-indigo-500/20"
+                            x-text="item.archetype"></span>
+                    </div>
+
+                    <!-- Category Pill -->
+                    <span class="text-[11px] text-slate-400 font-medium truncate max-w-[120px]" x-text="item.category"></span>
+                  </div>
+
+                  <!-- Keyword Title -->
+                  <h3 class="text-sm font-bold text-slate-100 mb-2.5 leading-snug break-words tracking-tight"
+                      x-text="item.keyword"></h3>
+
+                  <!-- Exact Title Matches & SERP Void Indicator -->
+                  <div class="space-y-1.5 mb-3 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="text-slate-400 text-[11px]">Exact &lt;title&gt; Matches:</span>
+                      <span class="font-mono text-[11px] font-bold"
+                            :class="item.exact_title_matches === 0 ? 'text-emerald-400' : (item.exact_title_matches <= 2 ? 'text-amber-400' : 'text-slate-400')">
+                        <span x-text="item.exact_title_matches + '/10'"></span>
+                        <span x-show="item.exact_title_matches === 0" class="text-emerald-400 font-semibold ml-1">🛡️ Untouched Void</span>
+                      </span>
+                    </div>
+
+                    <!-- Visual Void Progress Bar -->
+                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                      <div class="h-1.5 rounded-full transition-all duration-500"
+                           :class="item.exact_title_matches === 0 ? 'bg-emerald-400 w-full' : (item.exact_title_matches <= 2 ? 'bg-amber-400 w-3/4' : 'bg-slate-600 w-1/4')"></div>
+                    </div>
+
+                    <!-- Evidence Snippet -->
+                    <div class="text-[11px] text-slate-400 truncate pt-1 flex items-center space-x-1" x-show="item.top_competitor_title">
+                      <span class="text-slate-500">Top Rank:</span>
+                      <span class="text-slate-300 truncate" x-text="item.top_competitor_title"></span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card Actions Footer -->
+                <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between mt-1 text-xs">
+                  <!-- 3-Way Live Verification Links -->
+                  <div class="flex items-center space-x-2 text-[11px]">
+                    <a :href="item.google_verify_url" target="_blank"
+                       class="text-amber-400 hover:text-amber-300 font-semibold hover:underline">Google ↗</a>
+                    <span class="text-slate-600">·</span>
+                    <a :href="item.ddg_verify_url" target="_blank"
+                       class="text-slate-400 hover:text-slate-200 hover:underline">DuckDuckGo ↗</a>
+                    <span class="text-slate-600">·</span>
+                    <a :href="item.trends_verify_url" target="_blank"
+                       class="text-indigo-400 hover:text-indigo-300 hover:underline">Trends 12m ↗</a>
+                  </div>
+
+                  <!-- Right Action Buttons -->
+                  <div class="flex items-center space-x-1">
+                    <!-- AI Blueprint Trigger -->
+                    <button @click="openBlueprint(item)"
+                            class="p-1 px-2 rounded-md bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 text-[11px] font-semibold transition flex items-center space-x-1 cursor-pointer"
+                            title="1-Click AI Builder Blueprint">
+                      <span>🤖</span>
+                      <span class="hidden sm:inline">Blueprint</span>
+                    </button>
+
+                    <!-- Quick Triage Actions -->
+                    <button @click="setVerdict(item.id, 'confirmed_gold')"
+                            class="p-1 px-1.5 rounded-md hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 text-xs transition cursor-pointer"
+                            :class="item.human_verdict === 'confirmed_gold' ? 'text-emerald-400 font-bold bg-emerald-500/20' : ''"
+                            title="Confirm Gold">⭐</button>
+
+                    <button @click="setVerdict(item.id, 'snoozed')"
+                            class="p-1 px-1.5 rounded-md hover:bg-amber-500/20 text-slate-400 hover:text-amber-400 text-xs transition cursor-pointer"
+                            :class="item.human_verdict === 'snoozed' ? 'text-amber-400 font-bold bg-amber-500/20' : ''"
+                            title="Snooze for Later">⏳</button>
+
+                    <button @click="setVerdict(item.id, 'already_served')"
+                            class="p-1 px-1.5 rounded-md hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 text-xs transition cursor-pointer"
+                            :class="item.human_verdict === 'already_served' ? 'text-rose-400 font-bold bg-rose-500/20' : ''"
+                            title="Reject Query">✕</button>
+                  </div>
+                </div>
+
+              </div>
+            </template>
+          </div>
+
+          <!-- ============================================== -->
+          <!-- COMPACT DENSITY LIST VIEW MODE                 -->
+          <!-- ============================================== -->
+          <div x-show="!loading && feedView === 'compact'" class="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/60 shadow-lg">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-900/90 border-b border-slate-800 text-[11px] text-slate-400 uppercase tracking-wider sticky top-0">
+                <tr>
+                  <th class="py-2.5 px-3 font-semibold">Score</th>
+                  <th class="py-2.5 px-3 font-semibold">Search Void Query</th>
+                  <th class="py-2.5 px-3 font-semibold">Velocity</th>
+                  <th class="py-2.5 px-3 font-semibold">Archetype</th>
+                  <th class="py-2.5 px-3 font-semibold">Category</th>
+                  <th class="py-2.5 px-3 font-semibold">Void Level</th>
+                  <th class="py-2.5 px-3 font-semibold text-center">Verify</th>
+                  <th class="py-2.5 px-3 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/60 font-mono text-xs">
+                <template x-for="item in queries" :key="item.id">
+                  <tr class="hover:bg-slate-800/40 transition">
+                    <td class="py-2 px-3 whitespace-nowrap">
+                      <span class="px-2 py-0.5 rounded font-bold text-xs"
+                            :class="item.gap_score >= 85 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : (item.gap_score >= 65 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400')"
+                            x-text="item.gap_score"></span>
+                    </td>
+                    <td class="py-2 px-3 font-sans font-bold text-slate-100 whitespace-nowrap" x-text="item.keyword"></td>
+                    <td class="py-2 px-3 whitespace-nowrap" :class="item.trend_type === 'BREAKOUT' ? 'text-rose-400 font-bold' : 'text-slate-400'" x-text="item.trend_velocity"></td>
+                    <td class="py-2 px-3 whitespace-nowrap">
+                      <span class="px-1.5 py-0.2 rounded text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-sans" x-text="item.archetype"></span>
+                    </td>
+                    <td class="py-2 px-3 font-sans text-slate-400 whitespace-nowrap" x-text="item.category"></td>
+                    <td class="py-2 px-3 whitespace-nowrap">
+                      <span class="text-xs font-semibold"
+                            :class="item.exact_title_matches === 0 ? 'text-emerald-400' : (item.exact_title_matches <= 2 ? 'text-amber-400' : 'text-slate-400')"
+                            x-text="item.exact_title_matches + '/10 ' + (item.exact_title_matches === 0 ? '🛡️ Untouched' : '')"></span>
+                    </td>
+                    <td class="py-2 px-3 whitespace-nowrap text-center space-x-1.5 font-sans">
+                      <a :href="item.google_verify_url" target="_blank" class="text-amber-400 hover:underline">Google</a>
+                      <a :href="item.trends_verify_url" target="_blank" class="text-indigo-400 hover:underline">Trends</a>
+                    </td>
+                    <td class="py-2 px-3 whitespace-nowrap text-right space-x-1 font-sans">
+                      <button @click="openBlueprint(item)" class="text-xs px-2 py-0.5 rounded bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600/50 cursor-pointer">AI Blueprint</button>
+                      <button @click="setVerdict(item.id, 'confirmed_gold')" class="text-xs hover:text-emerald-400 p-0.5 cursor-pointer">⭐</button>
+                      <button @click="setVerdict(item.id, 'snoozed')" class="text-xs hover:text-amber-400 p-0.5 cursor-pointer">⏳</button>
+                      <button @click="setVerdict(item.id, 'already_served')" class="text-xs hover:text-rose-400 p-0.5 cursor-pointer">✕</button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty State -->
+          <div x-show="!loading && !queries.length" class="text-center py-20 space-y-3">
+            <span class="text-3xl">⛏️</span>
+            <h3 class="text-sm font-bold text-slate-300">No opportunities match current criteria</h3>
+            <p class="text-xs text-slate-500">Try adjusting the score slider or clearing the root term scope.</p>
+            <button @click="clearRootTerm(); setQuickFilter('all')" class="text-xs text-amber-400 underline cursor-pointer">Reset all filters</button>
+          </div>
+
         </div>
-        <div class="flex items-center space-x-2">
-          <button @click="loadQueries(page - 1)" :disabled="page <= 1"
-                  class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 disabled:opacity-40 transition">
-            ← Previous
-          </button>
-          <button @click="loadQueries(page + 1)" :disabled="page >= totalPages"
-                  class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 disabled:opacity-40 transition">
-            Next →
-          </button>
+
+        <!-- RIGHT PANE PAGINATION FOOTER (36px) -->
+        <div class="h-9 border-t border-slate-800 bg-slate-900/60 px-4 flex items-center justify-between text-xs text-slate-400 shrink-0">
+          <span x-text="'Showing Page ' + page + ' of ' + totalPages + ' (' + totalItems + ' opportunities)'"></span>
+          <div class="flex items-center space-x-2">
+            <button @click="loadQueries(page - 1)" :disabled="page <= 1"
+                    class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 cursor-pointer">Prev</button>
+            <span class="font-mono text-slate-300" x-text="page"></span>
+            <button @click="loadQueries(page + 1)" :disabled="page >= totalPages"
+                    class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 cursor-pointer">Next</button>
+          </div>
         </div>
-      </div>
+
+      </section>
+
     </div>
 
     <!-- ======================================================== -->
-    <!-- TAB 2: FRONTIER QUEUE EXPLORER                           -->
+    <!-- TAB 2: 🌐 FRONTIER HARVESTER & DEPTH QUEUE               -->
     <!-- ======================================================== -->
-    <div x-show="activeTab === 'frontier'">
-      <!-- Frontier Queue Telemetry Bar -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
-          <div class="text-xs text-slate-400">Pending Roots</div>
-          <div class="text-xl font-bold text-amber-400 font-mono" x-text="frontierStats.pending || 0">0</div>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
-          <div class="text-xs text-slate-400">Claimed by Shards</div>
-          <div class="text-xl font-bold text-cyan-400 font-mono" x-text="frontierStats.claimed || 0">0</div>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
-          <div class="text-xs text-slate-400">Completed Niches</div>
-          <div class="text-xl font-bold text-emerald-400 font-mono" x-text="frontierStats.completed || 0">0</div>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
-          <div class="text-xs text-slate-400">90-Day Cooldown Signatures</div>
-          <div class="text-xl font-bold text-purple-400 font-mono" x-text="frontierStats.cooldown_active || 0">0</div>
+    <div x-show="activeTab === 'frontier'" class="h-full overflow-y-auto p-6 space-y-6">
+      <!-- Harvester Action Banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-2xl p-5 shadow-xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-base font-bold text-slate-100 flex items-center space-x-2">
+              <span>Universal Frontier Queue & Harvester</span>
+              <span class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs border border-indigo-500/30 font-mono" x-text="frontierStats.total + ' Total Niches'"></span>
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">Multi-source root harvester feeding autonomous recursive sweeps across 12 verticals.</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button @click="triggerHarvester()"
+                    class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/20 transition cursor-pointer">
+              📚 Run Wikipedia & SO Harvester
+            </button>
+            <button @click="showAddSeedModal = true"
+                    class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition cursor-pointer">
+              ➕ Add Seed Term
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Add Seed Term Card -->
-      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 mb-6">
-        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">+ Add Instant Seed Root Term</h4>
-        <div class="flex flex-col sm:flex-row gap-2">
-          <input type="text" x-model="newSeedTerm" placeholder="e.g. closing cost, docker compose, heic to pdf..."
-                 class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500">
-          <select x-model="newSeedCategory"
-                  class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+      <!-- Frontier Stats Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+          <span class="text-xs text-slate-400">Total Root Niches</span>
+          <h4 class="text-lg font-bold text-slate-100 mt-1 font-mono" x-text="frontierStats.total || 0">0</h4>
+        </div>
+        <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+          <span class="text-xs text-slate-400">Pending Exploration</span>
+          <h4 class="text-lg font-bold text-amber-400 mt-1 font-mono" x-text="frontierStats.pending || 0">0</h4>
+        </div>
+        <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+          <span class="text-xs text-slate-400">Completed Sweeps</span>
+          <h4 class="text-lg font-bold text-emerald-400 mt-1 font-mono" x-text="frontierStats.completed || 0">0</h4>
+        </div>
+        <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+          <span class="text-xs text-slate-400">Recursive Sub-Niches (D1+)</span>
+          <h4 class="text-lg font-bold text-cyan-400 mt-1 font-mono" x-text="(frontierStats.by_depth && frontierStats.by_depth['1']) || 0">0</h4>
+        </div>
+      </div>
+
+      <!-- Frontier Filter Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+        <div class="flex items-center space-x-2">
+          <input type="text" x-model="frontierSearch" @input.debounce.300ms="loadFrontier(1)"
+                 placeholder="Search frontier niches..."
+                 class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 w-64 focus:outline-none focus:border-indigo-500">
+          
+          <select x-model="frontierCategory" @change="loadFrontier(1)"
+                  class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-300 text-xs focus:outline-none">
+            <option value="all">All Categories</option>
             <template x-for="c in categories" :key="c">
               <option :value="c" x-text="c"></option>
             </template>
           </select>
-          <button @click="addSeed()"
-                  class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition">
-            Queue Seed
-          </button>
+
+          <select x-model="frontierStatus" @change="loadFrontier(1)"
+                  class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-300 text-xs focus:outline-none">
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+          </select>
         </div>
+
+        <button @click="loadFrontier(1)" class="text-indigo-400 hover:underline">Refresh Queue</button>
       </div>
 
       <!-- Frontier Table -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-        <table class="w-full text-xs text-left">
-          <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
+      <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/60 shadow">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-900/90 border-b border-slate-800 text-[11px] text-slate-400 uppercase tracking-wider">
             <tr>
-              <th class="p-3">Depth</th>
-              <th class="p-3">Niche Term</th>
-              <th class="p-3">Category</th>
-              <th class="p-3">Status</th>
-              <th class="p-3">Yield</th>
-              <th class="p-3">Claimed Shard</th>
-              <th class="p-3">Explored At</th>
+              <th class="py-2.5 px-4 font-semibold">Niche Term</th>
+              <th class="py-2.5 px-4 font-semibold">Category</th>
+              <th class="py-2.5 px-4 font-semibold">Depth</th>
+              <th class="py-2.5 px-4 font-semibold">Status</th>
+              <th class="py-2.5 px-4 font-semibold">Gaps Yielded</th>
+              <th class="py-2.5 px-4 font-semibold text-right">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-800/60">
-            <template x-for="row in frontierItems" :key="row.id">
+          <tbody class="divide-y divide-slate-800/60 font-mono text-xs">
+            <template x-for="item in frontierItems" :key="item.id">
               <tr class="hover:bg-slate-800/40 transition">
-                <td class="p-3">
-                  <span class="px-2 py-0.5 rounded text-[11px] font-mono"
-                        :class="row.depth_level === 0 ? 'bg-amber-500/10 text-amber-300' : 'bg-indigo-500/10 text-indigo-300'"
-                        x-text="'Depth ' + row.depth_level"></span>
+                <td class="py-2.5 px-4 font-sans font-bold text-slate-100" x-text="item.niche_term"></td>
+                <td class="py-2.5 px-4 font-sans text-slate-400" x-text="item.category"></td>
+                <td class="py-2.5 px-4">
+                  <span class="px-1.5 py-0.5 rounded text-[10px]"
+                        :class="item.depth_level === 0 ? 'bg-slate-800 text-slate-300' : 'bg-cyan-500/20 text-cyan-300'"
+                        x-text="'Depth ' + item.depth_level"></span>
                 </td>
-                <td class="p-3 font-semibold text-slate-200" x-text="row.niche_term"></td>
-                <td class="p-3 text-slate-400" x-text="row.category"></td>
-                <td class="p-3">
-                  <span class="px-2 py-0.5 rounded text-[11px]"
-                        :class="row.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : (row.status === 'claimed' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-800 text-slate-400')"
-                        x-text="row.status"></span>
+                <td class="py-2.5 px-4">
+                  <span class="px-2 py-0.5 rounded text-[10px]"
+                        :class="item.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'"
+                        x-text="item.status"></span>
                 </td>
-                <td class="p-3 font-mono text-slate-300" x-text="row.queries_extracted + ' queries'"></td>
-                <td class="p-3 text-slate-400 font-mono" x-text="row.claimed_by_shard || '—'"></td>
-                <td class="p-3 text-slate-500" x-text="row.last_explored_at || 'Pending'"></td>
+                <td class="py-2.5 px-4 text-emerald-400 font-bold" x-text="item.queries_extracted || 0"></td>
+                <td class="py-2.5 px-4 text-right">
+                  <button @click="selectRootTerm(item.niche_term); activeTab = 'feed'"
+                          class="text-xs text-amber-400 hover:underline cursor-pointer">View Results ↗</button>
+                </td>
               </tr>
             </template>
           </tbody>
         </table>
       </div>
-
-      <!-- Frontier Pagination -->
-      <div class="mt-4 flex items-center justify-between text-xs text-slate-400">
-        <div>Page <span class="font-bold text-slate-200" x-text="frontierPage"></span> of <span class="font-bold text-slate-200" x-text="frontierTotalPages"></span></div>
-        <div class="space-x-2">
-          <button @click="loadFrontier(frontierPage - 1)" :disabled="frontierPage <= 1"
-                  class="px-3 py-1 rounded bg-slate-900 border border-slate-800 disabled:opacity-40">← Prev</button>
-          <button @click="loadFrontier(frontierPage + 1)" :disabled="frontierPage >= frontierTotalPages"
-                  class="px-3 py-1 rounded bg-slate-900 border border-slate-800 disabled:opacity-40">Next →</button>
-        </div>
-      </div>
     </div>
 
     <!-- ======================================================== -->
-    <!-- TAB 3: DATA EXPLORER & BULK ACTIONS                      -->
+    <!-- TAB 3: 📊 DATA MATRIX & BULK TRIAGE                      -->
     <!-- ======================================================== -->
-    <div x-show="activeTab === 'table'">
-      <!-- Bulk Action Bar -->
-      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center space-x-2">
-          <span class="text-xs text-slate-400 font-medium">
-            Selected: <span class="text-amber-400 font-bold" x-text="selectedRows.length"></span> items
-          </span>
-          <button @click="bulkSetVerdict('confirmed_gold')" :disabled="!selectedRows.length"
-                  class="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs disabled:opacity-40 transition">
-            💎 Bulk Confirm
-          </button>
-          <button @click="bulkSetVerdict('snoozed')" :disabled="!selectedRows.length"
-                  class="px-2.5 py-1 rounded bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs disabled:opacity-40 transition">
-            ⏳ Bulk Snooze
-          </button>
-          <button @click="bulkSetVerdict('already_served')" :disabled="!selectedRows.length"
-                  class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs disabled:opacity-40 transition">
-            ❌ Bulk Reject
-          </button>
+    <div x-show="activeTab === 'matrix'" class="h-full flex flex-col overflow-hidden p-4 space-y-3">
+      <!-- Bulk Toolbar -->
+      <div class="flex items-center justify-between text-xs bg-slate-900/80 p-3 rounded-xl border border-slate-800 shrink-0">
+        <div class="flex items-center space-x-3">
+          <button @click="toggleSelectAll()"
+                  class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer"
+                  x-text="selectedRows.length === queries.length ? 'Deselect All' : 'Select All Page'"></button>
+          
+          <div x-show="selectedRows.length" class="flex items-center space-x-2">
+            <span class="font-mono text-amber-400 font-bold" x-text="selectedRows.length + ' selected'"></span>
+            <button @click="executeBulkVerdict('confirmed_gold')"
+                    class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-semibold cursor-pointer">⭐ Confirm</button>
+            <button @click="executeBulkVerdict('snoozed')"
+                    class="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-500 text-slate-950 font-semibold cursor-pointer">⏳ Snooze</button>
+            <button @click="executeBulkVerdict('already_served')"
+                    class="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-semibold cursor-pointer">✕ Reject</button>
+          </div>
         </div>
 
+        <!-- Export Buttons -->
         <div class="flex items-center space-x-2">
-          <a href="/api/export?format=csv" download class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">
-            📥 Export CSV
-          </a>
-          <a href="/api/export?format=markdown" download class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">
-            📝 Export Checklist (.md)
-          </a>
-          <a href="/api/export?format=json" download class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">
-            Export JSON
-          </a>
+          <button @click="exportData('csv')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 cursor-pointer">📥 CSV</button>
+          <button @click="exportData('json')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 cursor-pointer">📥 JSON</button>
+          <button @click="exportData('markdown')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 cursor-pointer">📋 Markdown</button>
         </div>
       </div>
 
-      <!-- Data Table -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-        <table class="w-full text-xs text-left">
-          <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
+      <!-- Full-Screen Matrix Table -->
+      <div class="flex-1 border border-slate-800 rounded-xl overflow-y-auto bg-slate-900/60 shadow">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-900/90 border-b border-slate-800 text-[11px] text-slate-400 uppercase tracking-wider sticky top-0 z-10">
             <tr>
-              <th class="p-3 w-8">
-                <input type="checkbox" @change="toggleSelectAll($event)" class="rounded accent-amber-500">
-              </th>
-              <th class="p-3">Gap Score</th>
-              <th class="p-3">Keyword</th>
-              <th class="p-3">Category</th>
-              <th class="p-3">Archetype</th>
-              <th class="p-3">Velocity</th>
-              <th class="p-3">Title Voids</th>
-              <th class="p-3">Triage</th>
+              <th class="py-2.5 px-3 w-8"></th>
+              <th class="py-2.5 px-3 font-semibold">Score</th>
+              <th class="py-2.5 px-3 font-semibold">Search Void Keyword</th>
+              <th class="py-2.5 px-3 font-semibold">Archetype</th>
+              <th class="py-2.5 px-3 font-semibold">Category</th>
+              <th class="py-2.5 px-3 font-semibold">Velocity</th>
+              <th class="py-2.5 px-3 font-semibold">Title Void</th>
+              <th class="py-2.5 px-3 font-semibold">Triage</th>
+              <th class="py-2.5 px-3 font-semibold text-right">Blueprint</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-800/60">
+          <tbody class="divide-y divide-slate-800/60 font-mono text-xs">
             <template x-for="item in queries" :key="item.id">
-              <tr class="hover:bg-slate-800/40 transition">
-                <td class="p-3">
-                  <input type="checkbox" :value="item.id" x-model="selectedRows" class="rounded accent-amber-500">
+              <tr class="hover:bg-slate-800/40 transition" :class="selectedRows.includes(item.id) ? 'bg-indigo-950/30' : ''">
+                <td class="py-2 px-3">
+                  <input type="checkbox" :checked="selectedRows.includes(item.id)" @change="toggleRowSelection(item.id)"
+                         class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0 cursor-pointer">
                 </td>
-                <td class="p-3 font-mono font-bold"
-                    :class="item.gap_score >= 85 ? 'text-amber-400' : (item.gap_score >= 65 ? 'text-emerald-400' : 'text-slate-400')"
-                    x-text="item.gap_score + '/100'"></td>
-                <td class="p-3 font-medium text-slate-200">
-                  <div class="font-semibold text-slate-100" x-text="item.keyword"></div>
-                  <div class="text-[11px] text-slate-500">
-                    <a :href="item.google_verify_url" target="_blank" class="hover:underline text-amber-400/80">Google</a> · 
-                    <a :href="item.ddg_verify_url" target="_blank" class="hover:underline text-cyan-400/80">DuckDuckGo</a> · 
-                    <a :href="item.trends_verify_url" target="_blank" class="hover:underline text-purple-400/80">Trends 12m</a>
-                  </div>
+                <td class="py-2 px-3">
+                  <span class="px-2 py-0.5 rounded font-bold"
+                        :class="item.gap_score >= 85 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : (item.gap_score >= 65 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400')"
+                        x-text="item.gap_score"></span>
                 </td>
-                <td class="p-3 text-slate-400" x-text="item.category"></td>
-                <td class="p-3 text-slate-300" x-text="item.archetype"></td>
-                <td class="p-3">
-                  <span class="px-2 py-0.5 rounded text-[11px]"
-                        :class="item.trend_type === 'BREAKOUT' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/10 text-amber-300'"
-                        x-text="item.trend_velocity"></span>
+                <td class="py-2 px-3 font-sans font-bold text-slate-100" x-text="item.keyword"></td>
+                <td class="py-2 px-3 font-sans text-indigo-300" x-text="item.archetype"></td>
+                <td class="py-2 px-3 font-sans text-slate-400" x-text="item.category"></td>
+                <td class="py-2 px-3" :class="item.trend_type === 'BREAKOUT' ? 'text-rose-400 font-bold' : 'text-slate-400'" x-text="item.trend_velocity"></td>
+                <td class="py-2 px-3">
+                  <span :class="item.exact_title_matches === 0 ? 'text-emerald-400 font-bold' : 'text-slate-400'"
+                        x-text="item.exact_title_matches + '/10'"></span>
                 </td>
-                <td class="p-3 font-mono" x-text="item.exact_title_matches + '/10'"></td>
-                <td class="p-3">
-                  <span class="px-2 py-0.5 rounded text-[11px] capitalize"
-                        :class="item.human_verdict === 'confirmed_gold' ? 'bg-amber-500/20 text-amber-400 font-bold' : (item.human_verdict === 'snoozed' ? 'bg-purple-500/20 text-purple-400' : 'bg-slate-800 text-slate-400')"
-                        x-text="item.human_verdict.replace('_', ' ')"></span>
+                <td class="py-2 px-3 font-sans">
+                  <span class="px-1.5 py-0.2 rounded text-[10px]"
+                        :class="{
+                          'bg-emerald-500/20 text-emerald-300': item.human_verdict === 'confirmed_gold',
+                          'bg-amber-500/20 text-amber-300': item.human_verdict === 'snoozed',
+                          'bg-rose-500/20 text-rose-300': item.human_verdict === 'already_served',
+                          'bg-slate-800 text-slate-500': item.human_verdict === 'pending'
+                        }"
+                        x-text="item.human_verdict"></span>
+                </td>
+                <td class="py-2 px-3 text-right font-sans">
+                  <button @click="openBlueprint(item)" class="text-xs px-2 py-0.5 rounded bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600/50 cursor-pointer">Prompt ↗</button>
                 </td>
               </tr>
             </template>
@@ -621,37 +783,41 @@
     </div>
 
     <!-- ======================================================== -->
-    <!-- TAB 4: DAILY BRIEFS                                      -->
+    <!-- TAB 4: 📝 DAILY BRIEFS READER                            -->
     <!-- ======================================================== -->
-    <div x-show="activeTab === 'reports'">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <!-- Reports Sidebar List -->
-        <div class="space-y-2">
-          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Daily Markdown Briefs</h4>
-          <template x-for="rep in reports" :key="rep.filename">
-            <button @click="loadReport(rep.filename)"
-                    :class="selectedReport === rep.filename ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 font-semibold' : 'bg-slate-900 text-slate-400 hover:bg-slate-800 border-slate-800'"
-                    class="w-full text-left p-3 rounded-xl border text-xs transition flex items-center justify-between">
-              <span x-text="rep.filename"></span>
-              <span class="text-[10px] text-slate-500 font-mono" x-text="rep.date"></span>
-            </button>
-          </template>
-          <div x-show="!reports.length" class="text-xs text-slate-500 italic p-3">No reports generated yet.</div>
-        </div>
+    <div x-show="activeTab === 'reports'" class="h-full flex overflow-hidden">
+      <!-- Left Reports List -->
+      <aside class="w-72 border-r border-slate-800 bg-slate-900/50 flex flex-col shrink-0 overflow-y-auto p-3 space-y-1.5">
+        <h3 class="text-xs font-bold text-slate-300 mb-2 px-1">Daily Intelligence Reports</h3>
+        <template x-for="r in reports" :key="r.filename">
+          <button @click="viewReport(r.filename)"
+                  class="w-full text-left p-2.5 rounded-lg border transition cursor-pointer"
+                  :class="selectedReport === r.filename ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300' : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-bold text-xs" x-text="r.date"></span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-mono" x-text="r.repo"></span>
+            </div>
+            <div class="text-[10px] text-slate-500 flex items-center justify-between font-mono">
+              <span x-text="r.filename"></span>
+              <span x-text="Math.round(r.size_bytes / 1024) + ' KB'"></span>
+            </div>
+          </button>
+        </template>
+        <div x-show="!reports.length" class="text-xs text-slate-500 italic p-3">No reports generated yet.</div>
+      </aside>
 
-        <!-- Rendered Report Content -->
-        <div class="md:col-span-3 bg-slate-900 border border-slate-800 rounded-xl p-6 prose prose-invert max-w-none text-slate-300 text-sm">
-          <div x-html="selectedReportContent || '<p class=\"text-slate-500 italic\">Select a report on the left to read.</p>'"></div>
-        </div>
-      </div>
+      <!-- Right Report Content -->
+      <section class="flex-1 overflow-y-auto p-8 bg-slate-950">
+        <div class="max-w-4xl mx-auto prose prose-invert prose-amber max-w-none" x-html="selectedReportContent"></div>
+      </section>
     </div>
 
     <!-- ======================================================== -->
-    <!-- TAB 5: SWARM MONITOR & LOGS                              -->
+    <!-- TAB 5: 🚀 CLOUD SWARM FLEET (20 RUNNERS)                 -->
     <!-- ======================================================== -->
-    <div x-show="activeTab === 'admin'">
-      <!-- Fleet Swarm Command Bar -->
-      <div class="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-2xl p-5 mb-6 shadow-xl">
+    <div x-show="activeTab === 'fleet'" class="h-full overflow-y-auto p-6 space-y-6">
+      <!-- Fleet Header Banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 rounded-2xl p-6 shadow-xl">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div class="flex items-center space-x-3">
@@ -662,84 +828,59 @@
                   <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs border border-emerald-500/30 font-mono">⚡ 20 Parallel Runners</span>
                   <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs border border-cyan-500/30 font-mono">Public / 100% Free Forever</span>
                 </h3>
-                <p class="text-xs text-slate-400 mt-0.5">Distributed headless execution across all 12 universal industry verticals with zero spend.</p>
+                <p class="text-xs text-slate-400 mt-1">Multi-repository distributed matrix probe covering all 12 universal industry verticals with $0.00 spend.</p>
               </div>
             </div>
           </div>
           <div class="flex items-center space-x-3 shrink-0">
             <button @click="dispatchFleet(3)" :disabled="fleetDispatching"
-                    class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 flex items-center space-x-2 transition disabled:opacity-50">
+                    class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 flex items-center space-x-2 transition disabled:opacity-50 cursor-pointer">
               <span x-show="!fleetDispatching">⚡ Dispatch 20 Runners</span>
               <span x-show="fleetDispatching">🚀 Triggering Swarm...</span>
             </button>
             <button @click="syncFleet()" :disabled="fleetSyncing"
-                    class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs flex items-center space-x-2 transition disabled:opacity-50">
+                    class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs flex items-center space-x-2 transition disabled:opacity-50 cursor-pointer">
               <span x-show="!fleetSyncing">🔄 Sync Fleet Reports</span>
               <span x-show="fleetSyncing">⏳ Syncing...</span>
             </button>
           </div>
         </div>
-        <div x-show="fleetMessage" class="mt-3 p-2.5 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-mono" x-text="fleetMessage"></div>
+        <div x-show="fleetMessage" class="mt-4 p-3 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-mono" x-text="fleetMessage"></div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <!-- 5-Repository Fleet Matrix -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center justify-between">
-            <span>Distributed Repository Fleet</span>
-            <span class="text-xs px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-mono" x-text="(fleetData.total_concurrent_runners || 20) + ' Total Runners'">20 Total Runners</span>
-          </h3>
-          <div class="space-y-2 text-xs">
-            <template x-for="(repo, rIdx) in (fleetData.repositories || [])" :key="repo.name">
-              <div class="p-3 rounded-lg bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition">
-                <div class="flex items-center justify-between mb-1.5">
-                  <div class="flex items-center space-x-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <a :href="repo.url" target="_blank" class="font-mono text-slate-200 font-semibold hover:text-amber-400 transition" x-text="repo.name"></a>
-                  </div>
-                  <span class="text-emerald-400 font-mono text-[11px] px-1.5 py-0.5 bg-emerald-500/10 rounded" x-text="'Shards ' + repo.shards.join(', ')"></span>
+      <!-- Repositories Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <template x-for="repo in (fleetData.repositories || [])" :key="repo.name">
+          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <a :href="repo.url" target="_blank" class="font-mono text-sm font-bold text-slate-200 hover:text-amber-400 transition" x-text="repo.name"></a>
                 </div>
-                <div class="text-[11px] text-slate-400 flex items-center justify-between">
-                  <span x-text="repo.verticals.join(' · ')"></span>
-                  <a :href="repo.url + '/actions'" target="_blank" class="text-cyan-400 hover:underline shrink-0 ml-2">Actions ↗</a>
-                </div>
+                <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold" x-text="'Shards ' + repo.shards.join(', ')"></span>
               </div>
-            </template>
-          </div>
-        </div>
+              <p class="text-xs text-slate-400 mb-2" x-text="repo.description"></p>
+              <div class="text-[11px] text-indigo-300 font-medium bg-slate-950/80 p-2 rounded-lg border border-slate-800" x-text="repo.verticals.join(' · ')"></div>
+            </div>
 
-        <!-- Cookie Rotation Health Bar -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center justify-between">
-            <span>Google Session Cookie Pool</span>
-            <span class="text-xs px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-mono" x-text="cookieStatus.status || 'Checking...'"></span>
-          </h3>
-          <p class="text-xs text-slate-400 mb-4">
-            Encrypted session cookies configured with libsodium sealed-boxes across all 5 repositories for challenge-free batch extraction.
-          </p>
-          <div class="space-y-3 text-xs">
-            <div class="flex items-center justify-between p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-              <span class="text-slate-300 font-medium">Active Cookies in Pool:</span>
-              <span class="text-amber-400 font-mono font-bold" x-text="cookieStatus.active_count || 1">1</span>
-            </div>
-            <div class="flex items-center justify-between p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-              <span class="text-slate-300 font-medium">Log Masking Protocol:</span>
-              <span class="text-emerald-400 font-mono font-bold">::add-mask:: Active</span>
-            </div>
-            <div class="flex items-center justify-between p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-              <span class="text-slate-300 font-medium">GitHub Actions Quota:</span>
-              <span class="text-cyan-400 font-mono font-bold">100% Unlimited ($0.00)</span>
+            <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
+              <span class="text-slate-500 text-[11px]">4 Ubuntu Runners</span>
+              <a :href="repo.url + '/actions'" target="_blank" class="text-cyan-400 hover:underline">View Actions ↗</a>
             </div>
           </div>
-        </div>
+        </template>
       </div>
 
-      <!-- Live Log Stream -->
+      <!-- Live Terminal Logs -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-        <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center justify-between">
-          <span>Swarm Execution Terminal</span>
-          <button @click="loadLogs()" class="text-xs text-amber-400 hover:underline">Refresh Logs</button>
-        </h3>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2">
+            <span>Execution Terminal Stream</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          </h3>
+          <button @click="loadLogs()" class="text-xs text-amber-400 hover:underline cursor-pointer">Refresh</button>
+        </div>
         <div class="bg-slate-950 rounded-lg p-3 font-mono text-xs text-slate-300 h-64 overflow-y-auto space-y-1">
           <template x-for="log in logs" :key="log.id">
             <div class="flex items-start space-x-2">
@@ -752,10 +893,11 @@
         </div>
       </div>
     </div>
+
   </main>
 
   <!-- ======================================================== -->
-  <!-- 1-CLICK AI BUILDER BLUEPRINT MODAL                       -->
+  <!-- MODAL 1: 1-CLICK AI BUILDER BLUEPRINT                    -->
   <!-- ======================================================== -->
   <div x-show="showBlueprintModal"
        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
@@ -767,51 +909,79 @@
           <span class="text-xl">🤖</span>
           <h3 class="text-base font-bold text-amber-400">1-Click AI Builder Blueprint</h3>
         </div>
-        <button @click="showBlueprintModal = false" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+        <button @click="showBlueprintModal = false" class="text-slate-400 hover:text-slate-200 text-lg">✕</button>
       </div>
 
-      <div class="space-y-4 text-xs font-mono max-h-[70vh] overflow-y-auto pr-1">
+      <div class="space-y-4 text-xs">
         <div>
-          <span class="text-slate-400 block font-bold mb-1">TARGET VOID:</span>
-          <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-amber-300 text-sm font-sans font-bold" x-text="activeBlueprint.keyword"></div>
+          <span class="text-slate-400 font-medium">Target Search Void:</span>
+          <h4 class="text-base font-bold text-slate-100 mt-0.5" x-text="activeBlueprint.keyword"></h4>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
-          <div>
-            <span class="text-slate-400 block font-bold mb-1">ARCHETYPE:</span>
-            <div class="p-2 rounded bg-slate-950 border border-slate-800 text-slate-200" x-text="activeBlueprint.archetype"></div>
+          <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+            <span class="text-slate-500 font-mono text-[10px] uppercase">Recommended $0 Stack</span>
+            <div class="font-bold text-emerald-400 text-xs mt-1" x-text="activeBlueprint.stack"></div>
           </div>
-          <div>
-            <span class="text-slate-400 block font-bold mb-1">RECOMMENDED STACK:</span>
-            <div class="p-2 rounded bg-slate-950 border border-slate-800 text-slate-200" x-text="activeBlueprint.stack"></div>
+          <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+            <span class="text-slate-500 font-mono text-[10px] uppercase">Programmatic SEO Title</span>
+            <div class="font-bold text-slate-200 text-xs mt-1" x-text="activeBlueprint.seo_title"></div>
           </div>
         </div>
 
         <div>
-          <span class="text-slate-400 block font-bold mb-1">SEO TITLE FORMULA:</span>
-          <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-emerald-400 font-sans" x-text="activeBlueprint.seo_title"></div>
-        </div>
-
-        <div>
-          <span class="text-slate-400 block font-bold mb-1">AI IMPLEMENTATION PROMPT (COPY-PASTE):</span>
-          <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 whitespace-pre-wrap select-all" x-text="activeBlueprint.prompt"></div>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-slate-400 font-medium">Ready-to-Use Prompt (Claude / GPT-4o / Gemini):</span>
+            <button @click="copyBlueprintPrompt()"
+                    class="px-3 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center space-x-1 cursor-pointer">
+              <span x-show="!copiedPrompt">📋 Copy Prompt</span>
+              <span x-show="copiedPrompt" class="text-emerald-950">✓ Copied to Clipboard!</span>
+            </button>
+          </div>
+          <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-slate-300 whitespace-pre-wrap max-h-56 overflow-y-auto" x-text="activeBlueprint.prompt"></pre>
         </div>
       </div>
+    </div>
+  </div>
 
-      <div class="mt-5 pt-3 border-t border-slate-800 flex justify-end space-x-2">
-        <button @click="copyBlueprintPrompt()"
-                class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition">
-          <span x-text="copiedPrompt ? '✅ Copied to Clipboard!' : '📋 Copy Prompt'"></span>
-        </button>
-        <button @click="showBlueprintModal = false"
-                class="px-3 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition">
-          Close
+  <!-- ======================================================== -->
+  <!-- MODAL 2: ADD CUSTOM SEED ROOT TERM                       -->
+  <!-- ======================================================== -->
+  <div x-show="showAddSeedModal"
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+       x-transition.opacity>
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative"
+         @click.away="showAddSeedModal = false">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+        <h3 class="text-sm font-bold text-slate-100 flex items-center space-x-2">
+          <span>➕</span>
+          <span>Add Custom Input Seed</span>
+        </h3>
+        <button @click="showAddSeedModal = false" class="text-slate-400 hover:text-slate-200 text-lg">✕</button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">Input Keyword / Root Niche:</label>
+          <input type="text" x-model="newSeedTerm" placeholder="e.g. mortgage calculator, docker compose..."
+                 class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1">Assigned Vertical:</label>
+          <select x-model="newSeedCategory" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+            <template x-for="cat in categories" :key="cat">
+              <option :value="cat" x-text="cat"></option>
+            </template>
+          </select>
+        </div>
+
+        <button @click="addCustomSeed()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer">
+          Queue into Frontier Pool
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Application Logic -->
-  <script src="/static/app.js"></script>
 </body>
 </html>

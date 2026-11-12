@@ -1,13 +1,17 @@
 /**
- * Gold Miner Radar UI Application (Alpine.js State Manager v6.0)
- * Manages Live Feed (Cards & Compact), Frontier Queue, Bulk Actions, 
- * AI Builder Blueprint Generator, and Swarm Telemetry.
+ * Gold Miner Radar UI Application (Alpine.js State Manager v7.0)
+ * Modern Zero-Scroll Workspace:
+ * - Two-Pane Niche Radar (Input Keywords Explorer + Discovered Results)
+ * - Frontier Harvester & Depth Queue
+ * - High-Density Data Matrix & Bulk Triage
+ * - Multi-Repo Daily Intelligence Briefs
+ * - 20-Runner Cloud Swarm Fleet Controller
  */
 
 function radarApp() {
   return {
     activeTab: 'feed',
-    feedView: 'cards',
+    feedView: 'cards', // 'cards' or 'compact'
     queries: [],
     stats: {},
     categories: [],
@@ -15,13 +19,22 @@ function radarApp() {
     logs: [],
     loading: false,
 
-    // Pagination
+    // Input Keywords (Left Pane in Radar Feed)
+    inputKeywords: [],
+    inputKeywordsTotal: 0,
+    selectedRootTerm: '',
+    inputSearch: '',
+    inputCategory: 'all',
+    inputStatus: 'all',
+    inputSort: 'gaps', // 'gaps', 'name', 'depth'
+
+    // Result Pagination & Filtering
     page: 1,
-    limit: 20,
+    limit: 24,
     totalItems: 0,
     totalPages: 1,
+    quickFilter: 'all', // 'all', 'critical_85', 'high_65', 'breakouts', 'confirmed', 'snoozed'
 
-    // Filters
     filters: {
       search: '',
       category: 'all',
@@ -30,15 +43,22 @@ function radarApp() {
       min_score: 0,
     },
 
-    // Frontier Queue state
+    // Frontier Queue State
     frontierStats: {},
     frontierItems: [],
     frontierPage: 1,
     frontierTotalPages: 1,
+    frontierSearch: '',
+    frontierCategory: 'all',
+    frontierStatus: 'all',
+    frontierDepth: 'all',
+
+    // Add Seed Modal
+    showAddSeedModal: false,
     newSeedTerm: '',
     newSeedCategory: 'Developer & Cloud',
 
-    // Bulk selection
+    // Bulk selection in Data Matrix
     selectedRows: [],
 
     // AI Blueprint Modal
@@ -46,12 +66,15 @@ function radarApp() {
     activeBlueprint: {},
     copiedPrompt: false,
 
-    // Cookie & Swarm Status
+    // Cookie & Fleet Swarm Status
     cookieStatus: {},
     fleetData: { repositories: [], total_concurrent_runners: 20 },
     fleetDispatching: false,
     fleetSyncing: false,
     fleetMessage: '',
+    dispatchBatches: 3,
+
+    // Scan state
     scanState: {
       is_scanning: false,
       progress: 0,
@@ -63,10 +86,16 @@ function radarApp() {
     // Daily Reports
     selectedReport: '',
     selectedReportContent: '',
+    reportRepoFilter: 'all',
+
+    init() {
+      this.initApp();
+    },
 
     async initApp() {
       await this.loadCategories();
       await this.loadStats();
+      await this.loadInputKeywords();
       await this.loadQueries(1);
       await this.loadFrontierStats();
       await this.loadFrontier(1);
@@ -75,11 +104,12 @@ function radarApp() {
       await this.loadReports();
       await this.loadLogs();
 
-      // Poll stats every 4 seconds
+      // Background telemetry polling every 4s
       setInterval(() => {
         this.loadStats();
         if (this.scanState.is_scanning) {
           this.loadQueries(this.page);
+          this.loadInputKeywords();
           this.loadFrontierStats();
           this.loadLogs();
         }
@@ -90,19 +120,8 @@ function radarApp() {
       try {
         const resp = await fetch('/api/categories');
         this.categories = await resp.json();
-        if (this.categories.length) {
-          this.newSeedCategory = this.categories[0];
-        }
       } catch (e) {
         console.error('Failed to load categories', e);
-      }
-    },
-
-    async setCategory(cat) {
-      this.filters.category = cat;
-      await this.loadQueries(1);
-      if (this.activeTab === 'frontier') {
-        await this.loadFrontier(1);
       }
     },
 
@@ -119,23 +138,97 @@ function radarApp() {
       }
     },
 
+    // -------------------------------------------------------------
+    // INPUT KEYWORDS (LEFT PANE)
+    // -------------------------------------------------------------
+    async loadInputKeywords() {
+      try {
+        const params = new URLSearchParams({
+          category: this.inputCategory,
+          status: this.inputStatus,
+          search: this.inputSearch,
+          limit: '200',
+        });
+        const resp = await fetch(`/api/input-keywords?${params.toString()}`);
+        const data = await resp.json();
+        let items = data.items || [];
+
+        // Sorting
+        if (this.inputSort === 'gaps') {
+          items.sort((a, b) => (b.queries_extracted || 0) - (a.queries_extracted || 0));
+        } else if (this.inputSort === 'name') {
+          items.sort((a, b) => a.niche_term.localeCompare(b.niche_term));
+        } else if (this.inputSort === 'depth') {
+          items.sort((a, b) => (a.depth_level || 0) - (b.depth_level || 0));
+        }
+
+        this.inputKeywords = items;
+        this.inputKeywordsTotal = data.total || 0;
+      } catch (e) {
+        console.error('Failed to load input keywords', e);
+      }
+    },
+
+    selectRootTerm(term) {
+      if (this.selectedRootTerm === term) {
+        this.selectedRootTerm = '';
+      } else {
+        this.selectedRootTerm = term;
+      }
+      this.page = 1;
+      this.loadQueries(1);
+    },
+
+    clearRootTerm() {
+      this.selectedRootTerm = '';
+      this.page = 1;
+      this.loadQueries(1);
+    },
+
+    // -------------------------------------------------------------
+    // DISCOVERED SEARCH GAPS (RIGHT PANE / MATRIX)
+    // -------------------------------------------------------------
     async loadQueries(targetPage = 1) {
       this.loading = true;
       this.page = targetPage;
+
+      let effectiveMinScore = this.filters.min_score;
+      let effectiveVerdict = this.filters.verdict;
+
+      if (this.quickFilter === 'critical_85') {
+        effectiveMinScore = 85;
+      } else if (this.quickFilter === 'high_65') {
+        effectiveMinScore = 65;
+      } else if (this.quickFilter === 'confirmed') {
+        effectiveVerdict = 'confirmed_gold';
+      } else if (this.quickFilter === 'snoozed') {
+        effectiveVerdict = 'snoozed';
+      }
+
       const params = new URLSearchParams({
         category: this.filters.category,
         archetype: this.filters.archetype,
-        verdict: this.filters.verdict,
-        min_score: this.filters.min_score,
+        verdict: effectiveVerdict,
+        min_score: effectiveMinScore,
         search: this.filters.search,
         page: this.page,
         limit: this.limit,
       });
 
+      if (this.selectedRootTerm) {
+        params.append('root', this.selectedRootTerm);
+      }
+
       try {
         const resp = await fetch(`/api/queries?${params.toString()}`);
         const data = await resp.json();
-        this.queries = data.items || [];
+        let items = data.items || [];
+
+        if (this.quickFilter === 'breakouts') {
+          items = items.filter(q => q.trend_type === 'BREAKOUT');
+        }
+
+        this.queries = items;
         this.totalItems = data.total || 0;
         this.totalPages = data.total_pages || 1;
       } catch (e) {
@@ -143,6 +236,20 @@ function radarApp() {
       } finally {
         this.loading = false;
       }
+    },
+
+    setQuickFilter(qf) {
+      this.quickFilter = qf;
+      this.page = 1;
+      this.loadQueries(1);
+    },
+
+    setCategory(cat) {
+      this.filters.category = cat;
+      this.inputCategory = cat;
+      this.page = 1;
+      this.loadQueries(1);
+      this.loadInputKeywords();
     },
 
     async setVerdict(id, verdict) {
@@ -153,26 +260,36 @@ function radarApp() {
           body: JSON.stringify({ id, verdict }),
         });
         if (resp.ok) {
-          // Update in-memory
-          const item = this.queries.find((q) => q.id === id);
+          const item = this.queries.find(q => q.id === id);
           if (item) item.human_verdict = verdict;
           await this.loadStats();
         }
       } catch (e) {
-        console.error('Failed to set verdict', e);
+        console.error('Failed to update verdict', e);
       }
     },
 
-    // Bulk Actions
-    toggleSelectAll(e) {
-      if (e.target.checked) {
-        this.selectedRows = this.queries.map((q) => q.id);
+    // -------------------------------------------------------------
+    // DATA MATRIX BULK OPERATIONS
+    // -------------------------------------------------------------
+    toggleRowSelection(id) {
+      const idx = this.selectedRows.indexOf(id);
+      if (idx > -1) {
+        this.selectedRows.splice(idx, 1);
       } else {
-        this.selectedRows = [];
+        this.selectedRows.push(id);
       }
     },
 
-    async bulkSetVerdict(verdict) {
+    toggleSelectAll() {
+      if (this.selectedRows.length === this.queries.length) {
+        this.selectedRows = [];
+      } else {
+        this.selectedRows = this.queries.map(q => q.id);
+      }
+    },
+
+    async executeBulkVerdict(verdict) {
       if (!this.selectedRows.length) return;
       try {
         const resp = await fetch('/api/bulk-verdict', {
@@ -181,16 +298,26 @@ function radarApp() {
           body: JSON.stringify({ ids: this.selectedRows, verdict }),
         });
         if (resp.ok) {
-          await this.loadQueries(this.page);
-          await this.loadStats();
+          this.queries.forEach(q => {
+            if (this.selectedRows.includes(q.id)) {
+              q.human_verdict = verdict;
+            }
+          });
           this.selectedRows = [];
+          await this.loadStats();
         }
       } catch (e) {
-        console.error('Failed to bulk set verdict', e);
+        console.error('Bulk verdict failed', e);
       }
     },
 
-    // Frontier Queue
+    exportData(format = 'csv') {
+      window.open(`/api/export?format=${format}`, '_blank');
+    },
+
+    // -------------------------------------------------------------
+    // FRONTIER HARVESTER & QUEUE
+    // -------------------------------------------------------------
     async loadFrontierStats() {
       try {
         const resp = await fetch('/api/frontier/stats');
@@ -200,25 +327,38 @@ function radarApp() {
       }
     },
 
-    async loadFrontier(targetPage = 1) {
-      this.frontierPage = targetPage;
+    async loadFrontier(page = 1) {
+      this.frontierPage = page;
       const params = new URLSearchParams({
-        category: this.filters.category,
+        category: this.frontierCategory,
+        status: this.frontierStatus,
+        depth: this.frontierDepth,
+        search: this.frontierSearch,
         page: this.frontierPage,
         limit: 30,
       });
-
       try {
         const resp = await fetch(`/api/frontier?${params.toString()}`);
         const data = await resp.json();
         this.frontierItems = data.items || [];
         this.frontierTotalPages = data.total_pages || 1;
       } catch (e) {
-        console.error('Failed to load frontier page', e);
+        console.error('Failed to load frontier queue', e);
       }
     },
 
-    async addSeed() {
+    async triggerHarvester() {
+      try {
+        await fetch('/api/frontier/harvest', { method: 'POST' });
+        await this.loadFrontierStats();
+        await this.loadInputKeywords();
+        alert('Multi-source harvester launched in background! Frontier queue expanding...');
+      } catch (e) {
+        console.error('Failed to trigger harvester', e);
+      }
+    },
+
+    async addCustomSeed() {
       if (!this.newSeedTerm.trim()) return;
       try {
         const resp = await fetch('/api/frontier/add', {
@@ -229,37 +369,32 @@ function radarApp() {
             category: this.newSeedCategory,
           }),
         });
-        const res = await resp.json();
-        this.newSeedTerm = '';
-        await this.loadFrontierStats();
-        await this.loadFrontier(1);
+        if (resp.ok) {
+          this.newSeedTerm = '';
+          this.showAddSeedModal = false;
+          await this.loadFrontierStats();
+          await this.loadInputKeywords();
+          await this.loadFrontier(1);
+        }
       } catch (e) {
-        console.error('Failed to add seed', e);
+        console.error('Failed to add custom seed', e);
       }
     },
 
-    // Cookie Status
-    async loadCookieStatus() {
-      try {
-        const resp = await fetch('/api/cookies/status');
-        this.cookieStatus = await resp.json();
-      } catch (e) {
-        console.error('Failed to load cookie status', e);
-      }
-    },
-
-    // 1-Click AI Builder Blueprint Generator
+    // -------------------------------------------------------------
+    // 1-CLICK AI BUILDER BLUEPRINT GENERATOR
+    // -------------------------------------------------------------
     openBlueprint(item) {
       const q = item.keyword;
       const arch = item.archetype || 'Micro-Tool';
       const cat = item.category || 'General';
 
-      let stack = 'Static HTML + Alpine.js + Tailwind CSS (Cloudflare Pages)';
+      let stack = 'Static HTML + Alpine.js + Tailwind CSS (Cloudflare Pages / Vercel)';
       let seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Free Online Tool (2025)`;
       let prompt = '';
 
       if (arch === 'Micro-Tool') {
-        stack = 'Static Single-Page HTML/Wasm + Tailwind (Zero Backend)';
+        stack = 'Static Single-Page HTML/Wasm + Tailwind (Zero Backend, $0 Hosting)';
         seoTitle = `Free ${q.charAt(0).toUpperCase() + q.slice(1)} — Instant & No Signup`;
         prompt = `Act as an expert frontend engineer. Build a lightweight, responsive, single-page web utility for: "${q}".
 - Target User: People searching for "${q}" needing immediate results.
@@ -287,11 +422,11 @@ Format in clean Markdown with copyable syntax-highlighted code blocks.`;
 - Core Structure: Clean layout, pre-filled formulas/configs, and instructions.
 - Provide both a copyable raw config/scaffold and a printable checklist.`;
       } else {
-        stack = 'Programmatic Comparison Table (Next.js / Astro)';
-        seoTitle = `${q} — In-Depth Feature & Pricing Comparison`;
-        prompt = `Build a high-converting, objective comparison matrix for: "${q}".
-- Compare core features, pricing, open source vs hosted tradeoffs, and real-world benchmarks.
-- Provide a summary verdict recommendation matrix.`;
+        stack = 'Production-Ready Boilerplate & Canonical Recipe';
+        seoTitle = `${q} — Canonical Recipe & Production Boilerplate`;
+        prompt = `Build a high-quality developer boilerplate repository for: "${q}".
+- Include full docker-compose / setup commands, clean modular structure, zero deprecated packages.
+- Add comprehensive README with 1-click deploy to Vercel/Render.`;
       }
 
       this.activeBlueprint = {
@@ -312,24 +447,26 @@ Format in clean Markdown with copyable syntax-highlighted code blocks.`;
         this.copiedPrompt = true;
         setTimeout(() => {
           this.copiedPrompt = false;
-        }, 3000);
+        }, 2500);
       }
     },
 
-    // Daily Reports
+    // -------------------------------------------------------------
+    // DAILY BRIEFS (REPORTS)
+    // -------------------------------------------------------------
     async loadReports() {
       try {
         const resp = await fetch('/api/reports');
         this.reports = await resp.json();
         if (this.reports.length && !this.selectedReport) {
-          await this.loadReport(this.reports[0].filename);
+          this.viewReport(this.reports[0].filename);
         }
       } catch (e) {
         console.error('Failed to load reports', e);
       }
     },
 
-    async loadReport(filename) {
+    async viewReport(filename) {
       this.selectedReport = filename;
       try {
         const resp = await fetch(`/api/reports/${encodeURIComponent(filename)}`);
@@ -340,32 +477,9 @@ Format in clean Markdown with copyable syntax-highlighted code blocks.`;
       }
     },
 
-    // Live Logs
-    async loadLogs() {
-      try {
-        const resp = await fetch('/api/logs');
-        this.logs = await resp.json();
-      } catch (e) {
-        console.error('Failed to load logs', e);
-      }
-    },
-
-    // Manual Scan Trigger
-    async triggerScan() {
-      try {
-        const resp = await fetch('/api/scan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ category: this.filters.category, limit_batches: 2 }),
-        });
-        const data = await resp.json();
-        await this.loadStats();
-      } catch (e) {
-        console.error('Failed to trigger scan', e);
-      }
-    },
-
-    // Fleet Swarm Controls
+    // -------------------------------------------------------------
+    // CLOUD SWARM FLEET (20 RUNNERS)
+    // -------------------------------------------------------------
     async loadFleetStatus() {
       try {
         const resp = await fetch('/api/fleet/status');
@@ -408,5 +522,44 @@ Format in clean Markdown with copyable syntax-highlighted code blocks.`;
         this.fleetSyncing = false;
       }
     },
+
+    async loadCookieStatus() {
+      try {
+        const resp = await fetch('/api/cookies/status');
+        this.cookieStatus = await resp.json();
+      } catch (e) {
+        console.error('Failed to load cookie status', e);
+      }
+    },
+
+    async loadLogs() {
+      try {
+        const resp = await fetch('/api/logs');
+        this.logs = await resp.json();
+      } catch (e) {
+        console.error('Failed to load logs', e);
+      }
+    },
+
+    async triggerScan() {
+      try {
+        const resp = await fetch('/api/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category: this.filters.category, limit_batches: 2 }),
+        });
+        await this.loadStats();
+      } catch (e) {
+        console.error('Failed to trigger scan', e);
+      }
+    },
   };
 }
+
+// Make globally available & register with Alpine
+window.radarApp = radarApp;
+document.addEventListener('alpine:init', () => {
+  if (window.Alpine) {
+    window.Alpine.data('radarApp', radarApp);
+  }
+});
