@@ -234,10 +234,10 @@
         <div class="p-3 border-b border-slate-800 bg-slate-900/60 shrink-0 space-y-2">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-1.5">
-              <span class="text-xs font-bold text-slate-200">Input Root Keywords</span>
-              <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-mono" x-text="inputKeywords.length + ' shown'">0</span>
+              <span class="text-xs font-bold text-slate-200">Frontier Roots</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 font-mono" x-text="inputKeywords.length + ' in vertical'">0</span>
             </div>
-            <button @click="loadInputKeywords()" class="text-slate-400 hover:text-amber-400 text-xs" title="Refresh input keywords">🔄</button>
+            <button @click="loadInputKeywords()" class="text-slate-400 hover:text-amber-400 text-xs" title="Refresh frontier roots">🔄</button>
           </div>
 
           <!-- Search Input -->
@@ -272,16 +272,18 @@
           </div>
         </div>
 
-        <!-- Master Item: All Input Keywords (Reset Filter) -->
+        <!-- Master Item: All Discovered Opportunities (Reset Root Filter) -->
         <div class="p-2 border-b border-slate-800/80 bg-slate-950/40 shrink-0">
           <button @click="clearRootTerm()"
                   class="w-full text-left p-2.5 rounded-lg border transition flex items-center justify-between cursor-pointer"
                   :class="!selectedRootTerm ? 'bg-amber-500/15 border-amber-500/50 text-amber-300 font-semibold' : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700'">
             <div class="flex items-center space-x-2">
               <span>⭐</span>
-              <span class="text-xs">All Input Keywords</span>
+              <span class="text-xs truncate max-w-[140px]" 
+                    x-text="filters.category !== 'all' ? ('All ' + filters.category) : 'All Verticals'"></span>
             </div>
-            <span class="text-xs font-mono font-bold text-amber-400" x-text="stats.total_queries || 0">0</span>
+            <span class="text-xs font-mono font-bold text-amber-400 shrink-0" 
+                  x-text="(filters.category !== 'all' ? ((stats.by_category && stats.by_category[filters.category]) || 0) : (stats.total_queries || 0)) + ' items'">0</span>
           </button>
         </div>
 

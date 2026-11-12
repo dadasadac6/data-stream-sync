@@ -190,6 +190,8 @@ function radarApp() {
         this.selectedRootTerm = '';
       } else {
         this.selectedRootTerm = term;
+        // Reset quickFilter to 'all' so all opportunities for this specific root are immediately visible
+        this.quickFilter = 'all';
       }
       this.page = 1;
       this.loadQueries(1);
@@ -271,6 +273,7 @@ function radarApp() {
     setCategory(cat) {
       this.filters.category = cat;
       this.inputCategory = cat;
+      this.selectedRootTerm = '';
       this.page = 1;
       this.loadQueries(1);
       this.loadInputKeywords();
