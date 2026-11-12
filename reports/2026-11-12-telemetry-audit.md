@@ -462,3 +462,13 @@
 - **SERP Competition:** 0/10 exact `<title>` matches (Untouched Void if 0-1)
 - **1-Click Verify:** [Google Live ↗](https://www.google.com/search?q=health%20for%20life%20bethesda) | [DuckDuckGo ↗](https://duckduckgo.com/?q=health%20for%20life%20bethesda) | [Trends 12m ↗](https://trends.google.com/trends/explore?q=health%20for%20life%20bethesda&date=today%2012-m)
 
+### `[70/100]` ebay seller hub
+- **Category:** E-Commerce & Selling | **Archetype:** Recipe | **Velocity:** ⚡ +1,050%
+- **SERP Competition:** 0/10 exact `<title>` matches (Untouched Void if 0-1)
+- **1-Click Verify:** [Google Live ↗](https://www.google.com/search?q=ebay%20seller%20hub) | [DuckDuckGo ↗](https://duckduckgo.com/?q=ebay%20seller%20hub) | [Trends 12m ↗](https://trends.google.com/trends/explore?q=ebay%20seller%20hub&date=today%2012-m)
+
+### `[72/100]` ebay profit calculator
+- **Category:** E-Commerce & Selling | **Archetype:** Micro-Tool | **Velocity:** ⚡ +300%
+- **SERP Competition:** 0/10 exact `<title>` matches (Untouched Void if 0-1)
+- **1-Click Verify:** [Google Live ↗](https://www.google.com/search?q=ebay%20profit%20calculator) | [DuckDuckGo ↗](https://duckduckgo.com/?q=ebay%20profit%20calculator) | [Trends 12m ↗](https://trends.google.com/trends/explore?q=ebay%20profit%20calculator&date=today%2012-m)
+
