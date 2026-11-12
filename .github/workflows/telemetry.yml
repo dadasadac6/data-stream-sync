@@ -52,7 +52,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STACKAPPS_KEY: ${{ secrets.STACKAPPS_KEY }}
           SHARD_ID: ${{ matrix.shard_id }}
-          TOTAL_SHARDS: 4
+          TOTAL_SHARDS: 20
         run: |
           python3 -m engines.probe_worker \
             --shard-id $SHARD_ID \
