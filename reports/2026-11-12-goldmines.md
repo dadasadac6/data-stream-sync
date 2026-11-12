@@ -212,3 +212,23 @@
 - **SERP Competition:** 0/10 exact `<title>` matches (Untouched Void if 0-1)
 - **1-Click Verify:** [Google Live ↗](https://www.google.com/search?q=shopify%20com%20tools%20profit%20margin%20calculator) | [DuckDuckGo ↗](https://duckduckgo.com/?q=shopify%20com%20tools%20profit%20margin%20calculator) | [Trends 12m ↗](https://trends.google.com/trends/explore?q=shopify%20com%20tools%20profit%20margin%20calculator&date=today%2012-m)
 
+### `[80/100]` pdf to epub error
+- **Category:** Media & Converters | **Archetype:** Workaround | **Velocity:** 🔥 BREAKOUT
+- **SERP Competition:** 0/10 exact `<title>` matches (Untouched Void if 0-1)
+- **1-Click Verify:** [Google Live ↗](https://www.google.com/search?q=pdf%20to%20epub%20error) | [DuckDuckGo ↗](https://duckduckgo.com/?q=pdf%20to%20epub%20error) | [Trends 12m ↗](https://trends.google.com/trends/explore?q=pdf%20to%20epub%20error&date=today%2012-m)
+
+### `[75/100]` remove background from image
+- **Category:** Media & Converters | **Archetype:** Recipe | **Velocity:** ⚡ +800%
+- **SERP Competition:** 0/10 exact `<title>` matches (Untouched Void if 0-1)
+- **1-Click Verify:** [Google Live ↗](https://www.google.com/search?q=remove%20background%20from%20image) | [DuckDuckGo ↗](https://duckduckgo.com/?q=remove%20background%20from%20image) | [Trends 12m ↗](https://trends.google.com/trends/explore?q=remove%20background%20from%20image&date=today%2012-m)
+
+### `[75/100]` body fat percentage calculator for teens
+- **Category:** Health & Fitness | **Archetype:** Micro-Tool | **Velocity:** ⚡ +320%
+- **SERP Competition:** 0/10 exact `<title>` matches (Untouched Void if 0-1)
+- **1-Click Verify:** [Google Live ↗](https://www.google.com/search?q=body%20fat%20percentage%20calculator%20for%20teens) | [DuckDuckGo ↗](https://duckduckgo.com/?q=body%20fat%20percentage%20calculator%20for%20teens) | [Trends 12m ↗](https://trends.google.com/trends/explore?q=body%20fat%20percentage%20calculator%20for%20teens&date=today%2012-m)
+
+### `[75/100]` moving checklist things to do
+- **Category:** Real Estate & Living | **Archetype:** Recipe | **Velocity:** ⚡ +360%
+- **SERP Competition:** 0/10 exact `<title>` matches (Untouched Void if 0-1)
+- **1-Click Verify:** [Google Live ↗](https://www.google.com/search?q=moving%20checklist%20things%20to%20do) | [DuckDuckGo ↗](https://duckduckgo.com/?q=moving%20checklist%20things%20to%20do) | [Trends 12m ↗](https://trends.google.com/trends/explore?q=moving%20checklist%20things%20to%20do&date=today%2012-m)
+
