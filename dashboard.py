@@ -273,6 +273,11 @@ def get_queries(
             except Exception:
                 item["evidence"] = {}
 
+        # Defense-in-depth: Never treat an unverified/empty scrape as exact_title_matches = 0
+        raw_results = item.get("evidence", {}).get("serp", {}).get("raw_results", [])
+        if not raw_results or len(raw_results) == 0:
+            item["exact_title_matches"] = None
+
     return {
         "items": items,
         "total": total,

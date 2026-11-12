@@ -648,6 +648,9 @@ def get_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
             cursor.execute("SELECT COUNT(*) as c FROM queries WHERE trend_type = 'BREAKOUT'")
             stats["breakouts"] = cursor.fetchone()["c"]
 
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches = 0")
+            stats["verified_voids"] = cursor.fetchone()["c"]
+
             cursor.execute("SELECT archetype, COUNT(*) as c FROM queries GROUP BY archetype")
             for r in cursor.fetchall():
                 stats["by_archetype"][r["archetype"]] = r["c"]
