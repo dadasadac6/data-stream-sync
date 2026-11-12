@@ -151,7 +151,7 @@ def compute_composite_score(
         "opportunity_tier": tier,
         "archetype": archetype,
         "deliverable_desc": deliverable,
-        "exact_title_matches": audit.get("exact_title_matches", 0),
+        "exact_title_matches": audit.get("exact_title_matches"),
         "has_github_issues": evidence.get("has_github_issues", False),
         "has_stack_questions": evidence.get("has_stack_questions", False),
         "top_competitor_title": audit.get("top_competitor_title", ""),

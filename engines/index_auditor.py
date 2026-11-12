@@ -61,43 +61,57 @@ class SerpSieve:
         }
 
     def fetch_serp(self, query: str) -> List[Dict[str, str]]:
-        """Fetches top 10 organic results from DuckDuckGo HTML endpoint with anti-rate-limit jitter."""
-        time.sleep(random.uniform(0.4, 0.9))
-        url = f"https://html.duckduckgo.com/html/?q={urllib.parse.quote(query)}"
-        req = urllib.request.Request(url, headers=self._get_headers())
-        html = ""
+        """
+        Fetches top 10 organic results from DuckDuckGo HTML endpoint,
+        falling back to the lightweight lite.duckduckgo.com endpoint if primary is rate-limited.
+        """
+        time.sleep(random.uniform(0.3, 0.7))
+        results: List[Dict[str, str]] = []
 
+        # 1. Primary: html.duckduckgo.com
         try:
-            with urllib.request.urlopen(req, context=SSL_CTX, timeout=6) as resp:
+            url = f"https://html.duckduckgo.com/html/?q={urllib.parse.quote(query)}"
+            req = urllib.request.Request(url, headers=self._get_headers())
+            with urllib.request.urlopen(req, context=SSL_CTX, timeout=5) as resp:
                 html = resp.read().decode("utf-8", errors="ignore")
+
+            blocks = re.findall(r'<div class="result results_links.*?\">(.*?)</div>\s*</div>', html, re.DOTALL)
+            for b in blocks[:10]:
+                m_url = re.search(r"uddg=([^&]+)", b)
+                m_title = re.search(r'<a[^>]+class="result__a"[^>]*>(.*?)</a>', b, re.DOTALL)
+                m_snippet = re.search(r'<a[^>]+class="result__snippet"[^>]*>(.*?)</a>', b, re.DOTALL)
+
+                if m_url and m_title:
+                    try:
+                        real_url = urllib.parse.unquote(m_url.group(1))
+                        clean_title = unescape(re.sub(r"<[^>]+>", "", m_title.group(1))).strip()
+                        snippet = unescape(re.sub(r"<[^>]+>", "", m_snippet.group(1))).strip() if m_snippet else ""
+                        results.append({"title": clean_title, "url": real_url, "snippet": snippet})
+                    except Exception:
+                        continue
         except Exception as e:
-            logger.debug(f"DuckDuckGo HTML SERP fetch failed for '{query}': {e}. Trying lite endpoint.")
-            # Fallback to lite.duckduckgo.com
+            logger.debug(f"DuckDuckGo HTML SERP primary fetch failed for '{query}': {e}")
+
+        # 2. Resilient Fallback: lite.duckduckgo.com (Different server infrastructure, fewer blocks)
+        if not results:
             try:
                 lite_url = f"https://lite.duckduckgo.com/lite/?q={urllib.parse.quote(query)}"
                 lite_req = urllib.request.Request(lite_url, headers=self._get_headers())
-                with urllib.request.urlopen(lite_req, context=SSL_CTX, timeout=6) as resp:
-                    html = resp.read().decode("utf-8", errors="ignore")
-            except Exception:
-                return []
+                with urllib.request.urlopen(lite_req, context=SSL_CTX, timeout=5) as resp:
+                    lite_html = resp.read().decode("utf-8", errors="ignore")
 
-        # Parse result blocks
-        blocks = re.findall(r'<div class="result results_links.*?\">(.*?)</div>\s*</div>', html, re.DOTALL)
-        results: List[Dict[str, str]] = []
-
-        for b in blocks[:10]:
-            m_url = re.search(r"uddg=([^&]+)", b)
-            m_title = re.search(r'<a[^>]+class="result__a"[^>]*>(.*?)</a>', b, re.DOTALL)
-            m_snippet = re.search(r'<a[^>]+class="result__snippet"[^>]*>(.*?)</a>', b, re.DOTALL)
-
-            if m_url and m_title:
-                try:
-                    real_url = urllib.parse.unquote(m_url.group(1))
-                    clean_title = unescape(re.sub(r"<[^>]+>", "", m_title.group(1))).strip()
-                    snippet = unescape(re.sub(r"<[^>]+>", "", m_snippet.group(1))).strip() if m_snippet else ""
-                    results.append({"title": clean_title, "url": real_url, "snippet": snippet})
-                except Exception:
-                    continue
+                matches = re.findall(r'<a\s+[^>]*href=[\'\"]([^\'\"]+)[\'\"][^>]*class=[\'\"]result-link[\'\"][^>]*>(.*?)</a>', lite_html, re.DOTALL)
+                for href, title in matches:
+                    if "duckduckgo-help-pages" in href or "more info" in title.lower() or "y.js" in href:
+                        continue
+                    m = re.search(r"uddg=([^&]+)", href)
+                    real_url = urllib.parse.unquote(m.group(1)) if m else href
+                    clean_title = unescape(re.sub(r"<[^>]+>", "", title)).strip()
+                    results.append({"title": clean_title, "url": real_url, "snippet": ""})
+                    if len(results) >= 10:
+                        break
+            except Exception as e:
+                logger.debug(f"DuckDuckGo Lite fallback fetch failed for '{query}': {e}")
 
         return results
 

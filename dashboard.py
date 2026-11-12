@@ -84,6 +84,15 @@ class BatchAuditRequest(BaseModel):
     items: List[LiveAuditRequest]
 
 
+class InstantProbeRequest(BaseModel):
+    term: str
+    category: Optional[str] = "Developer & Cloud"
+
+
+class RecheckFrontierRequest(BaseModel):
+    term: str
+
+
 class AddFrontierRequest(BaseModel):
     term: str
     category: str
@@ -624,6 +633,27 @@ def audit_serp_batch(req: BatchAuditRequest):
             time.sleep(random.uniform(0.3, 0.6))
 
         return {"status": "ok", "audited": results}
+    finally:
+        conn.close()
+
+
+@app.post("/api/probe/instant")
+def instant_probe_endpoint(req: InstantProbeRequest, background_tasks: BackgroundTasks):
+    from engines.rechecker import recheck_term
+    background_tasks.add_task(recheck_term, req.term, req.category)
+    return {"status": "ok", "message": f"Instant live probe launched for '{req.term}'"}
+
+
+@app.post("/api/frontier/recheck")
+def recheck_frontier_endpoint(req: RecheckFrontierRequest):
+    conn = db.get_connection()
+    try:
+        cur = conn.cursor()
+        sig = db.compute_signature(req.term)
+        cur.execute("DELETE FROM explored_signatures WHERE signature_hash = ?", (sig,))
+        cur.execute("UPDATE frontier_niches SET status = 'pending', queries_extracted = 0 WHERE niche_term = ?", (req.term,))
+        conn.commit()
+        return {"status": "ok", "message": f"Frontier term '{req.term}' reset to pending"}
     finally:
         conn.close()
 

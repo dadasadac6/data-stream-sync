@@ -183,7 +183,7 @@ def run_swarm_shard(
                         "trend_velocity": cand.get("change", "Stable"),
                         "gap_score": gap_score,
                         "archetype": score_data["archetype"],
-                        "exact_title_matches": serp_res.get("exact_title_matches", 0),
+                        "exact_title_matches": serp_res.get("exact_title_matches"),
                         "has_github_issues": dev_res.get("has_github_issues", False),
                         "has_stack_questions": dev_res.get("has_stack_questions", False),
                         "top_competitor_title": serp_res.get("top_competitor_title", ""),

@@ -441,7 +441,7 @@ def upsert_query(data: Dict[str, Any], db_path: Optional[str] = None) -> int:
                     data.get("trend_velocity", "Stable"),
                     int(data.get("gap_score", 0)),
                     data.get("archetype", "Recipe"),
-                    int(data.get("exact_title_matches", 0)),
+                    int(data["exact_title_matches"]) if data.get("exact_title_matches") is not None else None,
                     1 if data.get("has_github_issues") else 0,
                     1 if data.get("has_stack_questions") else 0,
                     data.get("top_competitor_title", ""),

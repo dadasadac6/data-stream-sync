@@ -310,6 +310,13 @@
                   <span class="text-[9px] px-1 py-0.2 rounded bg-slate-800 font-mono text-slate-400" x-text="'D' + (item.depth_level || 0)"></span>
                   <span x-show="item.status === 'completed'" class="text-emerald-400 text-[10px]">✓</span>
                   <span x-show="item.status === 'pending'" class="text-slate-500 text-[10px]">⏳</span>
+                  <button @click.stop="recheckNiche(item.niche_term, item.category)"
+                          :disabled="recheckingTerm === item.niche_term"
+                          class="text-[10px] text-slate-400 hover:text-amber-300 p-0.5 rounded hover:bg-slate-800 transition cursor-pointer ml-0.5"
+                          title="Instant Live Recheck & Evaluate">
+                    <span x-show="recheckingTerm !== item.niche_term">↻</span>
+                    <span x-show="recheckingTerm === item.niche_term" class="animate-pulse">...</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1107,9 +1114,14 @@
           </div>
         </div>
 
-        <button @click="addCustomSeed()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition cursor-pointer">
-          Queue Single Seed into Frontier Pool
-        </button>
+        <div class="flex items-center space-x-2 pt-2">
+          <button @click="addCustomSeed()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition cursor-pointer">
+            Queue into Frontier Pool
+          </button>
+          <button @click="recheckNiche(newSeedTerm, newSeedCategory); showAddSeedModal = false;" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition cursor-pointer flex items-center justify-center space-x-1">
+            <span>⚡ Probe Live Now</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>

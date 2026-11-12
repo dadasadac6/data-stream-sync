@@ -100,6 +100,7 @@ function radarApp() {
 
     // Live Auditing State
     isAuditingBatch: false,
+    recheckingTerm: '',
 
     init() {
       this.initApp();
@@ -334,6 +335,27 @@ function radarApp() {
         }
       } finally {
         this.isAuditingBatch = false;
+      }
+    },
+
+    async recheckNiche(term, category) {
+      if (!term || this.recheckingTerm === term) return;
+      this.recheckingTerm = term;
+      try {
+        const resp = await fetch('/api/probe/instant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ term, category: category || 'Developer & Cloud' }),
+        });
+        if (resp.ok) {
+          alert(`⚡ Instant live probe launched for "${term}"! Evaluating Google Trends & SERP voids in background...`);
+          setTimeout(() => { this.loadQueries(1); this.loadInputKeywords(); this.loadStats(); }, 5000);
+          setTimeout(() => { this.loadQueries(1); this.loadInputKeywords(); this.loadStats(); }, 15000);
+        }
+      } catch (e) {
+        console.error('Failed to trigger recheck', e);
+      } finally {
+        this.recheckingTerm = '';
       }
     },
 
