@@ -1,4 +1,4 @@
-# ⛏️ Developer Search Gap Radar — Daily Intelligence Brief (2026-11-11)
+# 📊 Ecosystem Telemetry — Shard Audit Matrix (2026-11-11)
 
 > **Budget Spent:** $0.00 (Hard Rule) | **Protocol:** Pure HTTP Dual-Evidence Sieve
 > **Generated At:** 2026-11-11 12:33:11 UTC

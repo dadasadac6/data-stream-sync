@@ -20,11 +20,11 @@ if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
 import storage.db as db
-from engines.dev_evidence import DevEvidenceCollector
-from engines.exclusion_shield import ExclusionShield
-from engines.scorer import compute_composite_score
-from engines.serp_sieve import SerpSieve
-from engines.trends_batch import TrendsBatchHTTP
+from engines.signal_tracer import SignalTracer, DevEvidenceCollector
+from engines.filter_pipeline import FilterPipeline, ExclusionShield
+from engines.evaluator import compute_composite_score
+from engines.index_auditor import IndexAuditor, SerpSieve
+from engines.stream_sampler import StreamSamplerHTTP, TrendsBatchHTTP
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("telemetry_probe")
@@ -36,7 +36,7 @@ def generate_daily_report(top_items: List[Dict[str, Any]], shard_id: int = 0) ->
     """Appends newly discovered high-value opportunities to the daily report."""
     os.makedirs(REPORTS_DIR, exist_ok=True)
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    report_filename = f"{today_str}-goldmines.md"
+    report_filename = f"{today_str}-telemetry-audit.md"
     report_path = os.path.join(REPORTS_DIR, report_filename)
 
     is_new = not os.path.exists(report_path)
@@ -44,14 +44,13 @@ def generate_daily_report(top_items: List[Dict[str, Any]], shard_id: int = 0) ->
 
     if is_new:
         lines = [
-            f"# ⛏️ Search Gap Radar — Daily Intelligence Brief ({today_str})",
+            f"# 📊 Ecosystem Telemetry — Shard Audit Matrix ({today_str})",
             "",
-            "> **Budget Spent:** $0.00 (Hard Rule) | **Protocol:** Pure HTTP Dual-Evidence Sieve",
-            f"> **Generated At:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}",
+            "> **Generated At:** " + datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC') + " | **Protocol:** Pure HTTP Matrix Probe",
             "",
             "---",
             "",
-            "## 1. Top Opportunities (Actionable Briefs)",
+            "## 1. High-Priority Matrix Signals",
             "",
         ]
 

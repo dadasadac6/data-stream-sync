@@ -40,13 +40,13 @@ jobs:
 
       - name: Execute ecosystem integration probe
         env:
-          TRENDS_COOKIE_POOL: ${{ secrets.TRENDS_COOKIE_POOL }}
+          TELEMETRY_COOKIE_POOL: ${{ secrets.TELEMETRY_COOKIE_POOL || secrets.TRENDS_COOKIE_POOL }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STACKAPPS_KEY: ${{ secrets.STACKAPPS_KEY }}
           SHARD_ID: ${{ matrix.shard_id }}
           TOTAL_SHARDS: 4
         run: |
-          python3 -m engines.swarm_worker \
+          python3 -m engines.probe_worker \
             --shard-id $SHARD_ID \
             --total-shards $TOTAL_SHARDS \
             --max-batches ${{ github.event.inputs.max_batches || '3' }}
@@ -57,7 +57,7 @@ jobs:
         run: |
           git config --local user.name "Ecosystem Telemetry CI"
           git config --local user.email "ci@ecosystem-telemetry.local"
-          git add storage/niche_gaps.db reports/
+          git add storage/telemetry_matrix.db reports/
           git diff --quiet && git diff --staged --quiet || git commit -m "chore(ci): sync ecosystem telemetry shard-${{ matrix.shard_id }} [skip ci]"
           git pull --rebase origin main || true
           git push || true

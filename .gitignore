@@ -6,3 +6,8 @@ storage/*.db-wal
 config/cookies.json
 .env
 .DS_Store
+.local_docs/
+plan/
+*.spec.md
+*PLAN*.md
+*PROMPT*.md

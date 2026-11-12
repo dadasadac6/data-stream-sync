@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
-# 1-Click Background Radar Daemon Launcher
-# Continuous autonomous intelligence loop with zero spend
+# Ecosystem Telemetry Probe Daemon Launcher
+# Continuous autonomous verification loop
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 cd "$DIR"
 
 echo "=========================================================="
-echo "📡  Starting Autonomous Developer Search Gap Radar..."
+echo "📡  Starting Ecosystem Telemetry Probe..."
 echo "=========================================================="
-echo "Protocol: 8-Term Batch Exploration + Dual-Evidence Sieve"
-echo "Budget:   \$0.00 Hard Rule"
+echo "Protocol: 8-Term Batch Exploration + Matrix Verification"
 echo "=========================================================="
 
-python3 radar_daemon.py "$@"
+python3 probe_daemon.py "$@"

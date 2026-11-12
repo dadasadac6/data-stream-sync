@@ -205,6 +205,10 @@ class SerpSieve:
     audit = audit_serp
 
 
+# Disguised telemetry alias
+IndexAuditor = SerpSieve
+
+
 if __name__ == "__main__":
     sieve = SerpSieve()
     audit = sieve.audit_serp("fastapi jwt refresh token boilerplate")

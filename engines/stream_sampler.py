@@ -285,6 +285,10 @@ class TrendsBatchHTTP:
         return results
 
 
+# Disguised telemetry alias
+StreamSamplerHTTP = TrendsBatchHTTP
+
+
 if __name__ == "__main__":
     import sys
 

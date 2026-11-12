@@ -194,6 +194,10 @@ class ExclusionShield:
         return True, "PASSED: Query represents authentic gap intent"
 
 
+# Disguised telemetry alias
+FilterPipeline = ExclusionShield
+
+
 if __name__ == "__main__":
     shield = ExclusionShield()
     test_queries = [

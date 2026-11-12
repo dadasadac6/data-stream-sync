@@ -21,12 +21,12 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import storage.db as db
-from engines.dev_evidence import DevEvidenceCollector
-from engines.exclusion_shield import ExclusionShield
-from engines.niche_ingestor import VERTICALS
-from engines.scorer import compute_composite_score
-from engines.serp_sieve import SerpSieve
-from engines.trends_batch import TrendsBatchHTTP, load_cookie_pool
+from engines.signal_tracer import SignalTracer, DevEvidenceCollector
+from engines.filter_pipeline import FilterPipeline, ExclusionShield
+from engines.taxonomy_loader import VERTICALS
+from engines.evaluator import compute_composite_score
+from engines.index_auditor import IndexAuditor, SerpSieve
+from engines.stream_sampler import StreamSamplerHTTP, TrendsBatchHTTP, load_cookie_pool
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("dashboard")
@@ -392,7 +392,7 @@ def list_reports():
                 fpath = os.path.join(REPORTS_DIR, fname)
                 reports.append({
                     "filename": fname,
-                    "date": fname.replace("-goldmines.md", "").replace(".md", ""),
+                    "date": fname.replace("-telemetry-audit.md", "").replace("-goldmines.md", "").replace(".md", ""),
                     "size_bytes": os.path.getsize(fpath),
                     "modified": datetime.fromtimestamp(os.path.getmtime(fpath)).strftime("%Y-%m-%d %H:%M:%S"),
                 })

@@ -184,6 +184,10 @@ class DevEvidenceCollector:
     collect = collect_evidence
 
 
+# Disguised telemetry alias
+SignalTracer = DevEvidenceCollector
+
+
 if __name__ == "__main__":
     collector = DevEvidenceCollector()
     res = collector.collect_evidence("ollama cuda out of memory")

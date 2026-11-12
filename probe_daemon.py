@@ -15,39 +15,39 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 import storage.db as db
-from engines.dev_evidence import DevEvidenceCollector
-from engines.exclusion_shield import ExclusionShield
-from engines.scorer import compute_composite_score
-from engines.serp_sieve import SerpSieve
-from engines.trends_batch import TrendsBatchHTTP
+from engines.signal_tracer import SignalTracer, DevEvidenceCollector
+from engines.filter_pipeline import FilterPipeline, ExclusionShield
+from engines.evaluator import compute_composite_score
+from engines.index_auditor import IndexAuditor, SerpSieve
+from engines.stream_sampler import StreamSamplerHTTP, TrendsBatchHTTP
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger("radar_daemon")
+logger = logging.getLogger("probe_daemon")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.join(BASE_DIR, "config", "dev_niches.json")
+CONFIG_PATH = os.path.join(BASE_DIR, "config", "matrix_taxonomy.json")
 REPORTS_DIR = os.path.join(BASE_DIR, "reports")
 
 
 def generate_daily_report(top_items: List[Dict[str, Any]]) -> str:
-    """Generates an actionable Markdown product brief with 1-click verification links."""
+    """Generates an actionable Markdown brief with 1-click verification links."""
     os.makedirs(REPORTS_DIR, exist_ok=True)
-    today_str = datetime.utcnow().strftime("%Y-%m-%d")
-    report_filename = f"{today_str}-goldmines.md"
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    report_filename = f"{today_str}-telemetry-audit.md"
     report_path = os.path.join(REPORTS_DIR, report_filename)
 
     lines = [
-        f"# ⛏️ Developer Search Gap Radar — Daily Intelligence Brief ({today_str})",
+        f"# 📊 Ecosystem Telemetry — Shard Audit Matrix ({today_str})",
         "",
-        "> **Budget Spent:** $0.00 (Hard Rule) | **Protocol:** Pure HTTP Dual-Evidence Sieve",
-        f"> **Generated At:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}",
+        "> **Protocol:** Pure HTTP Matrix Probe",
+        f"> **Generated At:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}",
         "",
         "---",
         "",
-        "## 1. Executive Summary & Radar KPIs",
+        "## 1. Executive Summary & Telemetry KPIs",
         "",
         f"- **Qualified High-Demand Opportunities Discovered:** {len(top_items)}",
-        f"- **Critical Gold Mines (85+ Score):** {sum(1 for i in top_items if i.get('gap_score', 0) >= 85)}",
+        f"- **Critical Opportunities (85+ Score):** {sum(1 for i in top_items if i.get('gap_score', 0) >= 85)}",
         f"- **Surging Breakouts:** {sum(1 for i in top_items if i.get('trend_type') == 'BREAKOUT')}",
         "",
         "---",

@@ -164,6 +164,10 @@ def compute_composite_score(
     }
 
 
+# Disguised telemetry alias
+evaluate_matrix = compute_composite_score
+
+
 if __name__ == "__main__":
     sample_serp = {"serp_score": 35, "exact_title_matches": 0, "top_competitor_title": "Forum post", "top_competitor_url": "https://reddit.com"}
     sample_dev = {"dev_score": 25, "has_github_issues": True, "has_stack_questions": True}

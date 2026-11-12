@@ -235,6 +235,10 @@ class NicheIngestor:
         return results
 
 
+# Disguised telemetry alias
+TaxonomyLoader = NicheIngestor
+
+
 if __name__ == "__main__":
     ingestor = NicheIngestor()
     stats = ingestor.run_all()

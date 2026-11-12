@@ -1,6 +1,6 @@
 """
-Database Layer for Autonomous Search Gap Radar & Stealth Swarm (Gold Miner)
-SQLite storage with WAL mode, indexing, deduplication, frontier queue, and 90-day cooldown memory.
+Distributed State & Matrix Storage Layer
+SQLite storage with WAL mode, indexing, deduplication, state queue, and signature cache.
 """
 
 import hashlib
@@ -10,7 +10,10 @@ import sqlite3
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "niche_gaps.db")
+DB_PATH = os.path.join(os.path.dirname(__file__), "telemetry_matrix.db")
+LEGACY_DB_PATH = os.path.join(os.path.dirname(__file__), "niche_gaps.db")
+if not os.path.exists(DB_PATH) and os.path.exists(LEGACY_DB_PATH):
+    os.rename(LEGACY_DB_PATH, DB_PATH)
 
 
 def get_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
