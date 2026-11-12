@@ -67,7 +67,7 @@ def generate_daily_report(top_items: List[Dict[str, Any]], shard_id: int = 0) ->
         badge = "🔥 BREAKOUT" if ttype == "BREAKOUT" else f"⚡ {vel}"
         google_link = f"https://www.google.com/search?q={encoded_q}"
         ddg_link = f"https://duckduckgo.com/?q={encoded_q}"
-        trends_link = f"https://trends.google.com/trends/explore?q={encoded_q}&date=today%2012-m"
+        trends_link = f"https://trends.google.com/explore?q={encoded_q}&date=today%2012-m"
 
         card = [
             f"### `[{score}/100]` {q}",

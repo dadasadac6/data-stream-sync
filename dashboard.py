@@ -246,7 +246,7 @@ def get_queries(
         q_enc = urllib.parse.quote(item["keyword"])
         item["google_verify_url"] = f"https://www.google.com/search?q={q_enc}"
         item["ddg_verify_url"] = f"https://duckduckgo.com/?q={q_enc}"
-        item["trends_verify_url"] = f"https://trends.google.com/trends/explore?q={q_enc}&date=today%2012-m"
+        item["trends_verify_url"] = f"https://trends.google.com/explore?q={q_enc}&date=today%2012-m"
 
         if item.get("evidence_json"):
             try:
