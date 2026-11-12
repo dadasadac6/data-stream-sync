@@ -68,6 +68,14 @@
 
     <!-- Inline Compact KPI Pills (Clickable Filters!) -->
     <div class="hidden md:flex items-center space-x-2 text-xs">
+      <button @click="setQuickFilter('pure_gold')"
+              class="px-2.5 py-1 rounded-lg border transition flex items-center space-x-1.5 cursor-pointer shadow-sm shadow-amber-500/10"
+              :class="quickFilter === 'pure_gold' ? 'bg-gradient-to-r from-amber-500/30 to-amber-600/30 border-amber-400 text-amber-200 font-bold' : 'bg-slate-900 border-amber-500/40 text-amber-400 hover:border-amber-400'">
+        <span>🏆</span>
+        <span class="font-bold">Pure Gold</span>
+        <span class="text-[10px] px-1 py-0.2 rounded bg-amber-400/20 text-amber-300 font-mono">80+ Untouched</span>
+      </button>
+
       <button @click="setQuickFilter('critical_85')"
               class="px-2.5 py-1 rounded-lg border transition flex items-center space-x-1.5 cursor-pointer"
               :class="quickFilter === 'critical_85' ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'">
@@ -337,6 +345,12 @@
                     :class="quickFilter === 'all' ? 'bg-slate-800 text-amber-400 font-semibold' : 'text-slate-400 hover:text-slate-200'">
               All Results
             </button>
+            <button @click="setQuickFilter('pure_gold')"
+                    class="px-2.5 py-1 rounded-lg transition font-bold shrink-0 cursor-pointer flex items-center space-x-1"
+                    :class="quickFilter === 'pure_gold' ? 'bg-gradient-to-r from-amber-500/30 to-amber-600/30 text-amber-200 border border-amber-400' : 'text-amber-400 hover:text-amber-300 border border-amber-500/30 bg-amber-500/10'">
+              <span>🏆</span>
+              <span>Pure Gold (80+ Untouched)</span>
+            </button>
             <button @click="setQuickFilter('critical_85')"
                     class="px-2.5 py-1 rounded-lg transition font-medium shrink-0 cursor-pointer"
                     :class="quickFilter === 'critical_85' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40' : 'text-slate-400 hover:text-slate-200'">
@@ -483,6 +497,14 @@
                       <span class="hidden sm:inline">Blueprint</span>
                     </button>
 
+                    <!-- SERP Comparison Trigger (Ahrefs-Grade) -->
+                    <button @click="openCompare(item.keyword)"
+                            class="p-1 px-1.5 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-semibold transition flex items-center space-x-1 cursor-pointer"
+                            title="Compare SERP Overlap (Ahrefs-Grade)">
+                      <span>⚖️</span>
+                      <span class="hidden xl:inline">Compare</span>
+                    </button>
+
                     <!-- Quick Triage Actions -->
                     <button @click="setVerdict(item.id, 'confirmed_gold')"
                             class="p-1 px-1.5 rounded-md hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 text-xs transition cursor-pointer"
@@ -546,6 +568,7 @@
                       <a :href="item.trends_verify_url" target="_blank" class="text-indigo-400 hover:underline">Trends</a>
                     </td>
                     <td class="py-2 px-3 whitespace-nowrap text-right space-x-1 font-sans">
+                      <button @click="openCompare(item.keyword)" class="text-xs px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 hover:bg-amber-500/30 cursor-pointer" title="Compare SERP Overlap">⚖️</button>
                       <button @click="openBlueprint(item)" class="text-xs px-2 py-0.5 rounded bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600/50 cursor-pointer">AI Blueprint</button>
                       <button @click="setVerdict(item.id, 'confirmed_gold')" class="text-xs hover:text-emerald-400 p-0.5 cursor-pointer">⭐</button>
                       <button @click="setVerdict(item.id, 'snoozed')" class="text-xs hover:text-amber-400 p-0.5 cursor-pointer">⏳</button>
@@ -772,7 +795,8 @@
                         }"
                         x-text="item.human_verdict"></span>
                 </td>
-                <td class="py-2 px-3 text-right font-sans">
+                <td class="py-2 px-3 text-right font-sans space-x-1">
+                  <button @click="openCompare(item.keyword)" class="text-xs px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 hover:bg-amber-500/30 cursor-pointer" title="Compare SERP Overlap">⚖️</button>
                   <button @click="openBlueprint(item)" class="text-xs px-2 py-0.5 rounded bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600/50 cursor-pointer">Prompt ↗</button>
                 </td>
               </tr>
@@ -945,17 +969,17 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- MODAL 2: ADD CUSTOM SEED ROOT TERM                       -->
+  <!-- MODAL 2: ADD CUSTOM SEED & AI PRESET EXPANDER             -->
   <!-- ======================================================== -->
   <div x-show="showAddSeedModal"
        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
        x-transition.opacity>
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative"
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative"
          @click.away="showAddSeedModal = false">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
         <h3 class="text-sm font-bold text-slate-100 flex items-center space-x-2">
           <span>➕</span>
-          <span>Add Custom Input Seed</span>
+          <span>Add Custom Input Seed & AI Angle Expander</span>
         </h3>
         <button @click="showAddSeedModal = false" class="text-slate-400 hover:text-slate-200 text-lg">✕</button>
       </div>
@@ -963,7 +987,7 @@
       <div class="space-y-4 text-xs">
         <div>
           <label class="block text-slate-400 mb-1">Input Keyword / Root Niche:</label>
-          <input type="text" x-model="newSeedTerm" placeholder="e.g. mortgage calculator, docker compose..."
+          <input type="text" x-model="newSeedTerm" placeholder="e.g. mortgage calculator, docker compose, tiny house..."
                  class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
         </div>
 
@@ -976,9 +1000,161 @@
           </select>
         </div>
 
-        <button @click="addCustomSeed()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer">
-          Queue into Frontier Pool
+        <!-- Ahrefs-Grade AI Angle Expander -->
+        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+          <label class="block text-slate-400 text-[11px] font-semibold">Brainstorming Angle Presets (from Ahrefs):</label>
+          <div class="flex items-center space-x-2">
+            <select x-model="selectedPresetAngle"
+                    class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+              <option value="tools">🧮 Products, Micro-Tools & Calculators</option>
+              <option value="pain_points">⚠️ Challenges, Errors & Pain Points</option>
+              <option value="technical">🛠️ Technical, CLI & Specialized Terms</option>
+              <option value="comparative">⚖️ Comparative Phrases (X vs Y)</option>
+              <option value="emerging">🚀 Emerging Trends & Innovations (2026)</option>
+              <option value="subtopics">🧭 Subtopics & Niche Areas</option>
+              <option value="myth_busting">❌ Myth-Busting & Anti-Patterns</option>
+            </select>
+            <button @click="expandPresetSeeds()" :disabled="expandingSeeds"
+                    class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer shrink-0">
+              <span x-show="!expandingSeeds">✨ AI Expand (10 Seeds)</span>
+              <span x-show="expandingSeeds">Generating...</span>
+            </button>
+          </div>
+
+          <!-- Generated Seed Pack Preview -->
+          <div x-show="expandedSeeds.length" class="space-y-2 pt-2 border-t border-slate-800 mt-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-indigo-300" x-text="expandedSeeds.length + ' Targeted Seeds Generated'"></span>
+              <button @click="queueExpandedSeeds()"
+                      class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer shadow">
+                🚀 Queue All into Frontier
+              </button>
+            </div>
+            <div class="max-h-36 overflow-y-auto space-y-1 font-mono text-[11px] text-slate-300">
+              <template x-for="s in expandedSeeds" :key="s">
+                <div class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-slate-200 flex items-center justify-between">
+                  <span x-text="s"></span>
+                  <span class="text-emerald-400 text-[10px]">Ready</span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <button @click="addCustomSeed()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition cursor-pointer">
+          Queue Single Seed into Frontier Pool
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 3: AHREFS-GRADE SERP COMPARISON & OVERLAP ENGINE   -->
+  <!-- ======================================================== -->
+  <div x-show="showCompareModal"
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md"
+       x-transition.opacity>
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full p-6 shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden"
+         @click.away="showCompareModal = false">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
+        <div class="flex items-center space-x-2">
+          <span class="text-xl">⚖️</span>
+          <div>
+            <h3 class="text-base font-bold text-amber-400">SERP Overlap & Intent Similarity (Ahrefs-Grade)</h3>
+            <p class="text-[11px] text-slate-400">Determines if Google treats two keywords as 1 single problem or 2 independent search voids.</p>
+          </div>
+        </div>
+        <button @click="showCompareModal = false" class="text-slate-400 hover:text-slate-200 text-lg">✕</button>
+      </div>
+
+      <!-- Compare Inputs Bar -->
+      <div class="py-3 border-b border-slate-800 flex flex-wrap items-center gap-2 shrink-0 bg-slate-950/60 p-3 rounded-xl mt-3">
+        <div class="flex-1 min-w-[200px]">
+          <label class="text-[10px] text-slate-400 uppercase font-mono block mb-0.5">Keyword A</label>
+          <input type="text" x-model="compareQ1" @keydown.enter="runCompare()"
+                 class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-100 focus:outline-none focus:border-amber-400">
+        </div>
+        <span class="text-slate-500 font-bold text-xs pt-3">vs</span>
+        <div class="flex-1 min-w-[200px]">
+          <label class="text-[10px] text-slate-400 uppercase font-mono block mb-0.5">Keyword B (Compare With)</label>
+          <input type="text" x-model="compareQ2" @keydown.enter="runCompare()"
+                 class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-100 focus:outline-none focus:border-indigo-400">
+        </div>
+        <button @click="runCompare()" :disabled="compareLoading"
+                class="mt-3 px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition disabled:opacity-50 cursor-pointer">
+          <span x-show="!compareLoading">⚡ Run Comparison</span>
+          <span x-show="compareLoading">Comparing SERPs...</span>
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div x-show="compareLoading" class="flex items-center justify-center py-12 space-x-2 text-slate-400 text-xs">
+        <span class="w-3 h-3 rounded-full bg-amber-400 animate-ping"></span>
+        <span>Fetching live SERPs and computing similarity overlap...</span>
+      </div>
+
+      <!-- Similarity Score Banner -->
+      <div x-show="compareResult && !compareLoading" class="py-3 shrink-0">
+        <div class="p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+             :class="compareResult && compareResult.similarity_pct >= 50 ? 'bg-amber-950/30 border-amber-500/40' : (compareResult && compareResult.similarity_pct >= 20 ? 'bg-indigo-950/30 border-indigo-500/40' : 'bg-emerald-950/30 border-emerald-500/40')">
+          <div class="space-y-0.5">
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-bold font-mono px-2 py-0.5 rounded shadow-sm"
+                    :class="compareResult && compareResult.similarity_pct >= 50 ? 'bg-amber-400 text-slate-950 font-extrabold' : (compareResult && compareResult.similarity_pct >= 20 ? 'bg-indigo-500 text-white font-bold' : 'bg-emerald-400 text-slate-950 font-extrabold')"
+                    x-text="(compareResult ? compareResult.similarity_pct : 0) + '% SERP Similarity'"></span>
+              <span class="text-xs font-semibold text-slate-200" x-text="(compareResult ? compareResult.common_count : 0) + ' common domains in Top 10'"></span>
+            </div>
+            <p class="text-xs text-slate-300" x-text="compareResult ? compareResult.verdict : ''"></p>
+          </div>
+          <div class="text-left sm:text-right shrink-0">
+            <span class="text-[10px] text-slate-400 uppercase font-mono block">Actionable Blueprint</span>
+            <span class="text-xs font-bold text-amber-300" x-text="compareResult ? compareResult.action : ''"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side-by-Side Dual SERP Columns with Matching Highlights -->
+      <div x-show="compareResult && !compareLoading" class="flex-1 overflow-y-auto grid grid-cols-2 gap-4 mt-2 pr-1">
+        <!-- Column 1 -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold text-amber-300 flex items-center space-x-1.5 pb-1 border-b border-slate-800">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span x-text="compareResult ? compareResult.q1 : ''"></span>
+          </h4>
+          <div class="space-y-1.5">
+            <template x-for="(res, idx) in (compareResult ? compareResult.results1 : [])" :key="idx">
+              <div class="p-2 rounded-lg border text-xs transition"
+                   :class="compareResult.pairs.some(p => p.rank1 === idx + 1) ? 'bg-amber-950/20 border-amber-500/50 shadow' : 'bg-slate-950/60 border-slate-800 text-slate-400'">
+                <div class="flex items-center space-x-2 mb-1">
+                  <span class="w-5 h-5 rounded bg-slate-800 flex items-center justify-center font-mono text-[10px] font-bold text-slate-300" x-text="idx + 1"></span>
+                  <a :href="res.url" target="_blank" class="font-bold text-slate-200 hover:text-amber-300 truncate" x-text="res.title || res.url"></a>
+                </div>
+                <div class="text-[10px] text-slate-500 truncate font-mono" x-text="res.url"></div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Column 2 -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold text-indigo-300 flex items-center space-x-1.5 pb-1 border-b border-slate-800">
+            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+            <span x-text="compareResult ? compareResult.q2 : ''"></span>
+          </h4>
+          <div class="space-y-1.5">
+            <template x-for="(res, idx) in (compareResult ? compareResult.results2 : [])" :key="idx">
+              <div class="p-2 rounded-lg border text-xs transition"
+                   :class="compareResult.pairs.some(p => p.rank2 === idx + 1) ? 'bg-indigo-950/20 border-indigo-500/50 shadow' : 'bg-slate-950/60 border-slate-800 text-slate-400'">
+                <div class="flex items-center space-x-2 mb-1">
+                  <span class="w-5 h-5 rounded bg-slate-800 flex items-center justify-center font-mono text-[10px] font-bold text-slate-300" x-text="idx + 1"></span>
+                  <a :href="res.url" target="_blank" class="font-bold text-slate-200 hover:text-indigo-300 truncate" x-text="res.title || res.url"></a>
+                </div>
+                <div class="text-[10px] text-slate-500 truncate font-mono" x-text="res.url"></div>
+              </div>
+            </template>
+          </div>
+        </div>
       </div>
     </div>
   </div>

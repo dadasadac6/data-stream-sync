@@ -80,6 +80,16 @@ class AddFrontierRequest(BaseModel):
     category: str
 
 
+class BatchAddFrontierRequest(BaseModel):
+    terms: List[str]
+    category: str
+
+
+class SeedExpandRequest(BaseModel):
+    topic: str
+    preset: str  # 'technical', 'pain_points', 'subtopics', 'comparative', 'emerging', 'tools', 'myth_busting'
+
+
 class ScanRequest(BaseModel):
     category: Optional[str] = "All"
     limit_batches: Optional[int] = 2
@@ -208,6 +218,8 @@ def get_queries(
     min_score: int = 0,
     search: Optional[str] = None,
     root: Optional[str] = None,
+    trend_type: Optional[str] = None,
+    untouched_only: bool = False,
     sort_by: str = "gap_score",
     sort_order: str = "DESC",
     page: int = 1,
@@ -221,6 +233,8 @@ def get_queries(
         min_score=min_score,
         search=search,
         root=root,
+        trend_type=trend_type,
+        untouched_only=untouched_only,
         sort_by=sort_by,
         sort_order=sort_order,
         limit=limit,
@@ -351,6 +365,153 @@ def add_frontier_seed(req: AddFrontierRequest):
         raise HTTPException(status_code=400, detail="Seed term cannot be empty")
     added = db.queue_sub_niche(req.term, category=req.category, depth=0)
     return {"status": "ok" if added else "exists_or_cooldown", "term": req.term, "added": added}
+
+
+@app.post("/api/frontier/add-batch")
+def add_frontier_batch(req: BatchAddFrontierRequest):
+    added_count = 0
+    for t in req.terms:
+        clean = t.strip()
+        if clean and db.queue_sub_niche(clean, category=req.category, depth=0):
+            added_count += 1
+    return {"status": "ok", "added_count": added_count, "total_submitted": len(req.terms)}
+
+
+@app.post("/api/seeds/expand")
+def expand_seeds(req: SeedExpandRequest):
+    topic = req.topic.strip().lower()
+    preset = req.preset.lower()
+
+    PATTERNS = {
+        "technical": [
+            f"{topic} cli", f"{topic} api error", f"{topic} configuration",
+            f"{topic} architecture diagram", f"{topic} benchmarking", f"{topic} sdk documentation",
+            f"{topic} docker compose", f"{topic} open telemetry", f"{topic} rate limit",
+            f"{topic} webhook payload"
+        ],
+        "pain_points": [
+            f"{topic} error codes", f"{topic} not working", f"{topic} connection timeout",
+            f"{topic} workaround", f"{topic} high cpu memory", f"{topic} deprecation fix",
+            f"{topic} silent failure", f"{topic} permission denied", f"{topic} slow query"
+        ],
+        "subtopics": [
+            f"{topic} best practices", f"{topic} checklist", f"{topic} design principles",
+            f"{topic} security hardening", f"{topic} schema design", f"{topic} automated testing",
+            f"{topic} monitoring metrics", f"{topic} latency optimization"
+        ],
+        "comparative": [
+            f"{topic} vs", f"{topic} alternative open source", f"{topic} vs competitor",
+            f"{topic} migration guide", f"{topic} lightweight replacement", f"is {topic} obsolete"
+        ],
+        "emerging": [
+            f"{topic} llm integration", f"{topic} ai agent", f"{topic} serverless",
+            f"{topic} wasm edge", f"{topic} modern stack 2026", f"{topic} realtime websocket"
+        ],
+        "tools": [
+            f"{topic} calculator", f"{topic} generator", f"{topic} converter online",
+            f"{topic} validator", f"{topic} formatter", f"{topic} visualizer",
+            f"{topic} cheat sheet", f"{topic} interactive sandbox"
+        ],
+        "myth_busting": [
+            f"why {topic} is bad", f"{topic} common mistakes", f"when not to use {topic}",
+            f"{topic} anti patterns", f"is {topic} worth it"
+        ]
+    }
+
+    seeds = PATTERNS.get(preset, PATTERNS["tools"])
+    return {"topic": topic, "preset": preset, "seeds": seeds}
+
+
+@app.get("/api/serp/compare")
+def compare_serps(q1: str, q2: str):
+    q1 = q1.strip()
+    q2 = q2.strip()
+    if not q1 or not q2:
+        raise HTTPException(status_code=400, detail="Both q1 and q2 are required")
+
+    conn = db.get_connection()
+    results1 = []
+    results2 = []
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT evidence_json FROM queries WHERE keyword = ?", (q1,))
+        r1 = cur.fetchone()
+        if r1 and r1["evidence_json"]:
+            try:
+                ev1 = json.loads(r1["evidence_json"])
+                results1 = ev1.get("serp", {}).get("raw_results", [])
+            except Exception:
+                pass
+
+        cur.execute("SELECT evidence_json FROM queries WHERE keyword = ?", (q2,))
+        r2 = cur.fetchone()
+        if r2 and r2["evidence_json"]:
+            try:
+                ev2 = json.loads(r2["evidence_json"])
+                results2 = ev2.get("serp", {}).get("raw_results", [])
+            except Exception:
+                pass
+    finally:
+        conn.close()
+
+    sieve = SerpSieve()
+    if not results1:
+        results1 = sieve.fetch_serp(q1)
+    if not results2:
+        results2 = sieve.fetch_serp(q2)
+
+    def norm_domain(url: str):
+        try:
+            netloc = urllib.parse.urlparse(url).netloc.lower()
+            if netloc.startswith("www."):
+                netloc = netloc[4:]
+            return netloc
+        except Exception:
+            return ""
+
+    domains1 = [norm_domain(r.get("url", "")) for r in results1 if r.get("url")]
+    domains2 = [norm_domain(r.get("url", "")) for r in results2 if r.get("url")]
+
+    pairs = []
+    common_domains = set(domains1).intersection(set(domains2)) - {""}
+    for idx1, d1 in enumerate(domains1):
+        if d1 in common_domains:
+            for idx2, d2 in enumerate(domains2):
+                if d1 == d2:
+                    pairs.append({
+                        "domain": d1,
+                        "rank1": idx1 + 1,
+                        "rank2": idx2 + 1,
+                        "title1": results1[idx1].get("title", ""),
+                        "title2": results2[idx2].get("title", ""),
+                        "url1": results1[idx1].get("url", ""),
+                        "url2": results2[idx2].get("url", ""),
+                    })
+
+    union = len(set(domains1).union(set(domains2)))
+    similarity_pct = round((len(common_domains) / union * 100)) if union > 0 else 0
+
+    if similarity_pct >= 50:
+        verdict = f"High SERP Similarity ({similarity_pct}%) — Google treats these as the same user intent. Build 1 comprehensive authority page/tool covering both."
+        action = "Consolidate into 1 Page/Tool"
+    elif similarity_pct >= 20:
+        verdict = f"Moderate Overlap ({similarity_pct}%) — Shared conceptual space with distinct ranking angles. Build 1 main tool with a dedicated sub-tool."
+        action = "Build Pillar + Sub-tool"
+    else:
+        verdict = f"Low SERP Similarity ({similarity_pct}%) — Untouched Independent Voids! Google treats '{q1}' and '{q2}' as completely separate problems. Build 2 standalone tools/pages."
+        action = "Build 2 Independent Tools"
+
+    return {
+        "q1": q1,
+        "q2": q2,
+        "results1": results1[:10],
+        "results2": results2[:10],
+        "common_count": len(common_domains),
+        "similarity_pct": similarity_pct,
+        "verdict": verdict,
+        "action": action,
+        "pairs": pairs,
+    }
 
 
 @app.get("/api/cookies/status")

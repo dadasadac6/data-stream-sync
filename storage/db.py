@@ -540,6 +540,8 @@ def get_queries(
     min_score: int = 0,
     search: Optional[str] = None,
     root: Optional[str] = None,
+    trend_type: Optional[str] = None,
+    untouched_only: bool = False,
     sort_by: str = "gap_score",
     sort_order: str = "DESC",
     limit: int = 50,
@@ -570,6 +572,13 @@ def get_queries(
     if root:
         conditions.append("(keyword LIKE ? OR json_extract(evidence_json, '$.parent_niche') = ?)")
         params.extend([f"%{root}%", root])
+
+    if trend_type and trend_type.lower() != "all":
+        conditions.append("trend_type = ?")
+        params.append(trend_type.upper())
+
+    if untouched_only:
+        conditions.append("exact_title_matches = 0")
 
     where_clause = " WHERE " + " AND ".join(conditions)
 

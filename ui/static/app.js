@@ -53,10 +53,20 @@ function radarApp() {
     frontierStatus: 'all',
     frontierDepth: 'all',
 
-    // Add Seed Modal
+    // Add Seed Modal & AI Preset Expander
     showAddSeedModal: false,
     newSeedTerm: '',
     newSeedCategory: 'Developer & Cloud',
+    selectedPresetAngle: 'tools',
+    expandedSeeds: [],
+    expandingSeeds: false,
+
+    // SERP Comparison Modal (Ahrefs-Grade SERP Similarity)
+    showCompareModal: false,
+    compareQ1: '',
+    compareQ2: '',
+    compareLoading: false,
+    compareResult: null,
 
     // Bulk selection in Data Matrix
     selectedRows: [],
@@ -194,11 +204,18 @@ function radarApp() {
 
       let effectiveMinScore = this.filters.min_score;
       let effectiveVerdict = this.filters.verdict;
+      let effectiveTrendType = 'all';
+      let effectiveUntouchedOnly = false;
 
-      if (this.quickFilter === 'critical_85') {
+      if (this.quickFilter === 'pure_gold') {
+        effectiveMinScore = 80;
+        effectiveUntouchedOnly = true;
+      } else if (this.quickFilter === 'critical_85') {
         effectiveMinScore = 85;
       } else if (this.quickFilter === 'high_65') {
         effectiveMinScore = 65;
+      } else if (this.quickFilter === 'breakouts') {
+        effectiveTrendType = 'BREAKOUT';
       } else if (this.quickFilter === 'confirmed') {
         effectiveVerdict = 'confirmed_gold';
       } else if (this.quickFilter === 'snoozed') {
@@ -215,6 +232,13 @@ function radarApp() {
         limit: this.limit,
       });
 
+      if (effectiveTrendType !== 'all') {
+        params.append('trend_type', effectiveTrendType);
+      }
+      if (effectiveUntouchedOnly) {
+        params.append('untouched_only', 'true');
+      }
+
       if (this.selectedRootTerm) {
         params.append('root', this.selectedRootTerm);
       }
@@ -222,13 +246,7 @@ function radarApp() {
       try {
         const resp = await fetch(`/api/queries?${params.toString()}`);
         const data = await resp.json();
-        let items = data.items || [];
-
-        if (this.quickFilter === 'breakouts') {
-          items = items.filter(q => q.trend_type === 'BREAKOUT');
-        }
-
-        this.queries = items;
+        this.queries = data.items || [];
         this.totalItems = data.total || 0;
         this.totalPages = data.total_pages || 1;
       } catch (e) {
@@ -551,6 +569,82 @@ Format in clean Markdown with copyable syntax-highlighted code blocks.`;
         await this.loadStats();
       } catch (e) {
         console.error('Failed to trigger scan', e);
+      }
+    },
+
+    // -------------------------------------------------------------
+    // AHREFS-GRADE SERP COMPARISON (SERP SIMILARITY & OVERLAP)
+    // -------------------------------------------------------------
+    openCompare(q1, q2 = '') {
+      this.compareQ1 = q1;
+      const other = this.queries.find(q => q.keyword !== q1);
+      this.compareQ2 = q2 || (other ? other.keyword : q1 + ' alternative');
+      this.showCompareModal = true;
+      this.runCompare();
+    },
+
+    async runCompare() {
+      if (!this.compareQ1.trim() || !this.compareQ2.trim()) return;
+      this.compareLoading = true;
+      try {
+        const params = new URLSearchParams({
+          q1: this.compareQ1.trim(),
+          q2: this.compareQ2.trim(),
+        });
+        const resp = await fetch(`/api/serp/compare?${params.toString()}`);
+        this.compareResult = await resp.json();
+      } catch (e) {
+        console.error('Failed to run comparison', e);
+      } finally {
+        this.compareLoading = false;
+      }
+    },
+
+    // -------------------------------------------------------------
+    // AHREFS-GRADE AI PRESET ANGLE SEED EXPANDER
+    // -------------------------------------------------------------
+    async expandPresetSeeds() {
+      if (!this.newSeedTerm.trim()) return;
+      this.expandingSeeds = true;
+      try {
+        const resp = await fetch('/api/seeds/expand', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic: this.newSeedTerm.trim(),
+            preset: this.selectedPresetAngle,
+          }),
+        });
+        const data = await resp.json();
+        this.expandedSeeds = data.seeds || [];
+      } catch (e) {
+        console.error('Failed to expand seeds', e);
+      } finally {
+        this.expandingSeeds = false;
+      }
+    },
+
+    async queueExpandedSeeds() {
+      if (!this.expandedSeeds.length) return;
+      try {
+        const resp = await fetch('/api/frontier/add-batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            terms: this.expandedSeeds,
+            category: this.newSeedCategory,
+          }),
+        });
+        const res = await resp.json();
+        alert(`Successfully queued ${res.added_count} targeted seeds into the Frontier!`);
+        this.expandedSeeds = [];
+        this.newSeedTerm = '';
+        this.showAddSeedModal = false;
+        await this.loadFrontierStats();
+        await this.loadInputKeywords();
+        await this.loadFrontier(1);
+      } catch (e) {
+        console.error('Failed to queue expanded seeds', e);
       }
     },
   };
