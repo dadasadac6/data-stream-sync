@@ -263,7 +263,8 @@
               <span>Sort:</span>
               <select x-model="inputSort" @change="loadInputKeywords()"
                       class="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-slate-300 text-[11px] focus:outline-none">
-                <option value="gaps">Gaps Found</option>
+                <option value="gaps">Most Queries</option>
+                <option value="recent">Recently Explored</option>
                 <option value="name">A-Z</option>
                 <option value="depth">Depth</option>
               </select>
@@ -296,10 +297,11 @@
                     :class="selectedRootTerm === item.niche_term ? 'text-amber-300 font-bold' : 'text-slate-200'"
                     x-text="item.niche_term"></h4>
                 
-                <!-- Gaps Count Badge -->
+                <!-- Evaluated Queries Count Badge -->
                 <span class="shrink-0 text-[10px] font-mono px-1.5 py-0.2 rounded font-semibold"
-                      :class="item.queries_extracted > 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-500'"
-                      x-text="(item.queries_extracted || 0) + ' gaps'"></span>
+                      :class="item.queries_extracted > 0 ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-slate-800 text-slate-500'"
+                      :title="'Google Trends Evaluated: ' + (item.queries_extracted || 0) + ' candidate queries'"
+                      x-text="(item.queries_extracted || 0) + ' queries'"></span>
               </div>
 
               <div class="flex items-center justify-between text-[11px] text-slate-400">
@@ -393,6 +395,14 @@
               <option value="Breaking News">Breaking News</option>
             </select>
 
+            <!-- Batch Audit Page Button -->
+            <button @click="auditBatchLive()" :disabled="isAuditingBatch"
+                    class="px-2 py-1 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                    title="Audit pending SERPs on this page live from your Mac">
+              <span x-show="!isAuditingBatch">⚡ Audit Page Voids</span>
+              <span x-show="isAuditingBatch" class="animate-pulse">Auditing...</span>
+            </button>
+
             <span class="text-slate-500 text-xs font-mono font-medium hidden xl:inline" x-text="totalItems + ' items'"></span>
           </div>
         </div>
@@ -452,17 +462,48 @@
                   <div class="space-y-1.5 mb-3 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
                     <div class="flex items-center justify-between text-xs">
                       <span class="text-slate-400 text-[11px]">Exact &lt;title&gt; Matches:</span>
-                      <span class="font-mono text-[11px] font-bold"
-                            :class="item.exact_title_matches === 0 ? 'text-emerald-400' : (item.exact_title_matches <= 2 ? 'text-amber-400' : 'text-slate-400')">
-                        <span x-text="item.exact_title_matches + '/10'"></span>
-                        <span x-show="item.exact_title_matches === 0" class="text-emerald-400 font-semibold ml-1">🛡️ Untouched Void</span>
-                      </span>
+
+                      <!-- Verified Void / Competitors -->
+                      <template x-if="item.exact_title_matches !== null && item.exact_title_matches !== undefined">
+                        <span class="font-mono text-[11px] font-bold flex items-center gap-1"
+                              :class="item.exact_title_matches === 0 ? 'text-emerald-400' : (item.exact_title_matches <= 2 ? 'text-amber-400' : 'text-slate-400')">
+                          <span x-text="item.exact_title_matches + '/10'"></span>
+                          <span x-show="item.exact_title_matches === 0" class="text-emerald-400 font-semibold ml-0.5">🛡️ Untouched Void</span>
+                          <span x-show="item.exact_title_matches > 0 && item.exact_title_matches <= 2" class="text-amber-400 font-medium ml-0.5">⚡ Low Comp</span>
+                          <span x-show="item.exact_title_matches > 2" class="text-slate-400 font-normal ml-0.5">⚠️ Competed</span>
+                          <button @click.stop="auditSerpLive(item)" 
+                                  :disabled="item._auditing"
+                                  class="text-[10px] text-slate-500 hover:text-amber-300 ml-1 cursor-pointer" title="Re-audit live from Mac">
+                            <span x-show="!item._auditing">↻</span>
+                            <span x-show="item._auditing" class="animate-pulse">...</span>
+                          </button>
+                        </span>
+                      </template>
+
+                      <!-- Unverified / Pending Live Audit -->
+                      <template x-if="item.exact_title_matches === null || item.exact_title_matches === undefined">
+                        <span class="text-[11px] flex items-center gap-1.5">
+                          <span class="text-slate-400 text-[10px] italic">⏳ Pending Audit</span>
+                          <button @click.stop="auditSerpLive(item)" 
+                                  :disabled="item._auditing"
+                                  class="px-1.5 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[10px] font-semibold transition cursor-pointer flex items-center gap-1"
+                                  title="Audit SERP live from your Mac (100% accurate)">
+                            <span x-show="!item._auditing">⚡ Audit Now</span>
+                            <span x-show="item._auditing" class="animate-pulse">Auditing...</span>
+                          </button>
+                        </span>
+                      </template>
                     </div>
 
                     <!-- Visual Void Progress Bar -->
                     <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
                       <div class="h-1.5 rounded-full transition-all duration-500"
-                           :class="item.exact_title_matches === 0 ? 'bg-emerald-400 w-full' : (item.exact_title_matches <= 2 ? 'bg-amber-400 w-3/4' : 'bg-slate-600 w-1/4')"></div>
+                           :class="{
+                             'bg-emerald-400 w-full': item.exact_title_matches === 0,
+                             'bg-amber-400 w-2/3': item.exact_title_matches > 0 && item.exact_title_matches <= 2,
+                             'bg-slate-600 w-1/4': item.exact_title_matches > 2,
+                             'bg-slate-700/60 w-1/6 border-r border-dashed border-amber-500/50': item.exact_title_matches === null || item.exact_title_matches === undefined
+                           }"></div>
                     </div>
 
                     <!-- Evidence Snippet -->
@@ -475,10 +516,14 @@
 
                 <!-- Card Actions Footer -->
                 <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between mt-1 text-xs">
-                  <!-- 3-Way Live Verification Links -->
-                  <div class="flex items-center space-x-2 text-[11px]">
+                  <!-- 4-Way Live Verification Links (with allintitle:) -->
+                  <div class="flex items-center space-x-1.5 text-[11px] flex-wrap">
                     <a :href="item.google_verify_url" target="_blank"
                        class="text-amber-400 hover:text-amber-300 font-semibold hover:underline">Google ↗</a>
+                    <span class="text-slate-600">·</span>
+                    <a :href="item.google_allintitle_url" target="_blank"
+                       class="text-emerald-400 hover:text-emerald-300 font-medium hover:underline"
+                       title="Verify exact title matches on Google with allintitle:">allintitle: ↗</a>
                     <span class="text-slate-600">·</span>
                     <a :href="item.ddg_verify_url" target="_blank"
                        class="text-slate-400 hover:text-slate-200 hover:underline">DuckDuckGo ↗</a>
@@ -559,12 +604,23 @@
                     </td>
                     <td class="py-2 px-3 font-sans text-slate-400 whitespace-nowrap" x-text="item.category"></td>
                     <td class="py-2 px-3 whitespace-nowrap">
-                      <span class="text-xs font-semibold"
-                            :class="item.exact_title_matches === 0 ? 'text-emerald-400' : (item.exact_title_matches <= 2 ? 'text-amber-400' : 'text-slate-400')"
-                            x-text="item.exact_title_matches + '/10 ' + (item.exact_title_matches === 0 ? '🛡️ Untouched' : '')"></span>
+                      <template x-if="item.exact_title_matches !== null && item.exact_title_matches !== undefined">
+                        <span class="text-xs font-semibold"
+                              :class="item.exact_title_matches === 0 ? 'text-emerald-400' : (item.exact_title_matches <= 2 ? 'text-amber-400' : 'text-slate-400')"
+                              x-text="item.exact_title_matches + '/10 ' + (item.exact_title_matches === 0 ? '🛡️ Void' : '')"></span>
+                      </template>
+                      <template x-if="item.exact_title_matches === null || item.exact_title_matches === undefined">
+                        <button @click.stop="auditSerpLive(item)" 
+                                :disabled="item._auditing"
+                                class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 cursor-pointer">
+                          <span x-show="!item._auditing">⚡ Audit</span>
+                          <span x-show="item._auditing" class="animate-pulse">...</span>
+                        </button>
+                      </template>
                     </td>
                     <td class="py-2 px-3 whitespace-nowrap text-center space-x-1.5 font-sans">
                       <a :href="item.google_verify_url" target="_blank" class="text-amber-400 hover:underline">Google</a>
+                      <a :href="item.google_allintitle_url" target="_blank" class="text-emerald-400 hover:underline" title="allintitle:">Title</a>
                       <a :href="item.trends_verify_url" target="_blank" class="text-indigo-400 hover:underline">Trends</a>
                     </td>
                     <td class="py-2 px-3 whitespace-nowrap text-right space-x-1 font-sans">
@@ -782,8 +838,18 @@
                 <td class="py-2 px-3 font-sans text-slate-400" x-text="item.category"></td>
                 <td class="py-2 px-3" :class="item.trend_type === 'BREAKOUT' ? 'text-rose-400 font-bold' : 'text-slate-400'" x-text="item.trend_velocity"></td>
                 <td class="py-2 px-3">
-                  <span :class="item.exact_title_matches === 0 ? 'text-emerald-400 font-bold' : 'text-slate-400'"
-                        x-text="item.exact_title_matches + '/10'"></span>
+                  <template x-if="item.exact_title_matches !== null && item.exact_title_matches !== undefined">
+                    <span :class="item.exact_title_matches === 0 ? 'text-emerald-400 font-bold' : 'text-slate-400'"
+                          x-text="item.exact_title_matches + '/10'"></span>
+                  </template>
+                  <template x-if="item.exact_title_matches === null || item.exact_title_matches === undefined">
+                    <button @click.stop="auditSerpLive(item)" 
+                            :disabled="item._auditing"
+                            class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 cursor-pointer">
+                      <span x-show="!item._auditing">⚡ Audit</span>
+                      <span x-show="item._auditing" class="animate-pulse">...</span>
+                    </button>
+                  </template>
                 </td>
                 <td class="py-2 px-3 font-sans">
                   <span class="px-1.5 py-0.2 rounded text-[10px]"

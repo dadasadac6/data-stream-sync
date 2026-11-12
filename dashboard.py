@@ -75,6 +75,15 @@ class BulkVerdictRequest(BaseModel):
     verdict: str
 
 
+class LiveAuditRequest(BaseModel):
+    id: int
+    keyword: str
+
+
+class BatchAuditRequest(BaseModel):
+    items: List[LiveAuditRequest]
+
+
 class AddFrontierRequest(BaseModel):
     term: str
     category: str
@@ -245,6 +254,7 @@ def get_queries(
     for item in items:
         q_enc = urllib.parse.quote(item["keyword"])
         item["google_verify_url"] = f"https://www.google.com/search?q={q_enc}"
+        item["google_allintitle_url"] = f"https://www.google.com/search?q=allintitle%3A%22{q_enc}%22"
         item["ddg_verify_url"] = f"https://duckduckgo.com/?q={q_enc}"
         item["trends_verify_url"] = f"https://trends.google.com/explore?q={q_enc}&date=today%2012-m"
 
@@ -268,6 +278,7 @@ def get_input_keywords(
     category: Optional[str] = "all",
     status: Optional[str] = "all",
     search: Optional[str] = None,
+    sort_by: str = "queries_extracted",
     limit: int = 150,
     offset: int = 0,
 ):
@@ -291,11 +302,18 @@ def get_input_keywords(
         cursor.execute(f"SELECT COUNT(*) as c FROM frontier_niches {where_sql}", params)
         total = cursor.fetchone()["c"]
 
+        if sort_by == "recent":
+            order_clause = "last_explored_at DESC, id DESC"
+        elif sort_by == "term":
+            order_clause = "niche_term ASC"
+        else:
+            order_clause = "queries_extracted DESC, last_explored_at DESC, id ASC"
+
         query = f"""
             SELECT id, niche_term, category, status, queries_extracted, depth_level, created_at, last_explored_at
             FROM frontier_niches
             {where_sql}
-            ORDER BY queries_extracted DESC, last_explored_at DESC, id ASC
+            ORDER BY {order_clause}
             LIMIT ? OFFSET ?
         """
         cursor.execute(query, params + [limit, offset])
@@ -512,6 +530,102 @@ def compare_serps(q1: str, q2: str):
         "action": action,
         "pairs": pairs,
     }
+
+
+@app.post("/api/serp/audit-live")
+def audit_serp_live(req: LiveAuditRequest):
+    sieve = SerpSieve()
+    serp_res = sieve.audit_serp(req.keyword)
+
+    conn = db.get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT evidence_json, gap_score FROM queries WHERE id = ?", (req.id,))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Query not found")
+
+        ev = json.loads(row["evidence_json"]) if row["evidence_json"] else {}
+        ev["serp"] = serp_res
+
+        # Recompute score with real verified SERP data
+        serp_pts = serp_res.get("serp_score", 0)
+        dev_pts = ev.get("dev", {}).get("dev_score", 15)
+        vel_pts = 20 if ev.get("score_breakdown", {}).get("velocity") else 10
+        new_score = min(100, max(0, serp_pts + dev_pts + vel_pts))
+
+        exact_matches = serp_res.get("exact_title_matches")  # None if 0 results
+        top_title = serp_res.get("top_competitor_title", "")
+        top_url = serp_res.get("top_competitor_url", "")
+
+        cur.execute("""
+            UPDATE queries
+            SET exact_title_matches = ?, top_competitor_title = ?, top_competitor_url = ?, gap_score = ?, evidence_json = ?
+            WHERE id = ?
+        """, (exact_matches, top_title, top_url, new_score, json.dumps(ev), req.id))
+        conn.commit()
+
+        return {
+            "status": "ok",
+            "id": req.id,
+            "exact_title_matches": exact_matches,
+            "results_count": serp_res.get("results_count", 0),
+            "top_competitor_title": top_title,
+            "top_competitor_url": top_url,
+            "new_score": new_score,
+            "evidence": ev,
+        }
+    finally:
+        conn.close()
+
+
+@app.post("/api/serp/audit-batch")
+def audit_serp_batch(req: BatchAuditRequest):
+    sieve = SerpSieve()
+    results = []
+    conn = db.get_connection()
+    try:
+        cur = conn.cursor()
+        for item in req.items[:15]:  # Safety limit: max 15 per batch
+            serp_res = sieve.audit_serp(item.keyword)
+            cur.execute("SELECT evidence_json, gap_score FROM queries WHERE id = ?", (item.id,))
+            row = cur.fetchone()
+            if not row:
+                continue
+
+            ev = json.loads(row["evidence_json"]) if row["evidence_json"] else {}
+            ev["serp"] = serp_res
+
+            serp_pts = serp_res.get("serp_score", 0)
+            dev_pts = ev.get("dev", {}).get("dev_score", 15)
+            vel_pts = 20 if ev.get("score_breakdown", {}).get("velocity") else 10
+            new_score = min(100, max(0, serp_pts + dev_pts + vel_pts))
+
+            exact_matches = serp_res.get("exact_title_matches")
+            top_title = serp_res.get("top_competitor_title", "")
+            top_url = serp_res.get("top_competitor_url", "")
+
+            cur.execute("""
+                UPDATE queries
+                SET exact_title_matches = ?, top_competitor_title = ?, top_competitor_url = ?, gap_score = ?, evidence_json = ?
+                WHERE id = ?
+            """, (exact_matches, top_title, top_url, new_score, json.dumps(ev), item.id))
+            conn.commit()
+
+            results.append({
+                "id": item.id,
+                "exact_title_matches": exact_matches,
+                "results_count": serp_res.get("results_count", 0),
+                "top_competitor_title": top_title,
+                "top_competitor_url": top_url,
+                "new_score": new_score,
+                "evidence": ev,
+            })
+            time.sleep(random.uniform(0.3, 0.6))
+
+        return {"status": "ok", "audited": results}
+    finally:
+        conn.close()
 
 
 @app.get("/api/cookies/status")

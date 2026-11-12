@@ -98,6 +98,9 @@ function radarApp() {
     selectedReportContent: '',
     reportRepoFilter: 'all',
 
+    // Live Auditing State
+    isAuditingBatch: false,
+
     init() {
       this.initApp();
     },
@@ -166,6 +169,8 @@ function radarApp() {
         // Sorting
         if (this.inputSort === 'gaps') {
           items.sort((a, b) => (b.queries_extracted || 0) - (a.queries_extracted || 0));
+        } else if (this.inputSort === 'recent') {
+          items.sort((a, b) => (b.last_explored_at || '').localeCompare(a.last_explored_at || ''));
         } else if (this.inputSort === 'name') {
           items.sort((a, b) => a.niche_term.localeCompare(b.niche_term));
         } else if (this.inputSort === 'depth') {
@@ -284,6 +289,51 @@ function radarApp() {
         }
       } catch (e) {
         console.error('Failed to update verdict', e);
+      }
+    },
+
+    // -------------------------------------------------------------
+    // LIVE SERP AUDITING & VOID VERIFICATION
+    // -------------------------------------------------------------
+    async auditSerpLive(item) {
+      if (!item || item._auditing) return;
+      item._auditing = true;
+      try {
+        const resp = await fetch('/api/serp/audit-live', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: item.id, keyword: item.keyword }),
+        });
+        const res = await resp.json();
+        if (resp.ok) {
+          item.exact_title_matches = res.exact_title_matches;
+          item.top_competitor_title = res.top_competitor_title;
+          item.top_competitor_url = res.top_competitor_url;
+          item.gap_score = res.new_score;
+          if (res.evidence) item.evidence = res.evidence;
+          await this.loadStats();
+        }
+      } catch (e) {
+        console.error('Failed to live-audit SERP', e);
+      } finally {
+        item._auditing = false;
+      }
+    },
+
+    async auditBatchLive() {
+      const unverified = this.queries.filter(q => q.exact_title_matches === null || q.exact_title_matches === undefined);
+      if (!unverified.length) {
+        alert('All visible items on this page are already verified!');
+        return;
+      }
+      this.isAuditingBatch = true;
+      try {
+        for (const item of unverified.slice(0, 10)) {
+          await this.auditSerpLive(item);
+          await new Promise(r => setTimeout(r, 600));
+        }
+      } finally {
+        this.isAuditingBatch = false;
       }
     },
 

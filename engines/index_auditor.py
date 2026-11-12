@@ -101,6 +101,10 @@ class SerpSieve:
 
         return results
 
+    def audit(self, query: str, serp_results: Optional[List[Dict[str, str]]] = None) -> Dict[str, Any]:
+        """Convenience alias for audit_serp."""
+        return self.audit_serp(query, serp_results=serp_results)
+
     def audit_serp(self, query: str, serp_results: Optional[List[Dict[str, str]]] = None) -> Dict[str, Any]:
         """
         Calculates SERP Vulnerability metrics:
@@ -111,6 +115,23 @@ class SerpSieve:
         - serp_vulnerability_score (0 to 40 pts)
         """
         results = serp_results if serp_results is not None else self.fetch_serp(query)
+
+        # Guard: If no results could be retrieved (e.g. rate-limit or timeout), do NOT claim untouched void!
+        if not results:
+            return {
+                "query": query,
+                "serp_score": 0,
+                "exact_title_matches": None,
+                "root_domain_in_top5": False,
+                "forum_count": 0,
+                "top_forum_rank": None,
+                "has_stale_content": False,
+                "results_count": 0,
+                "top_competitor_title": "",
+                "top_competitor_url": "",
+                "raw_results": [],
+            }
+
         q_lower = query.lower().strip()
         q_tokens = [t for t in q_lower.split() if len(t) > 2]
 
