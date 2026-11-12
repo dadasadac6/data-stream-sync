@@ -48,6 +48,10 @@ function radarApp() {
 
     // Cookie & Swarm Status
     cookieStatus: {},
+    fleetData: { repositories: [], total_concurrent_runners: 20 },
+    fleetDispatching: false,
+    fleetSyncing: false,
+    fleetMessage: '',
     scanState: {
       is_scanning: false,
       progress: 0,
@@ -67,6 +71,7 @@ function radarApp() {
       await this.loadFrontierStats();
       await this.loadFrontier(1);
       await this.loadCookieStatus();
+      await this.loadFleetStatus();
       await this.loadReports();
       await this.loadLogs();
 
@@ -357,6 +362,50 @@ Format in clean Markdown with copyable syntax-highlighted code blocks.`;
         await this.loadStats();
       } catch (e) {
         console.error('Failed to trigger scan', e);
+      }
+    },
+
+    // Fleet Swarm Controls
+    async loadFleetStatus() {
+      try {
+        const resp = await fetch('/api/fleet/status');
+        this.fleetData = await resp.json();
+      } catch (e) {
+        console.error('Failed to load fleet status', e);
+      }
+    },
+
+    async dispatchFleet(batches = 3) {
+      this.fleetDispatching = true;
+      this.fleetMessage = 'Triggering 20 cloud runners across 5 repositories...';
+      try {
+        const resp = await fetch(`/api/fleet/dispatch?batches=${batches}`, { method: 'POST' });
+        const res = await resp.json();
+        this.fleetMessage = res.message || 'Swarm successfully dispatched!';
+        setTimeout(() => { this.fleetMessage = ''; }, 6000);
+      } catch (e) {
+        this.fleetMessage = 'Error dispatching swarm.';
+      } finally {
+        this.fleetDispatching = false;
+      }
+    },
+
+    async syncFleet() {
+      this.fleetSyncing = true;
+      this.fleetMessage = 'Pulling reports from all 5 repositories...';
+      try {
+        const resp = await fetch('/api/fleet/sync', { method: 'POST' });
+        const res = await resp.json();
+        this.fleetMessage = 'Sync initiated. Refreshing reports in 3s...';
+        setTimeout(async () => {
+          await this.loadReports();
+          this.fleetMessage = 'Fleet reports refreshed!';
+          setTimeout(() => { this.fleetMessage = ''; }, 4000);
+        }, 3000);
+      } catch (e) {
+        this.fleetMessage = 'Error syncing fleet.';
+      } finally {
+        this.fleetSyncing = false;
       }
     },
   };

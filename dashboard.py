@@ -383,6 +383,69 @@ def export_data(format: str = "json", category: str = "all", min_score: int = 0)
     return JSONResponse(content=items)
 
 
+FLEET_REPOS = [
+    {
+        "name": "ecosystem-telemetry-probe",
+        "description": "Distributed runtime health probe and dependency matrix verification",
+        "shards": [0, 1, 2, 3],
+        "verticals": ["Media & Converters", "Productivity & Work"],
+        "url": "https://github.com/beachjampore-lab/ecosystem-telemetry-probe"
+    },
+    {
+        "name": "matrix-stream-probe",
+        "description": "Distributed streaming matrix benchmark and telemetry probes",
+        "shards": [4, 5, 6, 7],
+        "verticals": ["Developer & Cloud", "AI/LLM", "Databases"],
+        "url": "https://github.com/beachjampore-lab/matrix-stream-probe"
+    },
+    {
+        "name": "runtime-audit-probe",
+        "description": "Runtime service health auditor and entropy monitoring matrix",
+        "shards": [8, 9, 10, 11],
+        "verticals": ["Finance & Wealth", "Small Business & B2B", "Legal & Compliance"],
+        "url": "https://github.com/beachjampore-lab/runtime-audit-probe"
+    },
+    {
+        "name": "node-matrix-sampler",
+        "description": "High-throughput node sampling matrix and distributed state probe",
+        "shards": [12, 13, 14, 15],
+        "verticals": ["Health & Fitness", "Real Estate & Living"],
+        "url": "https://github.com/beachjampore-lab/node-matrix-sampler"
+    },
+    {
+        "name": "distributed-signal-core",
+        "description": "Distributed telemetry signal core and matrix evaluation suite",
+        "shards": [16, 17, 18, 19],
+        "verticals": ["Gaming & Entertainment", "Travel & Visas", "Academic & Education", "E-Commerce & Selling"],
+        "url": "https://github.com/beachjampore-lab/distributed-signal-core"
+    }
+]
+
+
+@app.get("/api/fleet/status")
+def get_fleet_status():
+    return {
+        "total_repositories": len(FLEET_REPOS),
+        "total_concurrent_runners": 20,
+        "repositories": FLEET_REPOS,
+        "is_public_unlimited": True,
+    }
+
+
+@app.post("/api/fleet/dispatch")
+def trigger_fleet_dispatch(background_tasks: BackgroundTasks, batches: int = Query(default=3)):
+    import tools.fleet_sync as fleet_sync
+    background_tasks.add_task(fleet_sync.dispatch_fleet, max_batches=batches)
+    return {"status": "success", "message": f"Dispatched 20 runners across 5 repos (max_batches={batches})"}
+
+
+@app.post("/api/fleet/sync")
+def trigger_fleet_sync(background_tasks: BackgroundTasks):
+    import tools.fleet_sync as fleet_sync
+    background_tasks.add_task(fleet_sync.sync_fleet)
+    return {"status": "success", "message": "Fleet synchronization started"}
+
+
 @app.get("/api/reports")
 def list_reports():
     reports = []
@@ -390,9 +453,18 @@ def list_reports():
         for fname in sorted(os.listdir(REPORTS_DIR), reverse=True):
             if fname.endswith(".md"):
                 fpath = os.path.join(REPORTS_DIR, fname)
+                repo_tag = "central"
+                for r in FLEET_REPOS:
+                    if fname.startswith(r["name"] + "-"):
+                        repo_tag = r["name"]
+                        break
+                clean_date = fname.replace("-telemetry-audit.md", "").replace("-goldmines.md", "").replace(".md", "")
+                if repo_tag != "central":
+                    clean_date = clean_date.replace(repo_tag + "-", "")
                 reports.append({
                     "filename": fname,
-                    "date": fname.replace("-telemetry-audit.md", "").replace("-goldmines.md", "").replace(".md", ""),
+                    "repo": repo_tag,
+                    "date": clean_date,
                     "size_bytes": os.path.getsize(fpath),
                     "modified": datetime.fromtimestamp(os.path.getmtime(fpath)).strftime("%Y-%m-%d %H:%M:%S"),
                 })

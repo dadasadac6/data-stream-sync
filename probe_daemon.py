@@ -114,35 +114,27 @@ def generate_daily_report(top_items: List[Dict[str, Any]]) -> str:
 
 
 def run_radar_sweep(limit_batches_per_cat: int = 2) -> List[Dict[str, Any]]:
-    """Performs one full intelligence sweep across all categories."""
-    if not os.path.exists(CONFIG_PATH):
-        logger.error(f"Configuration file {CONFIG_PATH} not found.")
-        return []
-
-    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-        cfg = json.load(f)
-
-    categories = cfg.get("categories", {})
-    trends_engine = TrendsBatchHTTP(time_window="today 12-m")
-    shield = ExclusionShield()
-    sieve = SerpSieve()
-    evidence_collector = DevEvidenceCollector()
+    """Performs one full intelligence sweep across frontier niches and taxonomy categories."""
+    trends_engine = StreamSamplerHTTP(time_window="today 12-m")
+    shield = FilterPipeline()
+    sieve = IndexAuditor()
+    evidence_collector = SignalTracer()
 
     qualified_opportunities: List[Dict[str, Any]] = []
 
-    for cat_name, cat_data in categories.items():
-        batches = cat_data.get("batches", [])[:limit_batches_per_cat]
-        logger.info(f"=== Scanning Category: {cat_name} ({len(batches)} batches) ===")
+    # Priority 1: Check dynamic frontier queue
+    frontier_batch = db.claim_frontier_batch(shard_id=0, total_shards=1, batch_size=8)
+    if frontier_batch:
+        terms = [item["niche_term"] for item in frontier_batch]
+        logger.info(f"=== Processing Dynamic Frontier Batch ({len(terms)} terms): {terms} ===")
+        try:
+            batch_data = trends_engine.extract_batch(terms)
+            for f_item in frontier_batch:
+                niche_term = f_item["niche_term"]
+                category = f_item["category"]
+                depth = f_item.get("depth", 0)
+                stream = batch_data.get(niche_term, {})
 
-        for b_idx, batch_terms in enumerate(batches, 1):
-            logger.info(f"Processing 8-term batch #{b_idx}: {batch_terms}")
-            try:
-                batch_data = trends_engine.extract_batch(batch_terms)
-            except Exception as e:
-                logger.warning(f"Batch extraction failed: {e}")
-                continue
-
-            for seed, stream in batch_data.items():
                 all_queries = []
                 for item in stream.get("rising", []):
                     item["trend_type"] = "BREAKOUT" if item.get("isBreakout") else "RISING"
@@ -155,28 +147,18 @@ def run_radar_sweep(limit_batches_per_cat: int = 2) -> List[Dict[str, Any]]:
                     kw = item.get("query", "").strip()
                     if not kw or len(kw) < 4:
                         continue
-
-                    # Check deduplication cache (avoid re-auditing if tested in last 7 days)
                     if db.is_keyword_processed(kw, max_age_days=7):
                         continue
-
-                    # Exclusion Shield check 1 (syntactic/navigational)
                     passed, reason = shield.evaluate(kw)
                     if not passed:
                         continue
 
-                    # Serp Sieve audit
                     serp_audit = sieve.audit_serp(kw)
-
-                    # Exclusion Shield check 2 (institutional domain in top 3)
-                    passed_serp, s_reason = shield.evaluate(kw, serp_audit.get("raw_results"))
+                    passed_serp, _ = shield.evaluate(kw, serp_audit.get("raw_results"))
                     if not passed_serp:
                         continue
 
-                    # Dev Evidence collection
                     dev_evidence = evidence_collector.collect_evidence(kw)
-
-                    # Composite scoring
                     scored = compute_composite_score(
                         query=kw,
                         trend_type=item.get("trend_type", "TOP"),
@@ -184,44 +166,75 @@ def run_radar_sweep(limit_batches_per_cat: int = 2) -> List[Dict[str, Any]]:
                         serp_audit=serp_audit,
                         dev_evidence=dev_evidence,
                     )
-
-                    scored["category"] = cat_name
+                    scored["category"] = category
                     scored["trend_velocity"] = str(item.get("change", "Stable"))
                     scored["trend_type"] = item.get("trend_type", "TOP")
-                    scored["evidence"] = {
-                        "serp": {
-                            "top_competitor_title": serp_audit.get("top_competitor_title"),
-                            "top_competitor_url": serp_audit.get("top_competitor_url"),
-                            "exact_title_matches": serp_audit.get("exact_title_matches"),
-                            "forum_count": serp_audit.get("forum_count"),
-                        },
-                        "dev": {
-                            "github": dev_evidence.get("github"),
-                            "stack_exchange": dev_evidence.get("stack_exchange"),
-                            "hacker_news": dev_evidence.get("hacker_news"),
-                        },
-                    }
 
-                    # Save to DB
                     db.upsert_query(scored)
-
                     if scored["gap_score"] >= 65:
                         qualified_opportunities.append(scored)
-                        logger.info(
-                            f"✨ Found High Opp [{scored['gap_score']}/100]: '{kw}' "
-                            f"({scored['archetype']}, Exact Titles: {scored['exact_title_matches']}/10)"
-                        )
+                        logger.info(f"✨ Found High Opp [{scored['gap_score']}/100]: '{kw}' ({scored['archetype']})")
 
-            # Jitter between batches to respect free endpoints
-            time.sleep(random.uniform(1.0, 2.5))
+                    if scored["gap_score"] >= 60 and depth < 3 and len(kw.split()) <= 4:
+                        db.queue_sub_niche(kw, category=category, parent=niche_term, depth=depth + 1)
 
-    # Sort opportunities by gap score descending
+                db.mark_frontier_complete(niche_term, queries_extracted=len(all_queries))
+        except Exception as e:
+            logger.warning(f"Frontier batch extraction error: {e}")
+
+    # Priority 2: Also run static taxonomy categories
+    if os.path.exists(CONFIG_PATH):
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+            cfg = json.load(f)
+
+        categories = cfg.get("categories", {})
+        for cat_name, cat_data in categories.items():
+            batches = cat_data.get("batches", [])[:limit_batches_per_cat]
+            for b_idx, batch_terms in enumerate(batches, 1):
+                try:
+                    batch_data = trends_engine.extract_batch(batch_terms)
+                    for seed, stream in batch_data.items():
+                        all_queries = []
+                        for item in stream.get("rising", []):
+                            item["trend_type"] = "BREAKOUT" if item.get("isBreakout") else "RISING"
+                            all_queries.append(item)
+                        for item in stream.get("top", []):
+                            item["trend_type"] = "TOP"
+                            all_queries.append(item)
+
+                        for item in all_queries:
+                            kw = item.get("query", "").strip()
+                            if not kw or len(kw) < 4 or db.is_keyword_processed(kw, max_age_days=7):
+                                continue
+                            passed, _ = shield.evaluate(kw)
+                            if not passed:
+                                continue
+                            serp_audit = sieve.audit_serp(kw)
+                            passed_serp, _ = shield.evaluate(kw, serp_audit.get("raw_results"))
+                            if not passed_serp:
+                                continue
+                            dev_evidence = evidence_collector.collect_evidence(kw)
+                            scored = compute_composite_score(
+                                query=kw,
+                                trend_type=item.get("trend_type", "TOP"),
+                                trend_velocity=item.get("change", "Stable"),
+                                serp_audit=serp_audit,
+                                dev_evidence=dev_evidence,
+                            )
+                            scored["category"] = cat_name
+                            scored["trend_velocity"] = str(item.get("change", "Stable"))
+                            scored["trend_type"] = item.get("trend_type", "TOP")
+                            db.upsert_query(scored)
+                            if scored["gap_score"] >= 65:
+                                qualified_opportunities.append(scored)
+                                logger.info(f"✨ Found High Opp [{scored['gap_score']}/100]: '{kw}' ({scored['archetype']})")
+                except Exception as e:
+                    logger.warning(f"Batch sweep error for {cat_name}: {e}")
+                time.sleep(random.uniform(1.0, 2.5))
+
     qualified_opportunities.sort(key=lambda x: x["gap_score"], reverse=True)
-
-    # Generate daily Markdown report if opportunities were identified
     if qualified_opportunities:
         generate_daily_report(qualified_opportunities[:25])
-
     return qualified_opportunities
 
 

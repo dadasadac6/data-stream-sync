@@ -11,3 +11,5 @@ plan/
 *.spec.md
 *PLAN*.md
 *PROMPT*.md
+tools/
+sync_fleet.sh
