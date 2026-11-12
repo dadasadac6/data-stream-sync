@@ -542,6 +542,7 @@ def get_queries(
     root: Optional[str] = None,
     trend_type: Optional[str] = None,
     untouched_only: bool = False,
+    competition_status: Optional[str] = None,
     sort_by: str = "gap_score",
     sort_order: str = "DESC",
     limit: int = 50,
@@ -580,6 +581,15 @@ def get_queries(
     if untouched_only:
         conditions.append("exact_title_matches = 0")
 
+    if competition_status and competition_status.lower() != "all":
+        cs = competition_status.lower()
+        if cs in ("void", "untouched", "voids"):
+            conditions.append("exact_title_matches = 0")
+        elif cs == "competed":
+            conditions.append("exact_title_matches > 0")
+        elif cs == "pending":
+            conditions.append("exact_title_matches IS NULL")
+
     where_clause = " WHERE " + " AND ".join(conditions)
 
     allowed_sorts = {
@@ -588,6 +598,7 @@ def get_queries(
         "keyword": "keyword",
         "category": "category",
         "trend_type": "trend_type",
+        "exact_title_matches": "exact_title_matches",
     }
     sort_col = allowed_sorts.get(sort_by, "gap_score")
     order = "ASC" if sort_order.upper() == "ASC" else "DESC"
@@ -650,6 +661,12 @@ def get_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
 
             cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches = 0")
             stats["verified_voids"] = cursor.fetchone()["c"]
+
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches > 0")
+            stats["competed_queries"] = cursor.fetchone()["c"]
+
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches IS NULL")
+            stats["pending_audits"] = cursor.fetchone()["c"]
 
             cursor.execute("SELECT archetype, COUNT(*) as c FROM queries GROUP BY archetype")
             for r in cursor.fetchall():

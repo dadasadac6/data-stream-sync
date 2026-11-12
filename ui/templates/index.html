@@ -7,7 +7,7 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Application State & Logic -->
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=7.1"></script>
   <!-- Alpine.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
   <!-- Marked.js for Markdown Reports -->
@@ -345,44 +345,57 @@
               <button @click="clearRootTerm()" class="hover:text-white ml-1 text-slate-400">✕</button>
             </div>
 
-            <!-- Quick Score Filters -->
+            <!-- Quick Category / Competition Tabs -->
             <button @click="setQuickFilter('all')"
-                    class="px-2.5 py-1 rounded-lg transition font-medium shrink-0 cursor-pointer"
-                    :class="quickFilter === 'all' ? 'bg-slate-800 text-amber-400 font-semibold' : 'text-slate-400 hover:text-slate-200'">
-              All Results
+                    class="px-2.5 py-1 rounded-lg transition text-xs font-medium shrink-0 cursor-pointer"
+                    :class="quickFilter === 'all' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 shadow-sm' : 'text-slate-400 hover:text-slate-200 border border-transparent'">
+              All Results (<span x-text="stats.total_queries || 0"></span>)
             </button>
-            <button @click="setQuickFilter('pure_gold')"
-                    class="px-2.5 py-1 rounded-lg transition font-bold shrink-0 cursor-pointer flex items-center space-x-1"
-                    :class="quickFilter === 'pure_gold' ? 'bg-gradient-to-r from-amber-500/30 to-amber-600/30 text-amber-200 border border-amber-400' : 'text-amber-400 hover:text-amber-300 border border-amber-500/30 bg-amber-500/10'">
-              <span>🏆</span>
-              <span>Pure Gold (80+ Untouched)</span>
+            <button @click="setQuickFilter('voids')"
+                    class="px-2.5 py-1 rounded-lg transition text-xs font-medium shrink-0 cursor-pointer flex items-center space-x-1"
+                    :class="quickFilter === 'voids' ? 'bg-emerald-500/25 text-emerald-300 font-bold border border-emerald-400 shadow-sm' : 'text-slate-400 hover:text-emerald-300 border border-transparent'">
+              <span>🛡️ Untouched Voids (0/10)</span>
+              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-mono" x-text="stats.verified_voids || 0"></span>
+            </button>
+            <button @click="setQuickFilter('competed')"
+                    class="px-2.5 py-1 rounded-lg transition text-xs font-medium shrink-0 cursor-pointer flex items-center space-x-1"
+                    :class="quickFilter === 'competed' ? 'bg-amber-500/25 text-amber-300 font-bold border border-amber-400 shadow-sm' : 'text-slate-400 hover:text-amber-300 border border-transparent'">
+              <span>⚠️ Competed</span>
+              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-300 font-mono" x-text="stats.competed_queries || 0"></span>
+            </button>
+            <button @click="setQuickFilter('pending')"
+                    class="px-2.5 py-1 rounded-lg transition text-xs font-medium shrink-0 cursor-pointer flex items-center space-x-1"
+                    :class="quickFilter === 'pending' ? 'bg-indigo-500/25 text-indigo-300 font-bold border border-indigo-400 shadow-sm' : 'text-slate-400 hover:text-indigo-300 border border-transparent'">
+              <span>⏳ Pending Audit</span>
+              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-400 font-mono" x-text="stats.pending_audits || 0"></span>
             </button>
             <button @click="setQuickFilter('critical_85')"
-                    class="px-2.5 py-1 rounded-lg transition font-medium shrink-0 cursor-pointer"
-                    :class="quickFilter === 'critical_85' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40' : 'text-slate-400 hover:text-slate-200'">
-              💎 Critical (85+)
-            </button>
-            <button @click="setQuickFilter('high_65')"
-                    class="px-2.5 py-1 rounded-lg transition font-medium shrink-0 cursor-pointer"
-                    :class="quickFilter === 'high_65' ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40' : 'text-slate-400 hover:text-slate-200'">
-              ⚡ High (65+)
+                    class="px-2.5 py-1 rounded-lg transition text-xs font-medium shrink-0 cursor-pointer flex items-center space-x-1"
+                    :class="quickFilter === 'critical_85' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 shadow-sm' : 'text-slate-400 hover:text-slate-200 border border-transparent'">
+              <span>💎 Critical</span>
+              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-mono" x-text="stats.critical_gold || 0"></span>
             </button>
             <button @click="setQuickFilter('breakouts')"
-                    class="px-2.5 py-1 rounded-lg transition font-medium shrink-0 cursor-pointer"
-                    :class="quickFilter === 'breakouts' ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/40' : 'text-slate-400 hover:text-slate-200'">
-              🔥 Breakouts
-            </button>
-            <button @click="setQuickFilter('confirmed')"
-                    class="px-2.5 py-1 rounded-lg transition font-medium shrink-0 cursor-pointer"
-                    :class="quickFilter === 'confirmed' ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40' : 'text-slate-400 hover:text-slate-200'">
-              ⭐ Confirmed
+                    class="px-2.5 py-1 rounded-lg transition text-xs font-medium shrink-0 cursor-pointer flex items-center space-x-1"
+                    :class="quickFilter === 'breakouts' ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/40 shadow-sm' : 'text-slate-400 hover:text-slate-200 border border-transparent'">
+              <span>🔥 Breakouts</span>
+              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-mono" x-text="stats.breakouts || 0"></span>
             </button>
           </div>
 
           <!-- Secondary Filter Controls -->
           <div class="flex items-center space-x-2 shrink-0">
+            <!-- Sort Selector -->
+            <select x-model="sortBy" @change="loadQueries(1)"
+                    class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-slate-300 text-xs focus:outline-none cursor-pointer">
+              <option value="gap_score">Sort: Highest Gap Score</option>
+              <option value="exact_title_matches">Sort: Title Voids First</option>
+              <option value="last_updated">Sort: Recently Discovered</option>
+              <option value="keyword">Sort: Keyword (A-Z)</option>
+            </select>
+
             <!-- In-Results Keyword Search -->
-            <div class="relative w-44">
+            <div class="relative w-36">
               <input type="text" x-model="filters.search" @input.debounce.300ms="loadQueries(1)"
                      placeholder="Search results..."
                      class="w-full bg-slate-900 border border-slate-800 rounded-lg pl-7 pr-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500">
@@ -462,23 +475,51 @@
                   <h3 class="text-sm font-bold text-slate-100 mb-2.5 leading-snug break-words tracking-tight"
                       x-text="item.keyword"></h3>
 
-                  <!-- Exact Title Matches & SERP Void Indicator -->
-                  <div class="space-y-1.5 mb-3 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80">
+                  <!-- Top 10 SERP Competitors & Title Gap Breakdown -->
+                  <div class="space-y-2 mb-3 bg-slate-950/70 p-2.5 rounded-lg border border-slate-800/80">
                     <div class="flex items-center justify-between text-xs">
-                      <span class="text-slate-400 text-[11px]">Exact &lt;title&gt; Matches:</span>
+                      <span class="text-slate-400 text-[11px] font-medium">Top 10 SERP Competitors:</span>
 
-                      <!-- Verified Void / Competitors -->
-                      <template x-if="item.exact_title_matches !== null && item.exact_title_matches !== undefined">
-                        <span class="font-mono text-[11px] font-bold flex items-center gap-1"
-                              :class="item.exact_title_matches === 0 ? 'text-emerald-400' : (item.exact_title_matches <= 2 ? 'text-amber-400' : 'text-slate-400')">
-                          <span x-text="item.exact_title_matches + '/10'"></span>
-                          <span x-show="item.exact_title_matches === 0" class="text-emerald-400 font-semibold ml-0.5">🛡️ Untouched Void</span>
-                          <span x-show="item.exact_title_matches > 0 && item.exact_title_matches <= 2" class="text-amber-400 font-medium ml-0.5">⚡ Low Comp</span>
-                          <span x-show="item.exact_title_matches > 2" class="text-slate-400 font-normal ml-0.5">⚠️ Competed</span>
+                      <!-- Verified Untouched Void (0/10) -->
+                      <template x-if="item.exact_title_matches === 0">
+                        <span class="font-mono text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                          <span>0/10</span>
+                          <span class="text-emerald-400 font-semibold">🛡️ Untouched Void</span>
                           <button @click.stop="auditSerpLive(item)" 
                                   :disabled="item._auditing"
-                                  class="text-[10px] text-slate-500 hover:text-amber-300 ml-1 cursor-pointer" title="Re-audit live from Mac">
-                            <span x-show="!item._auditing">↻</span>
+                                  class="text-[10px] px-1 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 ml-1 cursor-pointer"
+                                  title="Re-verify SERP top 10 live from your Mac">
+                            <span x-show="!item._auditing">🔄</span>
+                            <span x-show="item._auditing" class="animate-pulse">...</span>
+                          </button>
+                        </span>
+                      </template>
+
+                      <!-- Low Competition (1-2/10) -->
+                      <template x-if="item.exact_title_matches > 0 && item.exact_title_matches <= 2">
+                        <span class="font-mono text-[11px] font-bold text-amber-400 flex items-center gap-1">
+                          <span x-text="item.exact_title_matches + '/10'"></span>
+                          <span class="text-amber-400 font-medium">⚡ Low Comp</span>
+                          <button @click.stop="auditSerpLive(item)" 
+                                  :disabled="item._auditing"
+                                  class="text-[10px] px-1 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 ml-1 cursor-pointer"
+                                  title="Re-verify SERP live">
+                            <span x-show="!item._auditing">🔄</span>
+                            <span x-show="item._auditing" class="animate-pulse">...</span>
+                          </button>
+                        </span>
+                      </template>
+
+                      <!-- Competed (>2/10) -->
+                      <template x-if="item.exact_title_matches > 2">
+                        <span class="font-mono text-[11px] font-medium text-slate-400 flex items-center gap-1">
+                          <span x-text="item.exact_title_matches + '/10'"></span>
+                          <span class="text-rose-400 font-normal">⚠️ Competed</span>
+                          <button @click.stop="auditSerpLive(item)" 
+                                  :disabled="item._auditing"
+                                  class="text-[10px] px-1 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 ml-1 cursor-pointer"
+                                  title="Re-verify SERP live">
+                            <span x-show="!item._auditing">🔄</span>
                             <span x-show="item._auditing" class="animate-pulse">...</span>
                           </button>
                         </span>
@@ -499,20 +540,38 @@
                       </template>
                     </div>
 
-                    <!-- Visual Void Progress Bar -->
-                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                      <div class="h-1.5 rounded-full transition-all duration-500"
-                           :class="{
-                             'bg-emerald-400 w-full': item.exact_title_matches === 0,
-                             'bg-amber-400 w-2/3': item.exact_title_matches > 0 && item.exact_title_matches <= 2,
-                             'bg-slate-600 w-1/4': item.exact_title_matches > 2,
-                             'bg-slate-700/60 w-1/6 border-r border-dashed border-amber-500/50': item.exact_title_matches === null || item.exact_title_matches === undefined
-                           }"></div>
+                    <!-- 10-Slot SERP Slot Competition Meter -->
+                    <div class="flex items-center space-x-1 py-0.5" title="10-result SERP competition meter">
+                      <template x-for="slot in 10" :key="slot">
+                        <div class="h-1.5 flex-1 rounded-sm transition-all"
+                             :class="{
+                               'bg-emerald-500/30 border border-emerald-500/60': item.exact_title_matches === 0,
+                               'bg-amber-400': item.exact_title_matches > 0 && slot <= item.exact_title_matches,
+                               'bg-slate-700': item.exact_title_matches > 0 && slot > item.exact_title_matches,
+                               'bg-slate-800/80 border border-slate-700/50': item.exact_title_matches === null || item.exact_title_matches === undefined
+                             }"></div>
+                      </template>
                     </div>
 
-                    <!-- Evidence Snippet -->
-                    <div class="text-[11px] text-slate-400 truncate pt-1 flex items-center space-x-1" x-show="item.top_competitor_title">
-                      <span class="text-slate-500">Top Rank:</span>
+                    <!-- Meaningful Context Subtitle -->
+                    <div class="text-[10px] flex items-center justify-between text-slate-400 pt-0.5">
+                      <template x-if="item.exact_title_matches === 0">
+                        <span class="text-emerald-400 font-medium">✨ 0 competitors target this title — Open Opportunity</span>
+                      </template>
+                      <template x-if="item.exact_title_matches > 0 && item.exact_title_matches <= 2">
+                        <span class="text-amber-400 font-medium" x-text="item.exact_title_matches + ' of 10 pages target title — Weak competition'"></span>
+                      </template>
+                      <template x-if="item.exact_title_matches > 2">
+                        <span class="text-slate-400" x-text="item.exact_title_matches + ' pages target this title — Saturated'"></span>
+                      </template>
+                      <template x-if="item.exact_title_matches === null || item.exact_title_matches === undefined">
+                        <span class="text-slate-500 italic">SERP snippets awaiting local audit</span>
+                      </template>
+                    </div>
+
+                    <!-- Top Competitor Title -->
+                    <div class="text-[11px] text-slate-400 truncate pt-0.5 flex items-center space-x-1" x-show="item.top_competitor_title">
+                      <span class="text-slate-500 font-medium">#1 Rank:</span>
                       <span class="text-slate-300 truncate" x-text="item.top_competitor_title"></span>
                     </div>
                   </div>

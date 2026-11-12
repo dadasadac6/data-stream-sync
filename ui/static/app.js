@@ -33,7 +33,9 @@ function radarApp() {
     limit: 24,
     totalItems: 0,
     totalPages: 1,
-    quickFilter: 'all', // 'all', 'critical_85', 'high_65', 'breakouts', 'confirmed', 'snoozed'
+    quickFilter: 'all', // 'all', 'voids', 'competed', 'pending', 'pure_gold', 'critical_85', 'high_65', 'breakouts', 'confirmed'
+    sortBy: 'gap_score',
+    sortOrder: 'DESC',
 
     filters: {
       search: '',
@@ -214,10 +216,17 @@ function radarApp() {
       let effectiveVerdict = this.filters.verdict;
       let effectiveTrendType = 'all';
       let effectiveUntouchedOnly = false;
+      let effectiveCompetition = 'all';
 
-      if (this.quickFilter === 'pure_gold') {
+      if (this.quickFilter === 'voids') {
+        effectiveCompetition = 'void';
+      } else if (this.quickFilter === 'competed') {
+        effectiveCompetition = 'competed';
+      } else if (this.quickFilter === 'pending') {
+        effectiveCompetition = 'pending';
+      } else if (this.quickFilter === 'pure_gold') {
         effectiveMinScore = 80;
-        effectiveUntouchedOnly = true;
+        effectiveCompetition = 'void';
       } else if (this.quickFilter === 'critical_85') {
         effectiveMinScore = 85;
       } else if (this.quickFilter === 'high_65') {
@@ -236,6 +245,8 @@ function radarApp() {
         verdict: effectiveVerdict,
         min_score: effectiveMinScore,
         search: this.filters.search,
+        sort_by: this.sortBy || 'gap_score',
+        sort_order: this.sortOrder || 'DESC',
         page: this.page,
         limit: this.limit,
       });
@@ -243,8 +254,8 @@ function radarApp() {
       if (effectiveTrendType !== 'all') {
         params.append('trend_type', effectiveTrendType);
       }
-      if (effectiveUntouchedOnly) {
-        params.append('untouched_only', 'true');
+      if (effectiveCompetition !== 'all') {
+        params.append('competition_status', effectiveCompetition);
       }
 
       if (this.selectedRootTerm) {
