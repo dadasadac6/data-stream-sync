@@ -35,9 +35,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def load_cookie_pool() -> List[str]:
     """
-    Loads Google session cookies from:
+    Loads session cookies from:
     1. config/cookies.json (local development)
-    2. TRENDS_COOKIE_POOL environment variable (GitHub Actions secret)
+    2. TELEMETRY_COOKIE_POOL or TRENDS_COOKIE_POOL env vars (GitHub Actions secrets)
     Returns list of cookie strings.
     """
     local_path = os.path.join(BASE_DIR, "config", "cookies.json")
@@ -46,23 +46,33 @@ def load_cookie_pool() -> List[str]:
             with open(local_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, list):
-                    cookies = [item.get("cookie", "") for item in data if isinstance(item, dict) and item.get("cookie")]
+                    cookies = []
+                    for item in data:
+                        if isinstance(item, str) and item.strip():
+                            cookies.append(item.strip())
+                        elif isinstance(item, dict) and item.get("cookie"):
+                            cookies.append(item["cookie"].strip())
                     if cookies:
                         return cookies
         except Exception as e:
             logger.debug(f"Failed to load cookies from {local_path}: {e}")
 
-    env_val = os.getenv("TRENDS_COOKIE_POOL", "").strip()
-    if env_val:
-        try:
-            data = json.loads(env_val)
-            if isinstance(data, list):
-                cookies = [item.get("cookie", "") for item in data if isinstance(item, dict) and item.get("cookie")]
-                if cookies:
-                    return cookies
-        except Exception:
-            # Maybe single raw cookie string
-            return [env_val]
+    for env_key in ["TELEMETRY_COOKIE_POOL", "TRENDS_COOKIE_POOL"]:
+        env_val = os.getenv(env_key, "").strip()
+        if env_val:
+            try:
+                data = json.loads(env_val)
+                if isinstance(data, list):
+                    cookies = []
+                    for item in data:
+                        if isinstance(item, str) and item.strip():
+                            cookies.append(item.strip())
+                        elif isinstance(item, dict) and item.get("cookie"):
+                            cookies.append(item["cookie"].strip())
+                    if cookies:
+                        return cookies
+            except Exception:
+                return [env_val]
 
     return []
 
