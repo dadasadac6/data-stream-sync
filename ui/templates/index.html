@@ -386,12 +386,14 @@
           <!-- Secondary Filter Controls -->
           <div class="flex items-center space-x-2 shrink-0">
             <!-- Sort Selector -->
-            <select x-model="sortBy" @change="loadQueries(1)"
+            <select :value="sortBy === 'exact_title_matches' ? (sortOrder === 'DESC' ? 'competed_first' : 'exact_title_matches') : sortBy"
+                    @change="handleSortChange($event.target.value)"
                     class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-slate-300 text-xs focus:outline-none cursor-pointer">
               <option value="gap_score">Sort: Highest Gap Score</option>
-              <option value="exact_title_matches">Sort: Title Voids First</option>
+              <option value="exact_title_matches">Sort: Title Voids First (0/10)</option>
+              <option value="competed_first">Sort: Most Competed First</option>
               <option value="last_updated">Sort: Recently Discovered</option>
-              <option value="keyword">Sort: Keyword (A-Z)</option>
+              <option value="keyword">Sort: Keyword (A to Z)</option>
             </select>
 
             <!-- In-Results Keyword Search -->

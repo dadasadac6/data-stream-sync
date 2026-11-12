@@ -281,6 +281,24 @@ function radarApp() {
       this.loadQueries(1);
     },
 
+    handleSortChange(val) {
+      if (val === 'competed_first') {
+        this.sortBy = 'exact_title_matches';
+        this.sortOrder = 'DESC';
+      } else if (val === 'exact_title_matches') {
+        this.sortBy = 'exact_title_matches';
+        this.sortOrder = 'ASC';
+      } else if (val === 'keyword') {
+        this.sortBy = 'keyword';
+        this.sortOrder = 'ASC';
+      } else {
+        this.sortBy = val;
+        this.sortOrder = 'DESC';
+      }
+      this.page = 1;
+      this.loadQueries(1);
+    },
+
     setCategory(cat) {
       this.filters.category = cat;
       this.inputCategory = cat;

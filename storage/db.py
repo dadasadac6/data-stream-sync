@@ -603,6 +603,13 @@ def get_queries(
     sort_col = allowed_sorts.get(sort_by, "gap_score")
     order = "ASC" if sort_order.upper() == "ASC" else "DESC"
 
+    if sort_col == "exact_title_matches":
+        order_clause = f"{sort_col} {order} NULLS LAST, gap_score DESC"
+    elif sort_col == "gap_score":
+        order_clause = f"gap_score {order}, exact_title_matches ASC NULLS LAST"
+    else:
+        order_clause = f"{sort_col} {order}"
+
     try:
         with conn:
             cursor = conn.cursor()
@@ -612,7 +619,7 @@ def get_queries(
             query = f"""
                 SELECT * FROM queries 
                 {where_clause} 
-                ORDER BY {sort_col} {order} 
+                ORDER BY {order_clause} 
                 LIMIT ? OFFSET ?
             """
             cursor.execute(query, params + [limit, offset])
