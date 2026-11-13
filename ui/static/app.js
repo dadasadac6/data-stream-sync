@@ -104,6 +104,16 @@ function radarApp() {
     isAuditingBatch: false,
     recheckingTerm: '',
 
+    get selectedRootItem() {
+      if (!this.selectedRootTerm) return null;
+      return this.inputKeywords.find(k => k.niche_term === this.selectedRootTerm) || null;
+    },
+
+    get isSelectedRootPending() {
+      const item = this.selectedRootItem;
+      return item ? (item.status === 'pending' && !item.queries_extracted) : false;
+    },
+
     init() {
       this.initApp();
     },
