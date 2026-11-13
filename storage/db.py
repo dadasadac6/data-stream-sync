@@ -664,6 +664,10 @@ def get_queries(
                         + (COALESCE(c.cluster_kws, 1) * 6)
                         + (CASE WHEN q.trend_type = 'BREAKOUT' THEN 75 ELSE 0 END)
                         + (CASE WHEN q.archetype IN ('Micro-Tool', 'Cost Estimator', 'Config Generator', 'Workaround') THEN 40 ELSE 0 END)
+                        + (CASE WHEN q.category IN ('Finance & Wealth', 'Legal & Compliance', 'Small Business & B2B', 'Clean Energy & Home') THEN 80
+                                WHEN q.category IN ('Real Estate & Living', 'Health & Fitness', 'Travel & Visas') THEN 50
+                                ELSE 15 END)
+                        + (CASE WHEN q.top_competitor_url LIKE '%reddit%' OR q.top_competitor_url LIKE '%quora%' THEN 100 ELSE 0 END)
                     ) as doability_rank
                 FROM queries q
                 LEFT JOIN cluster_stats c ON c.c_niche = COALESCE(json_extract(q.evidence_json, '$.parent_niche'), q.category)

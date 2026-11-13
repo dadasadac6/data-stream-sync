@@ -1,59 +1,63 @@
 {
   "categories": {
-    "AI/LLM": {
-      "description": "Local models, inference engines, vector stores, and agentic workflows",
+    "Finance & Wealth": {
+      "description": "High-RPM debt settlement, tax strategies, mortgages, retirement, and investing guides",
       "batches": [
-        ["ollama", "vllm", "langchain", "llamaindex", "huggingface", "groq", "cursor ai", "openrouter"],
-        ["whisper ai", "stable diffusion", "chromadb", "qdrant", "deepseek", "cohere", "litellm", "crewai"]
+        ["mortgage amortization schedule", "medical debt settlement", "probate court process", "short term disability claim", "custodial account rules", "backdoor roth ira limit", "capital gains tax real estate", "dividend reinvestment calculator"],
+        ["car refinance calculator", "debt to income ratio calculator", "early retirement fire calculator", "hsa contribution limit rules", "401k withdrawal penalty exception", "inherited ira distribution rules", "crypto tax loss harvesting", "closing costs buyer vs seller"],
+        ["heloc payment calculator", "umbrella insurance requirements", "solar tax credit rules", "auto insurance deductible comparison", "cd ladder calculator", "annuity payout options", "student loan forgiveness checklist", "credit report dispute letter"]
       ]
     },
-    "Cloud/DevOps": {
-      "description": "Containers, orchestrators, cloud infra, CI/CD, and telemetry",
+    "Small Business & B2B": {
+      "description": "B2B compliance, commercial agreements, contracts, templates, and valuation formulas",
       "batches": [
-        ["docker", "kubernetes", "terraform", "ansible", "helm", "prometheus", "grafana", "nginx"],
-        ["github actions", "argocd", "traefik", "caddy server", "wireguard", "cloudflare tunnels", "portainer", "datadog"]
+        ["commercial lease letter of intent", "independent contractor agreement template", "freelance invoice dispute resolution", "registered agent requirements by state", "ein number for trust or estate", "break even analysis formula", "operating agreement single member llc", "subcontractor agreement template"],
+        ["commercial general liability insurance cost", "accounts receivable aging report template", "b2b software contract terms checklist", "business valuation multiple by industry", "profit margin calculator by industry", "wholesale pricing formula", "client onboarding checklist template", "non compete agreement enforceability"],
+        ["vendor selection matrix template", "business asset purchase agreement", "co-founder equity split agreement", "trademark class selection guide", "freight shipping cost calculator", "employee severance agreement template", "equipment lease vs buy calculator", "sba 7a loan requirements checklist"]
       ]
     },
-    "Databases": {
-      "description": "Relational, vector, real-time, analytical, and edge databases",
+    "Legal & Compliance": {
+      "description": "Legal forms, statutory timelines, court filing procedures, and dispute resolution guides",
       "batches": [
-        ["postgresql", "supabase", "redis", "clickhouse", "mongodb", "duckdb", "sqlite", "neo4j"],
-        ["prisma orm", "drizzle orm", "pgvector", "turborepo", "surrealdb", "cassandra", "meilisearch", "typesense"]
+        ["affidavit of survivorship template", "power of attorney revocation form", "mechanics lien waiver and release", "trademark cease and desist letter", "small claims court filing limits by state", "living trust vs will cost comparison", "quitclaim deed requirements", "promissory note template with interest"],
+        ["eviction notice notice to quit template", "hipaa compliance checklist for small business", "non disclosure agreement mutual nda", "landlord security deposit return timeline", "dmca takedown notice template", "child support calculation formula", "statute of limitations debt collection", "prenuptial agreement checklist"],
+        ["medical power of attorney form", "breach of contract demand letter", "cease and desist harassment template", "guardianship petition process", "right of first refusal agreement", "commercial sublease agreement terms", "easement agreement template", "wrongful termination documentation checklist"]
       ]
     },
-    "Frameworks": {
-      "description": "Full-stack web and backend app frameworks",
+    "Real Estate & Living": {
+      "description": "Property boundaries, permits, zoning, home inspections, appraisals, and contracts",
       "batches": [
-        ["nextjs", "fastapi", "sveltekit", "astro", "nuxt", "django", "remix", "nestjs"],
-        ["hono", "elysia js", "express js", "gin golang", "axum rust", "laravel", "spring boot", "ruby on rails"]
+        ["land survey boundary dispute process", "septic tank inspection checklist", "owner financing contract terms", "property tax assessment appeal process", "rental property depreciation calculator", "commercial lease cam charges audit", "moving cross country budget calculator", "home inspection contingency checklist"],
+        ["hoa dispute resolution procedures", "title insurance cost breakdown", "cost of building a pole barn house", "adu accessory dwelling unit permit cost", "as-is home purchase contract risks", "well water testing parameters checklist", "short term rental permit requirements", "tenant screening criteria checklist"],
+        ["squatters rights by state timeline", "property boundary fence law rules", "cost to finish a basement per square foot", "house hacking rent vs mortgage calculator", "escrow shortage explanation and options", "real estate assignment contract template", "lease with option to purchase contract", "flood zone insurance cost calculator"]
       ]
     },
-    "APIs": {
-      "description": "API protocols, integrations, gateways, and webhooks",
+    "Clean Energy & Home": {
+      "description": "Solar systems, heat pumps, insulation, backup generators, and home infrastructure costs",
       "batches": [
-        ["trpc", "graphql", "openapi", "stripe api", "resend", "twilio", "websockets", "grpc"],
-        ["postman", "swagger", "webhook", "fastapi swagger", "sse", "socket io", "algolia", "pusher"]
+        ["off grid solar battery sizing calculator", "heat pump operating cost vs gas furnace", "whole house water filtration system cost", "metal roof vs architectural shingle cost", "geothermal heating installation cost", "solar panel payback period calculator", "backup generator sizing for house", "tankless water heater cost to install"],
+        ["spray foam insulation cost per sq ft", "ev charger home installation requirements", "solar battery storage cost after tax credit", "ductless mini split sizing by room", "rainwater harvesting system legal requirements", "energy audit checklist for home", "radon mitigation system installation cost", "wood stove vs pellet stove heating cost"]
       ]
     },
-    "Auth/Security": {
-      "description": "Authentication, authorization, secrets management, and cryptography",
+    "Health & Fitness": {
+      "description": "FSA/HSA eligibility, nutritional planning, ergonomic calculators, and health benchmarks",
       "batches": [
-        ["clerk auth", "nextauth", "auth0", "supabase auth", "passkeys", "oauth2", "jwt token", "keycloak"],
-        ["lucia auth", "kinde auth", "hashicorp vault", "tailscale", "letsencrypt", "cors error", "session cookie", "csrf"]
+        ["fsa eligible dental and medical expenses", "continuous glucose monitor for non diabetics", "low histamine diet food list pdf", "cpap mask leak troubleshooting guide", "electrolyte replacement recipe ratio", "blood pressure chart by age and gender", "macro calculator for muscle gain", "tdee calculator with body fat percentage"],
+        ["intermittent fasting 16 8 schedule guide", "ergonomic desk height calculator", "vo2 max chart by age and fitness level", "creatine loading phase vs daily dose", "anti inflammatory food list checklist", "target heart rate zones formula", "water intake calculator by body weight", "sleep debt recovery calculator"]
       ]
     },
-    "Data Tools": {
-      "description": "Data processing, pipelines, streaming, and modern data stack",
+    "Travel & Visas": {
+      "description": "Tax residency, passport rules, visa validity calculators, and international relocation",
       "batches": [
-        ["polars", "pandas", "dbt", "apache spark", "apache kafka", "airflow", "snowflake", "bigquery"],
-        ["dagster", "prefect", "arrow", "duckdb wasm", "cube js", "metabase", "superset", "databend"]
+        ["digital nomad tax residency requirements", "schengen 90 180 day calculator rule", "international pet relocation paperwork checklist", "car rental insurance credit card primary coverage", "passport renewal expedited processing timeline", "travel health insurance pre existing conditions", "customs duty declaration allowance limits", "working holiday visa age requirements by country"],
+        ["flight cancellation compensation claim template", "proof of onward travel rules by country", "international driving permit requirements", "luggage size limits comparison by airline", "japan rail pass price vs individual tickets", "electronic travel authorization eta checklist", "vat tax refund process for tourists", "global entry vs tsa precheck comparison"]
       ]
     },
-    "Mobile/Cross-platform": {
-      "description": "Mobile, desktop, and cross-platform native frameworks",
+    "Productivity & Work": {
+      "description": "Business templates, standard operating procedures, spreadsheets, and workflow tools",
       "batches": [
-        ["react native", "flutter", "expo", "tauri", "electron", "capacitor", "swiftui", "jetpack compose"],
-        ["tamagui", "react native reanimated", "kotlin multiplatform", "solito", "ionic", "wails", "flutter bloc", "pwa"]
+        ["notion client portal template free", "executive summary template for grant proposal", "sop standard operating procedure template", "google workspace data retention policy checklist", "meeting minutes template formal board", "work breakdown structure wbs template excel", "raci matrix template excel", "freelance rate calculator hourly to project"],
+        ["employee onboarding 30 60 90 day plan", "project risk assessment matrix template", "performance review self evaluation examples", "weekly status report template for leadership", "time blocking daily planner printable", "decision matrix template weighted scoring", "content calendar spreadsheet template", "change management communication plan template"]
       ]
     }
   }

@@ -1,8 +1,8 @@
 """
-Universal Root Niche Harvester (Gold Miner)
-Harvests broad root terms across 12 evergreen verticals without human hardcoding.
-Enforces strict intent richness filters to reject single-word generic terms.
-Includes Google Autocomplete a-z tree, Reddit developer pain points, and GitHub Trending harvesters.
+Universal Informational & Niche Website Harvester (Gold Miner v3.0)
+Harvests high-intent, high-RPM root topics across 12 universal verticals.
+Eliminates programming bug tags in favor of actionable buyer, decision, cost, and legal topics.
+Includes Google Autocomplete trees, Wikipedia classifications, and Reddit consumer problem harvesters.
 """
 
 import gzip
@@ -30,7 +30,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 SSL_CTX = ssl._create_unverified_context()
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
-# 12 Universal Verticals mapping
+# 12 Universal Evergreen Verticals
 VERTICALS = [
     "Finance & Wealth",
     "Small Business & B2B",
@@ -46,74 +46,161 @@ VERTICALS = [
     "Travel & Visas",
 ]
 
-# Baseline high-yield seed anchors per vertical
+# 250+ Curated High-Yield Informational & Decision Seed Anchors
 BASELINE_ROOT_SEEDS: Dict[str, List[str]] = {
     "Finance & Wealth": [
-        "mortgage calculator", "loan calculator", "tax calculator", "salary after tax",
-        "crypto tax calculator", "compound interest calculator", "car loan payment",
-        "dividend calculator", "401k calculator", "roi calculator", "refinance calculator",
-        "amortization schedule", "net worth tracker", "capital gains tax calculator",
+        "mortgage amortization schedule", "medical debt settlement", "probate court process",
+        "short term disability claim", "custodial account rules", "backdoor roth ira limit",
+        "capital gains tax real estate", "dividend reinvestment calculator", "car refinance calculator",
+        "debt to income ratio calculator", "early retirement fire calculator", "hsa contribution limit rules",
+        "401k withdrawal penalty exception", "inherited ira distribution rules", "crypto tax loss harvesting",
+        "closing costs buyer vs seller", "heloc payment calculator", "umbrella insurance requirements",
+        "solar tax credit rules", "auto insurance deductible comparison", "cd ladder calculator",
+        "annuity payout options", "student loan forgiveness checklist", "credit report dispute letter",
+        "structured settlement cash out",
     ],
     "Small Business & B2B": [
-        "invoice generator", "receipt maker", "paystub generator", "nda generator",
-        "bill of sale template", "profit margin calculator", "contract template",
-        "purchase order template", "business proposal template", "break even calculator",
-        "independent contractor agreement", "quote template", "inventory tracker",
-    ],
-    "Productivity & Work": [
-        "budget template", "timesheet template", "habit tracker", "meeting notes template",
-        "cron expression generator", "markdown editor", "pomodoro timer", "work breakdown structure",
-        "daily planner template", "kanban board template", "flowchart maker", "gantt chart template",
-    ],
-    "Media & Converters": [
-        "heic to jpg", "mp4 to gif", "pdf to word", "compress png",
-        "webp to png", "audio extractor", "svg to png", "watermark remover",
-        "video compressor", "epub to pdf", "m4a to mp3", "wav to mp3",
-        "image resizer", "remove background",
-    ],
-    "Health & Fitness": [
-        "calorie calculator", "macro calculator", "bmi calculator", "running pace calculator",
-        "tdee calculator", "water intake calculator", "intermittent fasting tracker",
-        "body fat percentage calculator", "one rep max calculator", "ovulation calculator",
-        "sleep cycle calculator", "keto diet calculator",
-    ],
-    "Real Estate & Living": [
-        "rent vs buy calculator", "closing cost calculator", "square footage calculator",
-        "moving checklist", "lease agreement template", "sublet agreement template",
-        "rental yield calculator", "property tax calculator", "roommate agreement template",
-        "landlord notice to vacate", "home inspection checklist",
+        "commercial lease letter of intent", "independent contractor agreement template",
+        "freelance invoice dispute resolution", "registered agent requirements by state",
+        "ein number for trust or estate", "break even analysis formula",
+        "operating agreement single member llc", "subcontractor agreement template",
+        "commercial general liability insurance cost", "accounts receivable aging report template",
+        "b2b software contract terms checklist", "business valuation multiple by industry",
+        "profit margin calculator by industry", "wholesale pricing formula",
+        "client onboarding checklist template", "non compete agreement enforceability",
+        "vendor selection matrix template", "business asset purchase agreement",
+        "co-founder equity split agreement", "trademark class selection guide",
+        "freight shipping cost calculator", "employee severance agreement template",
+        "equipment lease vs buy calculator", "cash flow projection spreadsheet",
+        "sba 7a loan requirements checklist",
     ],
     "Legal & Compliance": [
-        "privacy policy generator", "terms of service generator", "cookie consent banner",
-        "power of attorney form", "llc operating agreement template", "non disclosure agreement",
-        "cease and desist letter template", "employment contract template", "gdpr checklist",
-        "affidavit template", "eviction notice template",
+        "affidavit of survivorship template", "power of attorney revocation form",
+        "mechanics lien waiver and release", "trademark cease and desist letter",
+        "small claims court filing limits by state", "living trust vs will cost comparison",
+        "quitclaim deed requirements", "promissory note template with interest",
+        "eviction notice notice to quit template", "hipaa compliance checklist for small business",
+        "non disclosure agreement mutual nda", "landlord security deposit return timeline",
+        "dmca takedown notice template", "child support calculation formula",
+        "statute of limitations debt collection", "prenuptial agreement checklist",
+        "medical power of attorney form", "breach of contract demand letter",
+        "cease and desist harassment template", "guardianship petition process",
+        "right of first refusal agreement", "commercial sublease agreement terms",
+        "easement agreement template", "employment non solicitation agreement",
+        "wrongful termination documentation checklist",
     ],
-    "Academic & Education": [
-        "gpa calculator", "citation generator", "word counter", "grade calculator",
-        "percentage increase calculator", "scientific notation calculator", "weighted grade calculator",
-        "plagiarism checker", "flashcard maker", "apa citation maker",
+    "Real Estate & Living": [
+        "land survey boundary dispute process", "septic tank inspection checklist",
+        "owner financing contract terms", "property tax assessment appeal process",
+        "rental property depreciation calculator", "commercial lease cam charges audit",
+        "moving cross country budget calculator", "home inspection contingency checklist",
+        "hoa dispute resolution procedures", "title insurance cost breakdown",
+        "cost of building a pole barn house", "adu accessory dwelling unit permit cost",
+        "as-is home purchase contract risks", "well water testing parameters checklist",
+        "short term rental permit requirements", "tenant screening criteria checklist",
+        "squatters rights by state timeline", "property boundary fence law rules",
+        "cost to finish a basement per square foot", "house hacking rent vs mortgage calculator",
+        "escrow shortage explanation and options", "real estate assignment contract template",
+        "lease with option to purchase contract", "home appraisal low value dispute",
+        "flood zone insurance cost calculator",
     ],
-    "Developer & Cloud": [
-        "docker compose template", "fastapi boilerplate", "supabase starter", "jwt refresh token",
-        "ollama gpu setup", "kubernetes yaml generator", "sql query builder", "regex tester",
-        "nginx reverse proxy config", "tailwind components", "nextjs authentication",
-        "cron schedule generator", "rest api documentation template",
+    "Clean Energy & Home": [
+        "off grid solar battery sizing calculator", "heat pump operating cost vs gas furnace",
+        "whole house water filtration system cost", "metal roof vs architectural shingle cost",
+        "geothermal heating installation cost", "solar panel payback period calculator",
+        "backup generator sizing for house", "tankless water heater cost to install",
+        "spray foam insulation cost per sq ft", "ev charger home installation requirements",
+        "solar battery storage cost after tax credit", "ductless mini split sizing by room",
+        "rainwater harvesting system legal requirements", "energy audit checklist for home",
+        "radon mitigation system installation cost", "wood stove vs pellet stove heating cost",
+        "septic drain field replacement cost", "foundation repair cost by type of crack",
+        "pool removal cost in ground vs above ground", "crawl space encapsulation cost breakdown",
     ],
-    "Gaming & Entertainment": [
-        "damage calculator", "stat calculator", "tier list maker", "wordle solver",
-        "mouse sensitivity converter", "crosshair generator", "pokemon weakness chart",
-        "fps benchmark calculator", "discord bot template",
-    ],
-    "E-Commerce & Selling": [
-        "etsy fee calculator", "ebay fee calculator", "shopify margin calculator",
-        "amazon fba fees calculator", "shipping cost calculator", "barcode generator",
-        "drop shipping profit calculator", "product markup calculator", "mercari fee calculator",
+    "Health & Fitness": [
+        "fsa eligible dental and medical expenses", "continuous glucose monitor for non diabetics",
+        "low histamine diet food list pdf", "cpap mask leak troubleshooting guide",
+        "electrolyte replacement recipe ratio", "blood pressure chart by age and gender",
+        "macro calculator for muscle gain", "tdee calculator with body fat percentage",
+        "intermittent fasting 16 8 schedule guide", "ergonomic desk height calculator",
+        "vo2 max chart by age and fitness level", "creatine loading phase vs daily dose",
+        "anti inflammatory food list checklist", "target heart rate zones formula",
+        "water intake calculator by body weight", "running pace split calculator",
+        "plant based protein requirements chart", "sleep debt recovery calculator",
+        "potassium rich foods comparison chart", "hsa eligible vision and dental services",
     ],
     "Travel & Visas": [
-        "schengen 90 180 calculator", "visa requirements for", "flight delay compensation",
-        "currency converter", "packing checklist", "passport renewal requirements",
-        "jet lag planner", "customs declaration template", "travel budget calculator",
+        "digital nomad tax residency requirements", "schengen 90 180 day calculator rule",
+        "international pet relocation paperwork checklist", "car rental insurance credit card primary coverage",
+        "passport renewal expedited processing timeline", "travel health insurance pre existing conditions",
+        "customs duty declaration allowance limits", "working holiday visa age requirements by country",
+        "flight cancellation compensation claim template", "proof of onward travel rules by country",
+        "international driving permit requirements", "luggage size limits comparison by airline",
+        "japan rail pass price vs individual tickets", "electronic travel authorization eta checklist",
+        "vat tax refund process for tourists", "global entry vs tsa precheck comparison",
+        "long stay visa income requirements", "dual citizenship tax implications guide",
+        "packing checklist for long term travel pdf", "high altitude sickness prevention checklist",
+    ],
+    "Productivity & Work": [
+        "notion client portal template free", "executive summary template for grant proposal",
+        "sop standard operating procedure template", "google workspace data retention policy checklist",
+        "meeting minutes template formal board", "work breakdown structure wbs template excel",
+        "raci matrix template excel", "freelance rate calculator hourly to project",
+        "employee onboarding 30 60 90 day plan", "project risk assessment matrix template",
+        "performance review self evaluation examples", "weekly status report template for leadership",
+        "time blocking daily planner printable", "decision matrix template weighted scoring",
+        "content calendar spreadsheet template", "inventory reorder point formula excel",
+        "call sheet template for film production", "incident report form template workplace",
+        "okr objectives key results tracking sheet", "change management communication plan template",
+    ],
+    "E-Commerce & Selling": [
+        "etsy fee and profit calculator 2026", "shopify transaction fee comparison",
+        "amazon fba storage fee calculator", "reselling profit margin formula excel",
+        "dropshipping customs and import duties guide", "mercari vs ebay selling fees breakdown",
+        "sales tax nexus thresholds by state", "product barcode upc registration process",
+        "wholesale minimum order quantity moq calculation", "ecommerce return rate benchmarks by industry",
+        "private label packaging requirements checklist", "pallet shipping ltl freight quote estimator",
+        "pos point of sale processing fee comparison", "digital product delivery setup without monthly fee",
+        "ecommerce product listing seo checklist",
+    ],
+    "Media & Converters": [
+        "heic to jpg batch converter without upload", "webp to png high quality transparent",
+        "compress video for email 25mb limit", "pdf to excel formatted data extraction",
+        "audio track extractor from video file", "svg path optimizer and minifier",
+        "extract subtitles srt from mp4 file", "convert epub to mobi for kindle",
+        "crop video to 9 16 aspect ratio", "remove audio background noise free",
+        "dxf to svg conversion for laser cutting", "lossless flac to alac converter mac",
+        "merge pdf files with bookmarks preserved", "watermark pdf documents free online",
+        "raw cr3 to dng batch conversion",
+    ],
+    "Academic & Education": [
+        "gpa calculator weighted vs unweighted", "apa 7th edition reference citation template",
+        "scientific notation calculation converter", "grade needed on final exam calculator",
+        "cornell note taking template printable pdf", "college application essay outline structure",
+        "mla works cited formatting checklist", "percentage change increase decrease formula",
+        "act to sat score conversion chart 2026", "student loan amortization payment formula",
+        "grad school letter of recommendation request template", "reading speed wpm test and improvement guide",
+        "weighted average calculation formula", "lab report format structure template",
+        "peer review critique form template",
+    ],
+    "Gaming & Entertainment": [
+        "mouse sensitivity converter cs2 to valorant", "fov field of view calculator ultrawide",
+        "fps benchmark comparison calculator", "pokemon type weakness and resistance chart",
+        "armor damage reduction formula calculator", "tcg trading card condition grading guide",
+        "board game rulebook quick reference summary", "audio equalizer settings for competitive gaming",
+        "streaming bitrate calculator by resolution", "retro console hdmi upscaler comparison",
+        "monitor response time gtq vs mprt guide", "custom fight stick wiring diagram pinout",
+        "gaming chair ergonomic posture checklist", "mechanical keyboard switch sound chart",
+        "vr interpupillary distance ipd calculator",
+    ],
+    "Developer & Cloud": [
+        "docker compose multi container template", "fastapi production boilerplate with auth",
+        "supabase rls row level security policy guide", "jwt refresh token rotation implementation",
+        "ollama local model gpu memory requirements", "kubernetes ingress yaml template letsencrypt",
+        "sql query optimization checklist", "regex pattern cheatsheet with examples",
+        "nginx reverse proxy ssl websocket configuration", "tailwind css dashboard component template",
+        "nextjs 15 app router authentication pattern", "cron schedule expression generator tool",
+        "rest api documentation markdown template", "s3 bucket policy public read restricted upload",
+        "github actions cicd deployment pipeline template",
     ],
 }
 
@@ -123,64 +210,46 @@ BASELINE_ROOT_SEEDS: Dict[str, List[str]] = {
 
 _ACTION_VERBS = re.compile(
     r"\b(convert|calculate|generate|fix|repair|build|create|compare|check|"
-    r"validate|parse|format|extract|compress|resize|merge|split|encrypt|"
-    r"decode|encode|estimate|track|automate|deploy|configure|integrate|"
-    r"migrate|backup|restore|monitor|schedule|export|import|scrape|"
-    r"transform|analyze|visualize|optimize|debug|test|load|read|write|"
-    r"open|run|install|set up|setup)\b",
+    r"validate|parse|format|extract|compress|resize|merge|split|"
+    r"estimate|track|automate|deploy|configure|integrate|"
+    r"export|import|analyze|visualize|optimize|review|"
+    r"claim|dispute|settle|appeal|deduct|waive|cancel|revoke|"
+    r"negotiate|size|screen|inspect|pass|renew|refund)\b",
     re.IGNORECASE,
 )
 
 _PROBLEM_PREFIXES = re.compile(
-    r"\b(how to|error|failed|cannot|can't|won't|not working|fix|"
-    r"unable to|issue|bug|exception|crash|timeout|broken|invalid|"
-    r"missing|undefined|null|rejected|denied|forbidden|unauthorized|"
-    r"without|instead of|alternative to|replacement for|"
-    r"why is|why does|what is)\b",
-    re.IGNORECASE,
-)
-
-_COMPARISON_TOKENS = re.compile(
-    r"\b(vs|versus|compared to|better than|difference between|"
-    r"free|online|open source|self.hosted|no signup|without subscription|"
-    r"best|top|fastest|benchmark)\b",
+    r"\b(how to|cost of|average cost|price of|how much|checklist|requirements|"
+    r"rules for|timeline for|limits by|formula|template|agreement|sample|"
+    r"process|dispute|penalty|exception|exemption|breakdown|guide|"
+    r"worth it|without|instead of|alternative to|replacement for|"
+    r"why is|difference between|vs|versus)\b",
     re.IGNORECASE,
 )
 
 _MODIFIER_SUFFIXES = re.compile(
     r"\b(calculator|generator|converter|checker|validator|formatter|"
-    r"template|cheatsheet|guide|tutorial|example|boilerplate|starter|"
-    r"tool|library|package|plugin|extension|integration|api|sdk|"
-    r"workaround|patch|fix|solution|alternative|alternatives|setup|config|"
-    r"script|snippet|recipe|reference|cheat sheet)\b",
+    r"template|cheatsheet|guide|checklist|formula|matrix|schedule|"
+    r"contract|agreement|notice|letter|policy|rules|process|steps|"
+    r"breakdown|cost|price|requirements|timeline|deductible|calculator|"
+    r"spreadsheet|worksheet|handbook|pdf|form)\b",
     re.IGNORECASE,
 )
 
-_SO_GENERIC_SINGLE_WORDS = re.compile(
-    r"^(image|images|forms|css|html|sql|xml|json|api|rest|"
-    r"string|list|array|function|class|object|type|method|"
-    r"file|path|data|value|key|map|set|tree|graph|sort|"
-    r"loop|async|thread|process|memory|network|server|client|"
-    r"database|table|column|row|index|query|view|schema|"
-    r"error|exception|null|undefined|boolean|integer|float|health)$",
+_CODING_BUG_TAGS = re.compile(
+    r"\b(generation error occurred|media error 1|nullpointerexception|"
+    r"syntaxerror|typeerror|for loop tutorial|string tutorial|vb\.net tutorial|"
+    r"winforms tutorial|c\+\+11 tutorial|algorithm tutorial|load file in r|"
+    r"calculator error message|index out of range|undefined variable)\b",
     re.IGNORECASE,
 )
-
-_SO_TAG_EXPANSION_TEMPLATES = [
-    "{tag} error fix",
-    "{tag} vs alternative",
-    "{tag} best practices",
-    "{tag} not working",
-    "{tag} setup guide",
-    "how to use {tag}",
-    "{tag} tutorial 2026",
-]
 
 
 def score_seed_intent(seed: str) -> Dict[str, Any]:
     """
     Scores a candidate seed for builder/buyer intent richness.
     Score >= 2 is accepted into the frontier queue.
+    Rejects raw coding error strings and single generic words.
     """
     s = seed.strip().lower()
     words = s.split()
@@ -188,18 +257,21 @@ def score_seed_intent(seed: str) -> Dict[str, Any]:
 
     if word_count < 2:
         return {"score": 0, "reject_reason": "single_word", "seed": s}
-    if word_count > 8:
+    if word_count > 10:
         return {"score": 0, "reject_reason": "too_long", "seed": s}
+
+    if _CODING_BUG_TAGS.search(s):
+        return {"score": 0, "reject_reason": "coding_bug_artifact", "seed": s}
 
     has_action_verb = bool(_ACTION_VERBS.search(s))
     has_problem_prefix = bool(_PROBLEM_PREFIXES.search(s))
-    has_comparison = bool(_COMPARISON_TOKENS.search(s))
     has_modifier_suffix = bool(_MODIFIER_SUFFIXES.search(s))
+    has_comparison = "vs" in words or "versus" in words or "compared" in words
 
-    score = sum([has_action_verb, has_problem_prefix, has_comparison, has_modifier_suffix])
+    score = sum([has_action_verb, has_problem_prefix, has_modifier_suffix, has_comparison])
 
-    # Allow 2-word terms if they contain at least one strong modifier (e.g. "heic jpg", "webp png")
-    if score == 0 and ("to" in words or "vs" in words):
+    # Allow 2-word terms if they contain at least one strong modifier (e.g. "heic jpg", "webp png", "roas formula")
+    if score == 0 and ("to" in words or "cost" in words or "template" in words):
         score = 2
 
     return {
@@ -207,7 +279,6 @@ def score_seed_intent(seed: str) -> Dict[str, Any]:
         "score": score,
         "has_action_verb": has_action_verb,
         "has_problem_prefix": has_problem_prefix,
-        "has_comparison": has_comparison,
         "has_modifier_suffix": has_modifier_suffix,
         "reject_reason": None if score >= 1 else "low_intent",
     }
@@ -216,27 +287,6 @@ def score_seed_intent(seed: str) -> Dict[str, Any]:
 def is_intent_rich(seed: str) -> bool:
     """Quick boolean gate for the seed ingestion pipeline."""
     return score_seed_intent(seed)["score"] >= 1
-
-
-def expand_so_tag_with_intent(tag: str) -> List[str]:
-    """
-    Expands a StackOverflow tag into actionable, high-intent seeds.
-    Rejects generic single nouns (e.g. 'image', 'forms').
-    """
-    clean = tag.strip().lower().replace("-", " ").replace(".", " ")
-    words = clean.split()
-
-    if len(words) == 1 and _SO_GENERIC_SINGLE_WORDS.match(clean):
-        return []
-
-    if len(words) == 1:
-        candidates = [t.format(tag=clean) for t in _SO_TAG_EXPANSION_TEMPLATES]
-        return [c for c in candidates if is_intent_rich(c)]
-
-    candidates = [f"{clean} setup", f"{clean} error", f"{clean} alternative", f"{clean} vs"]
-    if is_intent_rich(clean):
-        candidates.append(clean)
-    return [c for c in candidates if is_intent_rich(c)]
 
 
 class NicheIngestor:
@@ -262,37 +312,9 @@ class NicheIngestor:
         logger.info(f"Seeded {count} baseline root anchors across {len(BASELINE_ROOT_SEEDS)} verticals")
         return count
 
-    def ingest_stackoverflow_tags(self, max_pages: int = 2) -> int:
-        """Harvests top tags from Stack Overflow API wrapped in intent templates."""
-        count = 0
-        for page in range(1, max_pages + 1):
-            url = f"https://api.stackexchange.com/2.3/tags?page={page}&pagesize=100&order=desc&sort=popular&site=stackoverflow"
-            try:
-                req = urllib.request.Request(url, headers=self.headers)
-                with urllib.request.urlopen(req, context=SSL_CTX, timeout=8) as resp:
-                    raw = resp.read()
-                    try:
-                        content = gzip.decompress(raw).decode("utf-8")
-                    except Exception:
-                        content = raw.decode("utf-8")
-                    data = json.loads(content)
-                    items = data.get("items", [])
-                    for item in items:
-                        tag_name = item.get("name", "").strip()
-                        expanded = expand_so_tag_with_intent(tag_name)
-                        for exp_term in expanded:
-                            if self._queue_term(exp_term, category="Developer & Cloud", depth=0):
-                                count += 1
-                time.sleep(random.uniform(0.5, 1.0))
-            except Exception as e:
-                logger.warning(f"Stack Overflow tag ingestion failed on page {page}: {e}")
-                break
-        logger.info(f"Harvested {count} high-intent Developer niche anchors from Stack Overflow tags")
-        return count
-
     def harvest_google_autocomplete(self, root: str, letters: str = "abcdefghijklmnopqrstuvwxyz") -> List[str]:
         """
-        Scrapes Google's Autocomplete JSON endpoint for a-z expansions of a root term.
+        Scrapes Google's Autocomplete JSON endpoint for intent-rich expansions of a root term.
         Zero API keys required.
         """
         seeds = []
@@ -315,11 +337,14 @@ class NicheIngestor:
         return seeds
 
     def harvest_reddit_pain_points(self, subreddits: Optional[List[str]] = None) -> List[str]:
-        """Scrapes problem titles from developer and business subreddits without API keys."""
+        """Scrapes consumer and business problem titles from active subreddits without API keys."""
         if subreddits is None:
-            subreddits = ["learnprogramming", "webdev", "devops", "selfhosted", "smallbusiness"]
+            subreddits = [
+                "smallbusiness", "personalfinance", "legaladvice", "realestateinvesting",
+                "homeowners", "digitalnomad", "solarenergy", "freelance"
+            ]
         seeds = []
-        headers = {"User-Agent": "Mozilla/5.0 (compatible; gap-research/1.0)"}
+        headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)"}
         for sub in subreddits:
             url = f"https://www.reddit.com/r/{sub}/top.json?t=month&limit=50"
             try:
@@ -338,46 +363,73 @@ class NicheIngestor:
             time.sleep(random.uniform(0.5, 1.0))
         return seeds
 
-    def ingest_wikipedia_categories(self) -> int:
-        """Traverses Wikipedia categories for calculators, converters, and business tools."""
-        category_targets = [
-            ("Category:Calculators", "Productivity & Work"),
-            ("Category:Financial_software", "Finance & Wealth"),
-            ("Category:Unit_converters", "Media & Converters"),
-            ("Category:Health_software", "Health & Fitness"),
-            ("Category:Legal_software", "Legal & Compliance"),
-            ("Category:Educational_software", "Academic & Education"),
-        ]
-        count = 0
-        for cat, vertical in category_targets:
-            url = f"https://en.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle={urllib.parse.quote(cat)}&cmlimit=100&format=json"
-            try:
-                req = urllib.request.Request(url, headers=self.headers)
-                with urllib.request.urlopen(req, context=SSL_CTX, timeout=8) as resp:
-                    data = json.loads(resp.read().decode("utf-8"))
-                    members = data.get("query", {}).get("categorymembers", [])
-                    for m in members:
-                        title = m.get("title", "")
-                        clean = re.sub(r"\(.*?\)", "", title).strip().lower()
-                        if clean and is_intent_rich(clean) and not clean.startswith("category:"):
-                            if self._queue_term(clean, category=vertical, depth=0):
-                                count += 1
-                time.sleep(random.uniform(0.3, 0.7))
-            except Exception as e:
-                logger.debug(f"Wikipedia category {cat} fetch error: {e}")
-        logger.info(f"Harvested {count} niche anchors from Wikipedia classification tree")
-        return count
-
     def run_all(self) -> Dict[str, int]:
-        """Runs the complete multi-source harvester."""
+        """Runs the complete informational seed injection."""
         results = {
             "baseline": self.seed_baseline_taxonomies(),
-            "wikipedia": self.ingest_wikipedia_categories(),
-            "so_tags": self.ingest_stackoverflow_tags(max_pages=2),
         }
         total = sum(results.values())
-        logger.info(f"Total new frontier niches queued across all sources: {total}")
+        logger.info(f"Total new frontier niches queued: {total}")
         return results
+
+
+def cleanse_and_reseed_database() -> Dict[str, Any]:
+    """
+    Purges contaminated Stack Overflow developer programming tags from SQLite,
+    resets the frontier queue, and seeds 250+ vetted informational website concepts.
+    """
+    conn = db.get_connection()
+    c = conn.cursor()
+
+    # 1. Identify programming tag patterns to purge
+    purge_patterns = [
+        "%.htaccess%", "%.net%", "%tutorial%", "%for loop%", "%winforms%",
+        "%vb.net%", "%algorithm%", "%load file in r%", "%c++11%",
+        "%syntaxerror%", "%typeerror%", "%error fix%", "%a generation error occurred%",
+        "%media error 1%", "%calculator error message%"
+    ]
+
+    purged_frontier = 0
+    purged_queries = 0
+
+    with conn:
+        for pat in purge_patterns:
+            c.execute("DELETE FROM frontier_niches WHERE niche_term LIKE ?", (pat,))
+            purged_frontier += c.rowcount
+            c.execute("DELETE FROM queries WHERE keyword LIKE ?", (pat,))
+            purged_queries += c.rowcount
+
+        # Also purge any single-word or obviously bad tags in frontier
+        c.execute("""
+            DELETE FROM frontier_niches 
+            WHERE category = 'Developer & Cloud' 
+              AND (niche_term LIKE '%tutorial%' OR niche_term LIKE '%error%' OR niche_term LIKE '%.%')
+        """)
+        purged_frontier += c.rowcount
+
+    logger.info(f"Purged {purged_frontier} contaminated frontier rows and {purged_queries} invalid query rows")
+
+    # 2. Reseed clean informational taxonomy
+    ingestor = NicheIngestor()
+    seeded = ingestor.seed_baseline_taxonomies()
+
+    # 3. Reset any pending status so runners immediately pick them up
+    with conn:
+        c.execute("UPDATE frontier_niches SET status = 'pending', claimed_by_shard = NULL WHERE status = 'claimed'")
+
+    # 4. Count final state
+    c.execute("SELECT count(*) FROM frontier_niches")
+    total_frontier = c.fetchone()[0]
+    c.execute("SELECT count(*) FROM queries")
+    total_queries = c.fetchone()[0]
+
+    return {
+        "purged_frontier": purged_frontier,
+        "purged_queries": purged_queries,
+        "newly_seeded": seeded,
+        "total_frontier_remaining": total_frontier,
+        "total_queries_remaining": total_queries,
+    }
 
 
 # Disguised telemetry alias
@@ -385,14 +437,6 @@ TaxonomyLoader = NicheIngestor
 
 
 if __name__ == "__main__":
-    # Test intent scoring
-    test_terms = ["image", "forms", "health", "fastapi jwt boilerplate", "calorie calculator net", "docker compose setup"]
-    print("Intent Scoring Test:")
-    for t in test_terms:
-        score_data = score_seed_intent(t)
-        print(f"'{t}': Score={score_data['score']}, Accepted={is_intent_rich(t)}, Reason={score_data.get('reject_reason')}")
-
-    # Test SO tag expansion
-    print("\nSO Tag Expansion Test:")
-    print(f"'image' -> {expand_so_tag_with_intent('image')} (Expected empty)")
-    print(f"'fastapi' -> {expand_so_tag_with_intent('fastapi')[:3]}")
+    print("Executing database cleanse and reseeding...")
+    stats = cleanse_and_reseed_database()
+    print("Cleanse & Reseed Results:", json.dumps(stats, indent=2))

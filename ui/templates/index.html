@@ -1200,49 +1200,106 @@
   </main>
 
   <!-- ======================================================== -->
-  <!-- MODAL 1: 1-CLICK AI BUILD PLAN PROMPT                    -->
+  <!-- MODAL 1: 1-CLICK WEBSITE SILO ARCHITECTURE BLUEPRINT     -->
   <!-- ======================================================== -->
   <div x-show="showBlueprintModal"
        @keydown.escape.window="showBlueprintModal = false"
-       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md"
        x-transition.opacity>
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative"
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-3xl w-full p-6 shadow-2xl relative max-h-[90vh] flex flex-col"
          @click.away="showBlueprintModal = false">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-        <div class="flex items-center space-x-2">
-          <span class="text-xl">🤖</span>
-          <h3 class="text-base font-bold text-amber-400">1-Click Build Plan (AI Prompt)</h3>
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0 mb-4">
+        <div class="flex items-center space-x-2.5">
+          <span class="text-2xl">🏛️</span>
+          <div>
+            <h3 class="text-base font-extrabold text-amber-400">Website Silo Architecture Blueprint</h3>
+            <span class="text-[11px] text-slate-400">Full 4-tier topical cluster ready for deployment</span>
+          </div>
         </div>
-        <button @click="showBlueprintModal = false" class="text-slate-400 hover:text-slate-200 text-lg">✕</button>
+        <button @click="showBlueprintModal = false" class="text-slate-400 hover:text-white text-lg p-1">✕</button>
       </div>
 
-      <div class="space-y-4 text-xs">
-        <div>
-          <span class="text-slate-400 font-medium">Target Keyword Opportunity:</span>
-          <h4 class="text-base font-bold text-slate-100 mt-0.5" x-text="activeBlueprint.keyword"></h4>
+      <!-- Modal Body (Scrollable) -->
+      <div class="space-y-4 overflow-y-auto pr-1 text-xs text-slate-300 flex-1">
+        <!-- Target & Monetization Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 p-3 rounded-xl bg-slate-950 border border-slate-800">
+          <div>
+            <span class="text-[10px] uppercase font-mono text-slate-500 font-bold">Target Topic</span>
+            <div class="font-bold text-white text-sm mt-0.5 truncate" x-text="activeBlueprint.keyword"></div>
+            <span class="text-[10px] text-indigo-400" x-text="activeBlueprint.category"></span>
+          </div>
+          <div>
+            <span class="text-[10px] uppercase font-mono text-slate-500 font-bold">Monetization RPM</span>
+            <div class="font-bold text-emerald-400 text-xs mt-0.5" x-text="activeBlueprint.rpm"></div>
+            <span class="text-[10px] text-slate-400" x-text="activeBlueprint.bounty"></span>
+          </div>
+          <div>
+            <span class="text-[10px] uppercase font-mono text-slate-500 font-bold">Suggested Domains</span>
+            <div class="flex flex-wrap gap-1 mt-1">
+              <template x-for="dom in (activeBlueprint.domains || [])" :key="dom">
+                <span class="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 font-mono text-[10px] border border-slate-700" x-text="dom"></span>
+              </template>
+            </div>
+          </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-            <span class="text-slate-500 font-mono text-[10px] uppercase">Recommended $0 Tech Stack</span>
-            <div class="font-bold text-emerald-400 text-xs mt-1" x-text="activeBlueprint.stack"></div>
+        <!-- Pillar Cornerstone & Lead Magnet -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <!-- Pillar Structure -->
+          <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                <span>📌</span> Cornerstone Pillar Page
+              </span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono">2,500 words</span>
+            </div>
+            <div class="font-bold text-slate-100 text-xs" x-text="activeBlueprint.pillar_title"></div>
+            <ul class="text-[11px] text-slate-400 space-y-1 list-disc list-inside">
+              <template x-for="sec in (activeBlueprint.pillar_sections || [])" :key="sec">
+                <li x-text="sec" class="truncate"></li>
+              </template>
+            </ul>
           </div>
-          <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-            <span class="text-slate-500 font-mono text-[10px] uppercase">Page Title & SEO Headline</span>
-            <div class="font-bold text-slate-200 text-xs mt-1" x-text="activeBlueprint.seo_title"></div>
+
+          <!-- Lead Magnet / Interactive Tool -->
+          <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+              <span>🧲</span> High-Converting Lead Asset
+            </span>
+            <div class="p-2.5 rounded-lg bg-cyan-950/30 border border-cyan-800/40 text-cyan-200 text-xs font-medium" x-text="activeBlueprint.lead_asset"></div>
+            <div class="text-[11px] text-slate-400 leading-relaxed">
+              Provides the critical <strong>Information Gain</strong> required by Google algorithms to outrank generic forum discussions and outdate Reddit/Quora threads.
+            </div>
           </div>
         </div>
 
+        <!-- Supporting Cluster Articles -->
+        <div class="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+          <span class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+            <span>🔗</span> Supporting Topical Cluster Articles (1,200 words each)
+          </span>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+            <template x-for="(art, idx) in (activeBlueprint.cluster_articles || [])" :key="idx">
+              <div class="p-2 rounded bg-slate-900 border border-slate-800 text-[11px] text-slate-300 flex items-start gap-1.5">
+                <span class="text-indigo-400 font-bold shrink-0" x-text="'#' + (idx + 1)"></span>
+                <span class="truncate" x-text="art"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- AI Prompt Box -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <span class="text-slate-400 font-medium">Ready-to-Use Prompt (Paste into Claude, ChatGPT, or Cursor):</span>
+            <span class="text-slate-400 font-medium">Ready-to-Use Website Generation Prompt:</span>
             <button @click="copyBlueprintPrompt()"
-                    class="px-3 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center space-x-1 cursor-pointer">
+                    class="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center space-x-1 cursor-pointer shadow">
               <span x-show="!copiedPrompt">📋 Copy AI Prompt</span>
-              <span x-show="copiedPrompt" class="text-emerald-950">✓ Copied to Clipboard!</span>
+              <span x-show="copiedPrompt" class="text-emerald-950 font-black">✓ Copied to Clipboard!</span>
             </button>
           </div>
-          <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-slate-300 whitespace-pre-wrap max-h-56 overflow-y-auto" x-text="activeBlueprint.prompt"></pre>
+          <pre class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 font-mono text-slate-300 whitespace-pre-wrap max-h-40 overflow-y-auto text-[11px]" x-text="activeBlueprint.prompt"></pre>
         </div>
       </div>
     </div>

@@ -566,94 +566,110 @@ function radarApp() {
     },
 
     // -------------------------------------------------------------
-    // 1-CLICK AI BUILDER BLUEPRINT GENERATOR (8 ARCHETYPES)
+    // 1-CLICK WEBSITE SILO BLUEPRINT GENERATOR (Gold Miner v3.0)
     // -------------------------------------------------------------
-    openBlueprint(item) {
+    async openBlueprint(item) {
       const q = item.keyword;
-      const arch = item.archetype || 'Micro-Tool';
       const cat = item.category || 'General';
+      const clusterKws = item.cluster_kws || 1;
+      const isVoid = item.exact_title_matches === 0;
 
-      let stack = 'Static HTML + Alpine.js + Tailwind CSS (Cloudflare Pages / Vercel)';
-      let seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Free Online Tool (2026)`;
-      let prompt = '';
+      // Clean domain slugs
+      const words = q.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => !['a','the','in','for','to','of','with','and','or','how'].includes(w)).slice(0, 3);
+      const capSlug = words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('');
+      const domains = [
+        `${capSlug}HQ.com`,
+        `${capSlug}Guide.com`,
+        `The${capSlug}Hub.com`
+      ];
 
-      if (arch === 'Micro-Tool') {
-        stack = 'Static Single-Page HTML/Wasm + Tailwind (Zero Backend, $0 Hosting)';
-        seoTitle = `Free ${q.charAt(0).toUpperCase() + q.slice(1)} — Instant & No Signup`;
-        prompt = `Act as an expert frontend engineer. Build a lightweight, responsive, single-page web utility for: "${q}".
-- Target User: People searching for "${q}" needing immediate results.
-- Architecture: Pure clientside JavaScript/Wasm with dark mode styling using Tailwind CSS.
-- Key Features:
-  1. Instant input slider/fields with zero required login.
-  2. Live recalculation on change without latency.
-  3. One-click copy/export to clipboard or PDF.
-  4. Structured JSON-LD FAQ Schema markup for programmatic SEO.
-Make it production-ready in a single self-contained index.html file with $0 monthly hosting cost.`;
-      } else if (arch === 'Config Generator') {
-        stack = 'Interactive Web UI with CodeMirror / Prism + 1-Click Download';
-        seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Interactive Generator & Validator`;
-        prompt = `Act as a senior DevOps & Cloud architect. Build an interactive web configuration generator for: "${q}".
-- Core Capability: Visual form controls that generate valid, syntax-checked configurations in real time.
-- Syntax Validation: Validate YAML / JSON / Dockerfile syntax live in browser.
-- Preset Profiles: Provide production, development, and high-performance presets.
-- 1-Click Actions: Copy to clipboard and download raw configuration file.
-Deliver a complete single-page application with modern dark UI.`;
-      } else if (arch === 'Cost Estimator') {
-        stack = 'Interactive Calculator + Formula Engine + Affiliate Card CTAs';
-        seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Real-Time Cost & Fee Calculator (2026)`;
-        prompt = `Act as a fintech product engineer. Build a high-converting, accurate pricing and cost estimator for: "${q}".
-- Calculation Engine: Dynamic tiers, percentage cuts, hidden fees, and net profit calculations.
-- Visual Breakdown: Interactive chart/donut breakdown of fee components.
-- Monetization Angles: Affiliate referral banners and high-CPC related tools.
-- PDF Export: Printable summary estimate for client quotes.
-Deliver a standalone responsive single-page tool.`;
-      } else if (arch === 'Compliance Checklist') {
-        stack = 'Interactive LocalStorage Checklist + Progress Ring + PDF Audit';
-        seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Interactive Audit Checklist & Template`;
-        prompt = `Act as a compliance and legal technology expert. Build an interactive checklist web tool for: "${q}".
-- Structure: Categorized requirements (Critical, Recommended, Optional) with pass/fail toggles.
-- Persistence: Saves progress automatically in browser localStorage.
-- Risk Score: Real-time compliance health score (0-100%) with actionable next steps.
-- Export: 1-click export to CSV / formatted PDF audit report.
-Deliver a polished, enterprise-grade dark-themed web utility.`;
-      } else if (arch === 'Interactive Visualizer') {
-        stack = 'SVG / Canvas Visualization (D3.js or Chart.js) + Embeddable Iframe';
-        seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Interactive Chart & Visualizer`;
-        prompt = `Act as a data visualization engineer. Build an interactive chart and visualizer for: "${q}".
-- Interaction: Zoom, pan, filter, hover tooltips, and data point inspection.
-- Shareability: 1-click "Copy Embed HTML" snippet for bloggers and documentation sites.
-- SVG/PNG Download: High-resolution export for reports.
-Deliver an interactive single-page visualizer.`;
-      } else if (arch === 'Workaround') {
-        stack = 'Astro / Next.js Static Markdown Guide with Verified Patch Scripts';
-        seoTitle = `How to Fix ${q} — Verified Step-by-Step Workaround (2026)`;
-        prompt = `Act as a senior technical documentation engineer. Write a definitive, minimal, high-ranking troubleshooting guide for: "${q}".
-- Exact Problem: Why does "${q}" happen in practice?
-- Quick Fix: 30-second copy-paste terminal command / code snippet.
-- Deep Dive: Root cause explanation with step-by-step verified instructions.
-- Edge Cases: OS-specific differences (Linux vs macOS vs Windows).
-Format in clean Markdown with copyable syntax-highlighted code blocks.`;
-      } else if (arch === 'Recipe') {
-        stack = 'Production-Ready Boilerplate & Canonical GitHub Repository';
-        seoTitle = `${q} — Canonical Recipe & Production Boilerplate`;
-        prompt = `Build a high-quality developer boilerplate repository for: "${q}".
-- Include full docker-compose / setup commands, clean modular structure, zero deprecated packages.
-- Add comprehensive README with 1-click deploy to Vercel/Render.`;
-      } else {
-        stack = 'Static Documentation & Technical Changelog Breakdown';
-        seoTitle = `${q} — Latest Updates & Migration Guide`;
-        prompt = `Write a comprehensive, technical overview and implementation cheatsheet for: "${q}".`;
+      // Monetization tier
+      const rpmTiers = {
+        'Finance & Wealth': { rpm: 'High ($55 - $125 RPM)', bounty: '$75 - $150 / lead', model: 'High-Ticket Financial Lead Gen & Affiliate' },
+        'Legal & Compliance': { rpm: 'High ($65 - $150 RPM)', bounty: '$60 - $120 / sale', model: 'Legal Template Downloads & Attorney Referrals' },
+        'Small Business & B2B': { rpm: 'High ($50 - $110 RPM)', bounty: '$50 - $100 / lead', model: 'B2B Software Trials & Commercial Templates' },
+        'Clean Energy & Home': { rpm: 'High ($40 - $95 RPM)', bounty: '$40 - $85 / quote', model: 'Contractor Quote Leads & Equipment Affiliates' },
+        'Real Estate & Living': { rpm: 'Medium-High ($35 - $80 RPM)', bounty: '$30 - $70 / lead', model: 'Property Management & Inspection Leads' },
+        'Health & Fitness': { rpm: 'Medium ($25 - $60 RPM)', bounty: '$20 - $50 / order', model: 'Direct Affiliates & Mediavine Display Ads' },
+        'Travel & Visas': { rpm: 'Medium ($25 - $55 RPM)', bounty: '$15 - $45 / booking', model: 'Travel Insurance & Flight Search Affiliates' },
+        'Productivity & Work': { rpm: 'Medium ($20 - $45 RPM)', bounty: '$10 - $35 / sale', model: 'Notion/SaaS Templates & Display Ads' },
+      };
+      const rpmData = rpmTiers[cat] || { rpm: 'Standard ($20 - $45 RPM)', bounty: '$15 - $35 / lead', model: 'Display Ads & Micro-SaaS Upgrades' };
+
+      // Interactive lead asset
+      let leadAsset = `1-Page Interactive ${q.toUpperCase()} Decision Calculator`;
+      if (/template|agreement|contract|form|affidavit/.test(q)) {
+        leadAsset = `Downloadable ${q.toUpperCase()} Template (Word & PDF) + Custom Clause Checklist`;
+      } else if (/checklist|requirements|rules|steps/.test(q)) {
+        leadAsset = `Printable ${q.toUpperCase()} Step-by-Step Compliance Checklist & Timeline`;
+      } else if (/cost|price|calculator|rate/.test(q)) {
+        leadAsset = `Real-Time Interactive ${q.toUpperCase()} Formula Calculator (Zero-Signup)`;
       }
+
+      // Pillar sections
+      const pillarSections = [
+        `1. Comprehensive Overview: Scope, Rules & Who Needs ${q.toUpperCase()}`,
+        `2. Total Costs, Price Ranges & Hidden Fees in 2026`,
+        `3. Step-by-Step Execution Process & Legal Timelines`,
+        `4. Common Traps, Costly Mistakes & Dispute Resolution`,
+        `5. Frequently Asked Questions & Expert Recommendations`
+      ];
+
+      // Cluster sub-articles
+      const clusterArticles = [
+        `Is ${q.toUpperCase()} Legally Binding? (Key Clauses & Exceptions)`,
+        `Step-by-Step Checklist for ${q.toUpperCase()} Before You Sign`,
+        `Free ${q.toUpperCase()} Template & Sample Breakdown (2026)`,
+        `${q.toUpperCase()} Cost Breakdown vs Standard Alternatives`
+      ];
+
+      // Master AI Generation Prompt
+      const fullPrompt = `Act as an expert digital publisher, niche website architect, and senior SEO copywriter.
+I am building a high-authority, high-converting niche website for the uncontested search topic: "${q}".
+
+[NICHE SPECIFICATION]
+- Primary Keyword: "${q}"
+- Vertical: ${cat}
+- Google SERP Competition: ${isVoid ? '0/10 Title Matches (Untouched Void)' : 'Weak / Forum Dominated'}
+- Target Audience: Decision makers seeking definitive answers, costs, rules, and actionable templates.
+- Brand Concept: ${domains[0]}
+
+[REQUIRED WEBSITE ARCHITECTURE]
+1. Cornerstone Pillar Article (2,500 words):
+   - Title: "The Complete Guide to ${q.toUpperCase()} (2026 Edition)"
+   - Outline:
+${pillarSections.map(s => '     * ' + s).join('\n')}
+   - Information Gain Differentiator: Include a structured comparison table, statutory timeline checklist, and concrete dollar figures.
+
+2. Supporting Topical Cluster Articles (1,200 words each):
+${clusterArticles.map((a, i) => `   - Article ${i+1}: "${a}"`).join('\n')}
+
+3. Lead Magnet / Interactive Web Asset:
+   - Asset: "${leadAsset}"
+   - Format: Single-page responsive HTML/Tailwind tool with zero required login.
+
+4. Programmatic SEO & Monetization:
+   - Primary Model: ${rpmData.model} (${rpmData.bounty})
+   - Display Ad RPM: ${rpmData.rpm}
+
+Generate the complete, production-ready Pillar Page markdown content with FAQ schema and clear CTAs linking to the lead magnet.`;
 
       this.activeBlueprint = {
         keyword: q,
-        archetype: arch,
         category: cat,
-        stack,
-        seo_title: seoTitle,
-        prompt,
+        cluster_kws: clusterKws,
+        domains: domains,
+        lead_asset: leadAsset,
+        rpm: rpmData.rpm,
+        bounty: rpmData.bounty,
+        model: rpmData.model,
+        pillar_title: `The Master Guide to ${q.toUpperCase()} [2026 Edition]`,
+        pillar_sections: pillarSections,
+        cluster_articles: clusterArticles,
+        prompt: fullPrompt,
+        copiedPrompt: false
       };
-      this.copiedPrompt = false;
+
       this.showBlueprintModal = true;
     },
 

@@ -289,6 +289,16 @@ def get_queries(
     }
 
 
+@app.get("/api/website-ideas")
+def get_website_ideas_endpoint(limit: int = 60, min_score: int = 50, category: Optional[str] = "all"):
+    """Returns clustered, high-doability website ideas with blueprints."""
+    from engines.cluster_engine import get_doable_website_ideas
+    ideas = get_doable_website_ideas(limit=limit, min_score=min_score)
+    if category and category.lower() != "all":
+        ideas = [i for i in ideas if i.get("category", "").lower() == category.lower()]
+    return {"ideas": ideas, "total": len(ideas)}
+
+
 @app.get("/api/input-keywords")
 def get_input_keywords(
     category: Optional[str] = "all",
