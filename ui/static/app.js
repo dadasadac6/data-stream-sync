@@ -288,6 +288,9 @@ function radarApp() {
       } else if (val === 'exact_title_matches') {
         this.sortBy = 'exact_title_matches';
         this.sortOrder = 'ASC';
+      } else if (val === 'pending_first') {
+        this.sortBy = 'pending_first';
+        this.sortOrder = 'DESC';
       } else if (val === 'keyword') {
         this.sortBy = 'keyword';
         this.sortOrder = 'ASC';

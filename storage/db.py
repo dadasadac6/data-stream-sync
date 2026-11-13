@@ -571,8 +571,8 @@ def get_queries(
         params.append(f"%{search}%")
 
     if root:
-        conditions.append("(keyword LIKE ? OR json_extract(evidence_json, '$.parent_niche') = ?)")
-        params.extend([f"%{root}%", root])
+        conditions.append("(json_extract(evidence_json, '$.parent_niche') = ? OR keyword = ? OR keyword LIKE ? OR keyword LIKE ? OR keyword LIKE ?)")
+        params.extend([root, root, f"{root} %", f"% {root}", f"% {root} %"])
 
     if trend_type and trend_type.lower() != "all":
         conditions.append("trend_type = ?")
@@ -599,14 +599,20 @@ def get_queries(
         "category": "category",
         "trend_type": "trend_type",
         "exact_title_matches": "exact_title_matches",
+        "pending_first": "pending_first",
     }
     sort_col = allowed_sorts.get(sort_by, "gap_score")
     order = "ASC" if sort_order.upper() == "ASC" else "DESC"
 
     if sort_col == "exact_title_matches":
-        order_clause = f"{sort_col} {order} NULLS LAST, gap_score DESC"
+        if order == "ASC":
+            order_clause = "CASE WHEN exact_title_matches IS NULL THEN 2 WHEN exact_title_matches = 0 THEN 0 ELSE 1 END, exact_title_matches ASC, gap_score DESC"
+        else:
+            order_clause = "CASE WHEN exact_title_matches IS NULL THEN 2 ELSE 0 END, exact_title_matches DESC, gap_score DESC"
+    elif sort_col == "pending_first":
+        order_clause = "CASE WHEN exact_title_matches IS NULL THEN 0 ELSE 1 END, gap_score DESC"
     elif sort_col == "gap_score":
-        order_clause = f"gap_score {order}, exact_title_matches ASC NULLS LAST"
+        order_clause = f"gap_score {order}, CASE WHEN exact_title_matches IS NULL THEN 2 ELSE 0 END, exact_title_matches ASC"
     else:
         order_clause = f"{sort_col} {order}"
 

@@ -67,47 +67,61 @@
     </div>
 
     <!-- Inline Compact KPI Pills (Clickable Filters!) -->
-    <!-- Header Summary KPI Metrics (Overview, no duplicate filter controls) -->
+    <!-- Header Summary KPI Metrics (Interactive 1-Click Filters) -->
     <div class="hidden md:flex items-center space-x-2 text-xs">
-      <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center space-x-1.5 shadow-sm">
+      <button @click="activeTab = 'feed'; setQuickFilter('critical_85')"
+              class="px-2.5 py-1 rounded-lg border text-slate-300 flex items-center space-x-1.5 transition cursor-pointer shadow-sm"
+              :class="activeTab === 'feed' && quickFilter === 'critical_85' ? 'bg-amber-500/25 border-amber-400 text-amber-200 ring-1 ring-amber-400/50 shadow-amber-500/20' : 'bg-slate-900 border-slate-800 hover:border-slate-700'"
+              title="Filter by Critical Search Gaps (Score 85+)">
         <span>💎</span>
         <span class="font-bold text-amber-400" x-text="stats.critical_gold || 0">0</span>
         <span class="text-[11px] text-slate-400">Critical (85+)</span>
-      </div>
+      </button>
 
-      <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center space-x-1.5 shadow-sm">
+      <button @click="activeTab = 'feed'; setQuickFilter('high_65')"
+              class="px-2.5 py-1 rounded-lg border text-slate-300 flex items-center space-x-1.5 transition cursor-pointer shadow-sm"
+              :class="activeTab === 'feed' && quickFilter === 'high_65' ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200 ring-1 ring-emerald-400/50 shadow-emerald-500/20' : 'bg-slate-900 border-slate-800 hover:border-slate-700'"
+              title="Filter by High Gap Opportunities (Score 65+)">
         <span>⚡</span>
         <span class="font-bold text-emerald-400" x-text="stats.high_opportunity || 0">0</span>
         <span class="text-[11px] text-slate-400">High Gaps (65+)</span>
-      </div>
+      </button>
 
-      <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center space-x-1.5 shadow-sm">
+      <button @click="activeTab = 'feed'; setQuickFilter('breakouts')"
+              class="px-2.5 py-1 rounded-lg border text-slate-300 flex items-center space-x-1.5 transition cursor-pointer shadow-sm"
+              :class="activeTab === 'feed' && quickFilter === 'breakouts' ? 'bg-rose-500/25 border-rose-400 text-rose-200 ring-1 ring-rose-400/50 shadow-rose-500/20' : 'bg-slate-900 border-slate-800 hover:border-slate-700'"
+              title="Filter by Breakout Velocity Queries (+5000% Surge)">
         <span>🔥</span>
         <span class="font-bold text-rose-400" x-text="stats.breakouts || 0">0</span>
         <span class="text-[11px] text-slate-400">Breakouts</span>
-      </div>
+      </button>
 
-      <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center space-x-1.5 shadow-sm"
-           title="Genuinely verified untouched search voids (0/10 exact title matches with confirmed SERP)">
+      <button @click="activeTab = 'feed'; setQuickFilter('voids')"
+              class="px-2.5 py-1 rounded-lg border text-slate-300 flex items-center space-x-1.5 transition cursor-pointer shadow-sm"
+              :class="activeTab === 'feed' && quickFilter === 'voids' ? 'bg-emerald-500/30 border-emerald-400 text-emerald-200 ring-1 ring-emerald-400/60 shadow-emerald-500/20' : 'bg-slate-900 border-slate-800 hover:border-slate-700'"
+              title="Genuinely verified untouched search voids (0/10 exact title matches with confirmed SERP)">
         <span>🛡️</span>
         <span class="font-bold text-emerald-400" x-text="stats.verified_voids || 0">0</span>
         <span class="text-[11px] text-slate-400">Verified Voids</span>
-      </div>
+      </button>
 
-      <button @click="activeTab = 'frontier'"
-              class="px-2.5 py-1 rounded-lg border transition flex items-center space-x-1.5 cursor-pointer"
-              :class="activeTab === 'frontier' ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'"
+      <button @click="activeTab = 'frontier'; loadFrontier(1)"
+              class="px-2.5 py-1 rounded-lg border transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
+              :class="activeTab === 'frontier' ? 'bg-indigo-500/25 border-indigo-400 text-indigo-200 ring-1 ring-indigo-400/50' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'"
               title="View Frontier Root Discovery Queue">
         <span>🌐</span>
         <span class="font-bold text-indigo-400" x-text="stats.frontier_total || 0">0</span>
         <span class="text-[11px] text-slate-400">Frontier Pool</span>
       </button>
 
-      <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center space-x-1.5 shadow-sm">
+      <button @click="activeTab = 'feed'; clearRootTerm(); setQuickFilter('all')"
+              class="px-2.5 py-1 rounded-lg border text-slate-300 flex items-center space-x-1.5 transition cursor-pointer shadow-sm"
+              :class="activeTab === 'feed' && quickFilter === 'all' && !selectedRootTerm ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 ring-1 ring-cyan-400/40' : 'bg-slate-900 border-slate-800 hover:border-slate-700'"
+              title="View All Evaluated Queries (Reset Filters)">
         <span>📊</span>
         <span class="font-bold text-cyan-400" x-text="stats.total_queries || 0">0</span>
         <span class="text-[11px] text-slate-400">Evaluated</span>
-      </div>
+      </button>
     </div>
 
     <!-- Quick Action Buttons -->
@@ -243,50 +257,41 @@
             <span class="absolute left-2.5 top-1.5 text-slate-500 text-xs">🔍</span>
           </div>
 
-          <!-- Filter & Sort Bar -->
-          <div class="space-y-1.5 pt-1">
+          <!-- Filter & Sort Bar (Clean, uncluttered, no duplicate dropdown) -->
+          <div class="space-y-2 pt-1">
             <!-- Quick Status Filter Pills -->
-            <div class="flex items-center gap-1 overflow-x-auto pb-0.5 text-[10px]">
+            <div class="grid grid-cols-3 gap-1 text-[10px]">
               <button @click="inputStatus = 'all'; loadInputKeywords()"
-                      class="px-2 py-0.5 rounded font-semibold transition cursor-pointer shrink-0"
-                      :class="inputStatus === 'all' ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/50' : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'">
+                      class="py-1 px-1.5 rounded font-semibold transition cursor-pointer text-center truncate"
+                      :class="inputStatus === 'all' ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/50 shadow-sm' : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'">
                 All (<span x-text="frontierStats.total || inputKeywordsTotal || 0"></span>)
               </button>
               <button @click="inputStatus = 'completed'; loadInputKeywords()"
-                      class="px-2 py-0.5 rounded font-semibold transition cursor-pointer flex items-center gap-1 shrink-0"
-                      :class="inputStatus === 'completed' ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/50' : 'bg-slate-950 text-slate-400 hover:text-emerald-300 border border-slate-800'">
+                      class="py-1 px-1.5 rounded font-semibold transition cursor-pointer text-center truncate flex items-center justify-center gap-1"
+                      :class="inputStatus === 'completed' ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/50 shadow-sm shadow-emerald-950' : 'bg-slate-950 text-slate-400 hover:text-emerald-300 border border-slate-800'">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                 Done (<span x-text="frontierStats.completed || 0"></span>)
               </button>
               <button @click="inputStatus = 'pending'; loadInputKeywords()"
-                      class="px-2 py-0.5 rounded font-semibold transition cursor-pointer flex items-center gap-1 shrink-0"
-                      :class="inputStatus === 'pending' ? 'bg-amber-500/25 text-amber-300 border border-amber-500/50' : 'bg-slate-950 text-slate-400 hover:text-amber-300 border border-slate-800'">
+                      class="py-1 px-1.5 rounded font-semibold transition cursor-pointer text-center truncate flex items-center justify-center gap-1"
+                      :class="inputStatus === 'pending' ? 'bg-amber-500/25 text-amber-300 border border-amber-500/50 shadow-sm shadow-amber-950' : 'bg-slate-950 text-slate-400 hover:text-amber-300 border border-slate-800'">
                 <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                 Queue (<span x-text="frontierStats.pending || 0"></span>)
               </button>
             </div>
 
-            <div class="flex items-center justify-between text-[11px] text-slate-400">
-              <div class="flex items-center space-x-1">
-                <span>Filter:</span>
-                <select x-model="inputStatus" @change="loadInputKeywords()"
-                        class="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-slate-300 text-[11px] focus:outline-none">
-                  <option value="all">All Statuses</option>
-                  <option value="completed">🟢 Completed</option>
-                  <option value="claimed">🔵 In Progress</option>
-                  <option value="pending">🟡 Pending Queue</option>
-                </select>
-              </div>
-              <div class="flex items-center space-x-1">
-                <span>Sort:</span>
-                <select x-model="inputSort" @change="loadInputKeywords()"
-                        class="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-slate-300 text-[11px] focus:outline-none">
-                  <option value="gaps">Most Queries</option>
-                  <option value="recent">Recently Explored</option>
-                  <option value="name">A-Z</option>
-                  <option value="depth">Depth</option>
-                </select>
-              </div>
+            <!-- Sort By Row (Decluttered, no duplicate filter dropdown) -->
+            <div class="flex items-center justify-between text-[11px] text-slate-400 bg-slate-950/60 p-1.5 rounded-lg border border-slate-800/80">
+              <span class="text-slate-400 text-[10px] font-medium flex items-center gap-1">
+                <span>↕</span> Sort:
+              </span>
+              <select x-model="inputSort" @change="loadInputKeywords()"
+                      class="bg-slate-900 border border-slate-800 rounded px-2 py-0.5 text-slate-200 text-[11px] focus:outline-none focus:border-indigo-500 cursor-pointer">
+                <option value="gaps">Most Queries Extracted</option>
+                <option value="recent">Recently Explored</option>
+                <option value="name">Name (A to Z)</option>
+                <option value="depth">Frontier Depth (D0-D3)</option>
+              </select>
             </div>
           </div>
         </div>
@@ -295,69 +300,72 @@
         <div class="p-2 border-b border-slate-800/80 bg-slate-950/40 shrink-0">
           <button @click="clearRootTerm()"
                   class="w-full text-left p-2.5 rounded-lg border transition flex items-center justify-between cursor-pointer"
-                  :class="!selectedRootTerm ? 'bg-amber-500/15 border-amber-500/50 text-amber-300 font-semibold' : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700'">
-            <div class="flex items-center space-x-2">
-              <span>⭐</span>
-              <span class="text-xs truncate max-w-[140px]" 
-                    x-text="filters.category !== 'all' ? ('All ' + filters.category) : 'All Verticals'"></span>
+                  :class="!selectedRootTerm ? 'bg-amber-500/15 border-amber-500/50 text-amber-300 font-semibold shadow-sm' : 'bg-slate-900/80 border-slate-700 text-slate-200 hover:border-amber-400 hover:text-amber-300'">
+            <div class="flex items-center space-x-2 truncate">
+              <span x-text="selectedRootTerm ? '↩' : '⭐'"></span>
+              <span class="text-xs truncate" 
+                    x-text="selectedRootTerm ? 'Reset Filter: View All (' + (stats.total_queries || 0) + ')' : (filters.category !== 'all' ? ('All ' + filters.category) : 'All Verticals')"></span>
             </div>
-            <span class="text-xs font-mono font-bold text-amber-400 shrink-0" 
+            <span class="text-xs font-mono font-bold shrink-0 ml-1"
+                  :class="!selectedRootTerm ? 'text-amber-400' : 'text-slate-400'"
                   x-text="(filters.category !== 'all' ? ((stats.by_category && stats.by_category[filters.category]) || 0) : (stats.total_queries || 0)) + ' items'">0</span>
           </button>
         </div>
 
-        <!-- Scrollable List of Input Keywords -->
+        <!-- Scrollable List of Input Keywords (Vibrant Color-Coded by Status) -->
         <div class="flex-1 overflow-y-auto p-2 space-y-1.5">
           <template x-for="item in inputKeywords" :key="item.id">
             <div @click="selectRootTerm(item.niche_term)"
-                 class="p-2.5 rounded-lg border transition cursor-pointer relative group text-left"
+                 class="p-2.5 rounded-lg border transition cursor-pointer relative group text-left shadow-sm"
                  :class="{
-                   'border-l-4 border-l-indigo-400 ring-2 ring-indigo-500/50 bg-indigo-950/40 text-indigo-100 shadow-md shadow-indigo-500/10': selectedRootTerm === item.niche_term,
-                   'border-l-4 border-l-emerald-500 bg-slate-950/80 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900/60': selectedRootTerm !== item.niche_term && (item.status === 'completed' || item.queries_extracted > 0),
-                   'border-l-4 border-l-cyan-400 bg-slate-950/80 border-slate-800/80 hover:border-slate-700': selectedRootTerm !== item.niche_term && item.status === 'claimed',
-                   'border-l-4 border-l-amber-500/60 bg-slate-950/40 border-slate-800/80 hover:border-slate-700': selectedRootTerm !== item.niche_term && item.status === 'pending' && !item.queries_extracted
+                   'border-l-4 border-l-amber-400 ring-2 ring-indigo-400 border-indigo-400 bg-gradient-to-r from-indigo-950/90 to-slate-900 text-indigo-100 shadow-xl shadow-indigo-950/80': selectedRootTerm === item.niche_term,
+                   'border-l-4 border-l-emerald-400 bg-gradient-to-r from-emerald-950/40 via-emerald-950/20 to-slate-900/90 border-emerald-500/40 hover:border-emerald-300 hover:from-emerald-950/60 shadow-emerald-950/40': selectedRootTerm !== item.niche_term && (item.status === 'completed' || item.queries_extracted > 0),
+                   'border-l-4 border-l-cyan-400 bg-gradient-to-r from-cyan-950/35 via-slate-900/90 to-slate-900/80 border-cyan-500/40 hover:border-cyan-300 animate-pulse': selectedRootTerm !== item.niche_term && item.status === 'claimed',
+                   'border-l-4 border-l-amber-500/80 bg-gradient-to-r from-amber-950/25 via-slate-900/90 to-slate-900/80 border-amber-500/30 hover:border-amber-400/60 hover:from-amber-950/40': selectedRootTerm !== item.niche_term && item.status === 'pending' && !item.queries_extracted
                  }">
               
-              <div class="flex items-start justify-between gap-1.5 mb-1.5">
+              <div class="flex items-start justify-between gap-1.5 mb-1">
                 <div class="flex items-center gap-1.5 flex-1 min-w-0">
                   <!-- Status Indicator Dot -->
                   <span class="w-2 h-2 rounded-full shrink-0"
                         :class="{
-                          'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]': item.status === 'completed' || item.queries_extracted > 0,
+                          'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]': item.status === 'completed' || item.queries_extracted > 0,
                           'bg-cyan-400 animate-ping': item.status === 'claimed',
-                          'bg-amber-400/80': item.status === 'pending' && !item.queries_extracted
+                          'bg-amber-400': item.status === 'pending' && !item.queries_extracted
                         }"></span>
                   <h4 class="text-xs font-bold leading-tight truncate"
-                      :class="selectedRootTerm === item.niche_term ? 'text-amber-300 font-bold' : (item.status === 'completed' || item.queries_extracted > 0 ? 'text-slate-100' : 'text-slate-300')"
+                      :class="selectedRootTerm === item.niche_term ? 'text-amber-300 font-extrabold' : ((item.status === 'completed' || item.queries_extracted > 0) ? 'text-emerald-100 group-hover:text-emerald-200' : 'text-amber-100/90 group-hover:text-amber-200')"
                       x-text="item.niche_term"></h4>
                 </div>
                 
-                <!-- Status & Query Count Badge -->
+                <!-- Status & Query Count Badge (High Contrast Pill) -->
                 <template x-if="item.status === 'completed' || item.queries_extracted > 0">
-                  <span class="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1"
+                  <span class="shrink-0 text-[10px] font-mono px-2 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 flex items-center gap-1 shadow-xs"
                         :title="'Completed: ' + (item.queries_extracted || 0) + ' candidate queries evaluated'">
-                    <span>✓</span>
+                    <span class="text-emerald-400">✓</span>
                     <span x-text="(item.queries_extracted || 0) + ' queries'"></span>
                   </span>
                 </template>
                 <template x-if="item.status === 'claimed'">
-                  <span class="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 animate-pulse">
+                  <span class="shrink-0 text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold bg-cyan-500/25 text-cyan-300 border border-cyan-400/50 animate-pulse">
                     ⚡ Exploring
                   </span>
                 </template>
                 <template x-if="item.status === 'pending' && !item.queries_extracted">
-                  <span class="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded font-medium bg-amber-500/10 text-amber-400/80 border border-amber-500/20">
-                    ⏳ In Queue
+                  <span class="shrink-0 text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    🟡 Queue
                   </span>
                 </template>
               </div>
 
-              <div class="flex items-center justify-between text-[11px] text-slate-400">
+              <div class="flex items-center justify-between text-[11px]">
                 <span class="truncate pr-1 text-[10px]"
-                      :class="item.status === 'completed' || item.queries_extracted > 0 ? 'text-slate-400 font-medium' : 'text-slate-500'"
+                      :class="item.status === 'completed' || item.queries_extracted > 0 ? 'text-emerald-400/70 font-medium' : 'text-slate-400'"
                       x-text="item.category"></span>
                 <div class="flex items-center space-x-1 shrink-0">
-                  <span class="text-[9px] px-1 py-0.2 rounded bg-slate-900 border border-slate-800 font-mono text-slate-400" x-text="'D' + (item.depth_level || 0)"></span>
+                  <span class="text-[9px] px-1.5 py-0.2 rounded font-mono"
+                        :class="item.status === 'completed' || item.queries_extracted > 0 ? 'bg-emerald-950/60 border border-emerald-800/60 text-emerald-300' : 'bg-slate-900 border border-slate-800 text-slate-400'"
+                        x-text="'D' + (item.depth_level || 0)"></span>
                   <button @click.stop="recheckNiche(item.niche_term, item.category)"
                           :disabled="recheckingTerm === item.niche_term"
                           class="text-[10px] text-slate-400 hover:text-amber-300 p-0.5 rounded hover:bg-slate-800 transition cursor-pointer ml-0.5"
@@ -385,70 +393,57 @@
       <!-- RIGHT PANE: DISCOVERED SEARCH GAPS RESULTS (FLEX-1) -->
       <section class="flex-1 flex flex-col overflow-hidden bg-slate-950">
         
-        <!-- Filter & Search Command Strip (44px) -->
+        <!-- Filter & Search Command Strip (Decluttered, Spacious, No Duplicates) -->
         <div class="h-11 border-b border-slate-800 bg-slate-900/40 px-4 flex items-center justify-between shrink-0 gap-3 text-xs">
-          <!-- Active Scope Pill & Quick Score Filters -->
-          <div class="flex items-center space-x-2 overflow-x-auto py-1">
+          <!-- Left: Scope Pill & Core Competition Segments -->
+          <div class="flex items-center space-x-2 overflow-x-auto py-1 shrink-0">
             <!-- Active Input Term Scope Pill -->
             <div x-show="selectedRootTerm" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 font-mono font-semibold shrink-0">
-              <span class="text-[10px] text-indigo-400 uppercase">Input:</span>
-              <span class="max-w-[140px] truncate" x-text="selectedRootTerm"></span>
-              <button @click="clearRootTerm()" class="hover:text-white ml-1 text-slate-400">✕</button>
+              <span class="text-[10px] text-indigo-400 uppercase">Root:</span>
+              <span class="max-w-[120px] truncate" x-text="selectedRootTerm"></span>
+              <button @click="clearRootTerm()" class="hover:text-white ml-1 text-slate-400" title="Clear root filter">✕</button>
             </div>
 
-            <!-- Quick Category / Competition Tabs -->
+            <!-- 3 Core Competition Segments -->
             <button @click="setQuickFilter('all')"
                     class="px-2.5 py-1 rounded-lg transition text-xs font-medium shrink-0 cursor-pointer"
                     :class="quickFilter === 'all' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 shadow-sm' : 'text-slate-400 hover:text-slate-200 border border-transparent'">
-              All Results (<span x-text="stats.total_queries || 0"></span>)
+              <span x-text="selectedRootTerm ? 'All Matches' : 'All Results'"></span>
+              (<span x-text="selectedRootTerm ? totalItems : (stats.total_queries || 0)"></span>)
             </button>
+
             <button @click="setQuickFilter('voids')"
                     class="px-2.5 py-1 rounded-lg transition text-xs font-medium shrink-0 cursor-pointer flex items-center space-x-1"
-                    :class="quickFilter === 'voids' ? 'bg-emerald-500/25 text-emerald-300 font-bold border border-emerald-400 shadow-sm' : 'text-slate-400 hover:text-emerald-300 border border-transparent'">
+                    :class="quickFilter === 'voids' ? 'bg-emerald-500/25 text-emerald-300 font-bold border border-emerald-400 shadow-sm shadow-emerald-950' : 'text-slate-400 hover:text-emerald-300 border border-transparent'">
               <span>🛡️ Untouched Voids (0/10)</span>
-              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-mono" x-text="stats.verified_voids || 0"></span>
+              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-mono font-bold" x-text="stats.verified_voids || 0"></span>
             </button>
+
             <button @click="setQuickFilter('competed')"
                     class="px-2.5 py-1 rounded-lg transition text-xs font-medium shrink-0 cursor-pointer flex items-center space-x-1"
                     :class="quickFilter === 'competed' ? 'bg-amber-500/25 text-amber-300 font-bold border border-amber-400 shadow-sm' : 'text-slate-400 hover:text-amber-300 border border-transparent'">
               <span>⚠️ Competed</span>
               <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-300 font-mono" x-text="stats.competed_queries || 0"></span>
             </button>
-            <button @click="setQuickFilter('pending')"
-                    class="px-2.5 py-1 rounded-lg transition text-xs font-medium shrink-0 cursor-pointer flex items-center space-x-1"
-                    :class="quickFilter === 'pending' ? 'bg-indigo-500/25 text-indigo-300 font-bold border border-indigo-400 shadow-sm' : 'text-slate-400 hover:text-indigo-300 border border-transparent'">
-              <span>⏳ Pending Audit</span>
-              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-400 font-mono" x-text="stats.pending_audits || 0"></span>
-            </button>
-            <button @click="setQuickFilter('critical_85')"
-                    class="px-2.5 py-1 rounded-lg transition text-xs font-medium shrink-0 cursor-pointer flex items-center space-x-1"
-                    :class="quickFilter === 'critical_85' ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40 shadow-sm' : 'text-slate-400 hover:text-slate-200 border border-transparent'">
-              <span>💎 Critical</span>
-              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-mono" x-text="stats.critical_gold || 0"></span>
-            </button>
-            <button @click="setQuickFilter('breakouts')"
-                    class="px-2.5 py-1 rounded-lg transition text-xs font-medium shrink-0 cursor-pointer flex items-center space-x-1"
-                    :class="quickFilter === 'breakouts' ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/40 shadow-sm' : 'text-slate-400 hover:text-slate-200 border border-transparent'">
-              <span>🔥 Breakouts</span>
-              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-mono" x-text="stats.breakouts || 0"></span>
-            </button>
+
           </div>
 
-          <!-- Secondary Filter Controls -->
+          <!-- Right: Search, Filter, Actions, Export -->
           <div class="flex items-center space-x-2 shrink-0">
             <!-- Sort Selector -->
-            <select :value="sortBy === 'exact_title_matches' ? (sortOrder === 'DESC' ? 'competed_first' : 'exact_title_matches') : sortBy"
+            <select :value="sortBy === 'pending_first' ? 'pending_first' : (sortBy === 'exact_title_matches' ? (sortOrder === 'DESC' ? 'competed_first' : 'exact_title_matches') : sortBy)"
                     @change="handleSortChange($event.target.value)"
-                    class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-slate-300 text-xs focus:outline-none cursor-pointer">
+                    class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300 text-xs focus:outline-none focus:border-amber-500 cursor-pointer">
               <option value="gap_score">Sort: Highest Gap Score</option>
               <option value="exact_title_matches">Sort: Title Voids First (0/10)</option>
               <option value="competed_first">Sort: Most Competed First</option>
+              <option value="pending_first">Sort: Pending Audits First</option>
               <option value="last_updated">Sort: Recently Discovered</option>
               <option value="keyword">Sort: Keyword (A to Z)</option>
             </select>
 
             <!-- In-Results Keyword Search -->
-            <div class="relative w-36">
+            <div class="relative w-36 lg:w-44">
               <input type="text" x-model="filters.search" @input.debounce.300ms="loadQueries(1)"
                      placeholder="Search results..."
                      class="w-full bg-slate-900 border border-slate-800 rounded-lg pl-7 pr-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500">
@@ -457,7 +452,7 @@
 
             <!-- Archetype Dropdown -->
             <select x-model="filters.archetype" @change="loadQueries(1)"
-                    class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-slate-300 text-xs focus:outline-none">
+                    class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-slate-300 text-xs focus:outline-none focus:border-amber-500">
               <option value="all">All Archetypes</option>
               <option value="Micro-Tool">Micro-Tool</option>
               <option value="Config Generator">Config Generator</option>
@@ -472,7 +467,7 @@
 
             <!-- Batch Audit Page Button -->
             <button @click="auditBatchLive()" :disabled="isAuditingBatch"
-                    class="px-2 py-1 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                    class="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
                     title="Audit pending SERPs on this page live from your Mac">
               <span x-show="!isAuditingBatch">⚡ Audit Page Voids</span>
               <span x-show="isAuditingBatch" class="animate-pulse">Auditing...</span>
@@ -481,7 +476,7 @@
             <!-- Export Opportunities Dropdown -->
             <div class="relative" x-data="{ exportOpen: false }">
               <button @click="exportOpen = !exportOpen"
-                      class="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 hover:border-slate-600 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                      class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 hover:border-slate-600 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
                       title="Export current opportunities">
                 <span>📥</span>
                 <span class="hidden sm:inline">Export</span>
@@ -554,15 +549,15 @@
                   <h3 class="text-sm font-bold text-slate-100 mb-2.5 leading-snug break-words tracking-tight"
                       x-text="item.keyword"></h3>
 
-                  <!-- Top 10 SERP Competitors & Title Gap Breakdown -->
+                  <!-- Top 10 SERP Competitors & Title Gap Breakdown (Truthful 10-Slot Meter) -->
                   <div class="space-y-2 mb-3 bg-slate-950/70 p-2.5 rounded-lg border border-slate-800/80">
                     <div class="flex items-center justify-between text-xs">
-                      <span class="text-slate-400 text-[11px] font-medium">Top 10 SERP Competitors:</span>
+                      <span class="text-slate-400 text-[11px] font-medium">SERP Title Competition:</span>
 
                       <!-- Verified Untouched Void (0/10) -->
                       <template x-if="item.exact_title_matches === 0">
                         <span class="font-mono text-[11px] font-bold text-emerald-400 flex items-center gap-1">
-                          <span>0/10</span>
+                          <span class="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">0/10</span>
                           <span class="text-emerald-400 font-semibold">🛡️ Untouched Void</span>
                           <button @click.stop="auditSerpLive(item)" 
                                   :disabled="item._auditing"
@@ -577,7 +572,7 @@
                       <!-- Low Competition (1-2/10) -->
                       <template x-if="item.exact_title_matches > 0 && item.exact_title_matches <= 2">
                         <span class="font-mono text-[11px] font-bold text-amber-400 flex items-center gap-1">
-                          <span x-text="item.exact_title_matches + '/10'"></span>
+                          <span class="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30" x-text="item.exact_title_matches + '/10'"></span>
                           <span class="text-amber-400 font-medium">⚡ Low Comp</span>
                           <button @click.stop="auditSerpLive(item)" 
                                   :disabled="item._auditing"
@@ -592,8 +587,8 @@
                       <!-- Competed (>2/10) -->
                       <template x-if="item.exact_title_matches > 2">
                         <span class="font-mono text-[11px] font-medium text-slate-400 flex items-center gap-1">
-                          <span x-text="item.exact_title_matches + '/10'"></span>
-                          <span class="text-rose-400 font-normal">⚠️ Competed</span>
+                          <span class="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30" x-text="item.exact_title_matches + '/10'"></span>
+                          <span class="text-rose-400 font-semibold">⚠️ Saturated</span>
                           <button @click.stop="auditSerpLive(item)" 
                                   :disabled="item._auditing"
                                   class="text-[10px] px-1 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 ml-1 cursor-pointer"
@@ -619,29 +614,31 @@
                       </template>
                     </div>
 
-                    <!-- 10-Slot SERP Slot Competition Meter -->
-                    <div class="flex items-center space-x-1 py-0.5" title="10-result SERP competition meter">
+                    <!-- 10-Slot SERP Slot Competition Meter (Positions #1 to #10 on Google) -->
+                    <div class="flex items-center space-x-1 py-1" title="Top 10 Google SERP positions: red=competitor targeting title, dark=uncontested open slot">
                       <template x-for="slot in 10" :key="slot">
-                        <div class="h-1.5 flex-1 rounded-sm transition-all"
+                        <div class="h-2 flex-1 rounded-sm transition-all"
                              :class="{
-                               'bg-emerald-500/30 border border-emerald-500/60': item.exact_title_matches === 0,
-                               'bg-amber-400': item.exact_title_matches > 0 && slot <= item.exact_title_matches,
-                               'bg-slate-700': item.exact_title_matches > 0 && slot > item.exact_title_matches,
-                               'bg-slate-800/80 border border-slate-700/50': item.exact_title_matches === null || item.exact_title_matches === undefined
+                               'bg-slate-800/40 border border-emerald-500/30': item.exact_title_matches === 0,
+                               'bg-rose-500 shadow-xs shadow-rose-500/50': item.exact_title_matches > 0 && slot <= item.exact_title_matches,
+                               'bg-slate-800/60 border border-slate-700/40': item.exact_title_matches > 0 && slot > item.exact_title_matches,
+                               'bg-slate-900 border border-dashed border-slate-700/60': item.exact_title_matches === null || item.exact_title_matches === undefined
                              }"></div>
                       </template>
                     </div>
 
                     <!-- Meaningful Context Subtitle -->
-                    <div class="text-[10px] flex items-center justify-between text-slate-400 pt-0.5">
+                    <div class="text-[10px] flex items-center justify-between text-slate-400">
                       <template x-if="item.exact_title_matches === 0">
-                        <span class="text-emerald-400 font-medium">✨ 0 competitors target this title — Open Opportunity</span>
+                        <span class="text-emerald-300 font-medium flex items-center gap-1">
+                          <span>✨</span> 100% Uncontested SERP — 0 of 10 pages target this title
+                        </span>
                       </template>
                       <template x-if="item.exact_title_matches > 0 && item.exact_title_matches <= 2">
-                        <span class="text-amber-400 font-medium" x-text="item.exact_title_matches + ' of 10 pages target title — Weak competition'"></span>
+                        <span class="text-amber-300 font-medium" x-text="item.exact_title_matches + ' of 10 pages target title (' + (10 - item.exact_title_matches) + ' positions open)'"></span>
                       </template>
                       <template x-if="item.exact_title_matches > 2">
-                        <span class="text-slate-400" x-text="item.exact_title_matches + ' pages target this title — Saturated'"></span>
+                        <span class="text-rose-300" x-text="item.exact_title_matches + ' pages target this title — Saturated SERP'"></span>
                       </template>
                       <template x-if="item.exact_title_matches === null || item.exact_title_matches === undefined">
                         <span class="text-slate-500 italic">SERP snippets awaiting local audit</span>
@@ -649,47 +646,43 @@
                     </div>
 
                     <!-- Top Competitor Title -->
-                    <div class="text-[11px] text-slate-400 truncate pt-0.5 flex items-center space-x-1" x-show="item.top_competitor_title">
-                      <span class="text-slate-500 font-medium">#1 Rank:</span>
+                    <div class="text-[11px] text-slate-400 truncate pt-0.5 flex items-center space-x-1 border-t border-slate-800/40 mt-1" x-show="item.top_competitor_title">
+                      <span class="text-slate-500 font-medium shrink-0">#1 Rank:</span>
                       <span class="text-slate-300 truncate" x-text="item.top_competitor_title"></span>
                     </div>
                   </div>
                 </div>
 
-                <!-- Card Actions Footer -->
+                <!-- Card Actions Footer (Clean & Decluttered) -->
                 <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between mt-1 text-xs">
-                  <!-- 4-Way Live Verification Links (with allintitle:) -->
+                  <!-- Verification Links as Clean Micro-Pills -->
                   <div class="flex items-center space-x-1.5 text-[11px] flex-wrap">
                     <a :href="item.google_verify_url" target="_blank"
-                       class="text-amber-400 hover:text-amber-300 font-semibold hover:underline">Google ↗</a>
-                    <span class="text-slate-600">·</span>
+                       class="px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-amber-400 hover:text-amber-300 font-semibold border border-slate-800 transition">Google ↗</a>
                     <a :href="item.google_allintitle_url" target="_blank"
-                       class="text-emerald-400 hover:text-emerald-300 font-medium hover:underline"
+                       class="px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-emerald-400 hover:text-emerald-300 font-semibold border border-slate-800 transition"
                        title="Verify exact title matches on Google with allintitle:">allintitle: ↗</a>
-                    <span class="text-slate-600">·</span>
                     <a :href="item.ddg_verify_url" target="_blank"
-                       class="text-slate-400 hover:text-slate-200 hover:underline">DuckDuckGo ↗</a>
-                    <span class="text-slate-600">·</span>
+                       class="px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 transition">DuckDuckGo ↗</a>
                     <a :href="item.trends_verify_url" target="_blank"
-                       class="text-indigo-400 hover:text-indigo-300 hover:underline">Trends 12m ↗</a>
+                       class="px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-indigo-400 hover:text-indigo-300 border border-slate-800 transition">Trends 12m ↗</a>
                   </div>
 
                   <!-- Right Action Buttons -->
                   <div class="flex items-center space-x-1">
                     <!-- AI Blueprint Trigger -->
                     <button @click="openBlueprint(item)"
-                            class="p-1 px-2 rounded-md bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 text-[11px] font-semibold transition flex items-center space-x-1 cursor-pointer"
+                            class="px-2.5 py-1 rounded-md bg-indigo-600/25 hover:bg-indigo-600/45 text-indigo-300 border border-indigo-500/40 text-[11px] font-semibold transition flex items-center space-x-1 cursor-pointer shadow-sm"
                             title="1-Click AI Builder Blueprint">
                       <span>🤖</span>
                       <span class="hidden sm:inline">Blueprint</span>
                     </button>
 
-                    <!-- SERP Comparison Trigger (Ahrefs-Grade) -->
+                    <!-- SERP Comparison Trigger -->
                     <button @click="openCompare(item.keyword)"
-                            class="p-1 px-1.5 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-semibold transition flex items-center space-x-1 cursor-pointer"
+                            class="p-1 px-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-[11px] transition cursor-pointer"
                             title="Compare SERP Overlap (Ahrefs-Grade)">
                       <span>⚖️</span>
-                      <span class="hidden xl:inline">Compare</span>
                     </button>
 
                     <!-- Quick Triage Actions -->
@@ -697,11 +690,6 @@
                             class="p-1 px-1.5 rounded-md hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 text-xs transition cursor-pointer"
                             :class="item.human_verdict === 'confirmed_gold' ? 'text-emerald-400 font-bold bg-emerald-500/20' : ''"
                             title="Confirm Gold">⭐</button>
-
-                    <button @click="setVerdict(item.id, 'snoozed')"
-                            class="p-1 px-1.5 rounded-md hover:bg-amber-500/20 text-slate-400 hover:text-amber-400 text-xs transition cursor-pointer"
-                            :class="item.human_verdict === 'snoozed' ? 'text-amber-400 font-bold bg-amber-500/20' : ''"
-                            title="Snooze for Later">⏳</button>
 
                     <button @click="setVerdict(item.id, 'already_served')"
                             class="p-1 px-1.5 rounded-md hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 text-xs transition cursor-pointer"
@@ -1132,6 +1120,7 @@
   <!-- MODAL 1: 1-CLICK AI BUILDER BLUEPRINT                    -->
   <!-- ======================================================== -->
   <div x-show="showBlueprintModal"
+       @keydown.escape.window="showBlueprintModal = false"
        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
        x-transition.opacity>
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative"
@@ -1180,6 +1169,7 @@
   <!-- MODAL 2: ADD CUSTOM SEED & AI PRESET EXPANDER             -->
   <!-- ======================================================== -->
   <div x-show="showAddSeedModal"
+       @keydown.escape.window="showAddSeedModal = false"
        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
        x-transition.opacity>
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative"
@@ -1265,6 +1255,7 @@
   <!-- MODAL 3: AHREFS-GRADE SERP COMPARISON & OVERLAP ENGINE   -->
   <!-- ======================================================== -->
   <div x-show="showCompareModal"
+       @keydown.escape.window="showCompareModal = false"
        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md"
        x-transition.opacity>
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full p-6 shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden"
