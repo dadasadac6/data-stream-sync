@@ -7,7 +7,7 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Application State & Logic -->
-  <script src="/static/app.js?v=7.1"></script>
+  <script src="/static/app.js?v=7.2"></script>
   <!-- Alpine.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
   <!-- Marked.js for Markdown Reports -->
@@ -62,17 +62,17 @@
 
       <div class="hidden xl:flex items-center space-x-1.5 text-xs text-slate-400 pl-3 border-l border-slate-800">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span class="font-mono text-xs text-emerald-400 font-semibold">20 Runners Active</span>
+        <span class="font-mono text-xs text-emerald-400 font-semibold">20 Scanners Active</span>
       </div>
     </div>
 
-    <!-- Main Navigation Tabs (High Contrast, Centered & Direct) -->
+    <!-- Main Navigation Tabs (High Contrast, Centered & Plain English) -->
     <div class="flex items-center space-x-1 sm:space-x-2">
       <button @click="activeTab = 'feed'"
               class="px-3.5 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
               :class="activeTab === 'feed' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-amber-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
         <span>⚡</span>
-        <span>Niche Radar</span>
+        <span>Opportunity Radar</span>
         <span class="text-xs px-2 py-0.5 rounded-full font-mono font-black"
               :class="activeTab === 'feed' ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-300'"
               x-text="stats.total_queries || 0">0</span>
@@ -82,7 +82,7 @@
               class="px-3.5 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
               :class="activeTab === 'frontier' ? 'bg-indigo-500/25 text-indigo-200 border border-indigo-400/50 shadow-indigo-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
         <span>🌐</span>
-        <span>Frontier Harvester</span>
+        <span>Topic Explorer</span>
         <span class="text-xs px-2 py-0.5 rounded-full font-mono font-black"
               :class="activeTab === 'frontier' ? 'bg-indigo-400 text-slate-950' : 'bg-indigo-500/20 text-indigo-300'"
               x-text="stats.frontier_total || 0">0</span>
@@ -92,14 +92,14 @@
               class="px-3.5 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
               :class="activeTab === 'matrix' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
         <span>📊</span>
-        <span>Data Matrix</span>
+        <span>All Opportunities</span>
       </button>
 
       <button @click="activeTab = 'reports'; loadReports()"
               class="px-3.5 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
               :class="activeTab === 'reports' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
         <span>📝</span>
-        <span>Daily Briefs</span>
+        <span>Daily Reports</span>
         <span class="text-xs px-2 py-0.5 rounded-full font-mono font-black"
               :class="activeTab === 'reports' ? 'bg-cyan-400 text-slate-950' : 'bg-cyan-500/20 text-cyan-300'"
               x-text="reports.length || 0">0</span>
@@ -109,7 +109,7 @@
               class="px-3.5 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
               :class="activeTab === 'fleet' ? 'bg-purple-500/20 text-purple-300 border border-purple-400/50' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
         <span>🚀</span>
-        <span>Cloud Fleet</span>
+        <span>Cloud Scanners</span>
         <span class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono font-bold">20</span>
       </button>
     </div>
@@ -117,24 +117,26 @@
     <!-- Global Quick Actions -->
     <div class="flex items-center space-x-2 shrink-0">
       <button @click="dispatchFleet(3)" :disabled="fleetDispatching"
-              class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer">
+              class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer"
+              title="Start cloud scanners searching for new keyword gaps">
         <span>⚡</span>
-        <span class="hidden sm:inline" x-show="!fleetDispatching">Dispatch Swarm</span>
+        <span class="hidden sm:inline" x-show="!fleetDispatching">Run Cloud Scan</span>
         <span x-show="fleetDispatching">Triggering...</span>
       </button>
 
       <button @click="syncFleet()" :disabled="fleetSyncing"
               class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer"
-              title="Pull reports from all 5 fleet repos">
+              title="Pull latest discovered opportunities from all cloud workers">
         <span>🔄</span>
-        <span class="hidden sm:inline" x-show="!fleetSyncing">Sync Fleet</span>
+        <span class="hidden sm:inline" x-show="!fleetSyncing">Sync Results</span>
         <span x-show="fleetSyncing">...</span>
       </button>
 
       <button @click="showAddSeedModal = true"
-              class="px-3 py-2 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 text-xs font-bold flex items-center space-x-1 transition cursor-pointer">
+              class="px-3 py-2 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 text-xs font-bold flex items-center space-x-1 transition cursor-pointer"
+              title="Add a custom topic or keyword to scan">
         <span>➕</span>
-        <span class="hidden sm:inline">Add Seed</span>
+        <span class="hidden sm:inline">Add Topic</span>
       </button>
     </div>
   </header>
@@ -149,22 +151,22 @@
     <!-- ======================================================== -->
     <div x-show="activeTab === 'feed'" class="h-full w-full flex overflow-hidden">
 
-      <!-- LEFT PANE: INPUT KEYWORDS & ROOT NICHES (High Readability & Space Efficiency) -->
+      <!-- LEFT PANE: TARGET TOPICS & NICHES (High Readability & Space Efficiency) -->
       <aside class="w-80 lg:w-88 xl:w-96 border-r border-slate-800 bg-slate-900/40 flex flex-col shrink-0 overflow-hidden">
         <!-- Input Keywords Header & Search -->
         <div class="p-3 border-b border-slate-800 bg-slate-900/60 shrink-0 space-y-2.5">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
-              <span class="text-sm font-bold text-slate-100">Frontier Roots</span>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-semibold" x-text="inputKeywords.length + ' in vertical'">0</span>
+              <span class="text-sm font-bold text-slate-100">🎯 Topics & Niches</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono font-semibold" x-text="inputKeywords.length + ' in category'">0</span>
             </div>
-            <button @click="loadInputKeywords()" class="text-slate-400 hover:text-amber-400 text-sm transition" title="Refresh frontier roots">🔄</button>
+            <button @click="loadInputKeywords()" class="text-slate-400 hover:text-amber-400 text-sm transition" title="Refresh topic list">🔄</button>
           </div>
 
           <!-- Search Input -->
           <div class="relative">
             <input type="text" x-model="inputSearch" @input.debounce.300ms="loadInputKeywords()"
-                   placeholder="Search input terms..."
+                   placeholder="Search topics..."
                    class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 shadow-inner">
             <span class="absolute left-2.5 top-2.5 text-slate-500 text-xs">🔍</span>
           </div>
@@ -188,7 +190,7 @@
                       class="py-1 px-2 rounded-lg font-bold transition cursor-pointer text-center truncate flex items-center justify-center gap-1.5"
                       :class="inputStatus === 'pending' ? 'bg-amber-500/30 text-amber-200 border border-amber-500/60 shadow-sm shadow-amber-950' : 'bg-slate-950 text-slate-400 hover:text-amber-300 border border-slate-800'">
                 <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                Queue (<span x-text="frontierStats.pending || 0"></span>)
+                In Queue (<span x-text="frontierStats.pending || 0"></span>)
               </button>
             </div>
 
@@ -199,16 +201,16 @@
               </span>
               <select x-model="inputSort" @change="loadInputKeywords()"
                       class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500 cursor-pointer">
-                <option value="gaps">Most Queries Extracted</option>
-                <option value="recent">Recently Explored</option>
+                <option value="gaps">Most Opportunities Found</option>
+                <option value="recent">Recently Scanned</option>
                 <option value="name">Name (A to Z)</option>
-                <option value="depth">Frontier Depth (D0-D3)</option>
+                <option value="depth">Topic Level (Main/Sub)</option>
               </select>
             </div>
           </div>
         </div>
 
-        <!-- Master Item: All Discovered Opportunities (Reset Root Filter) -->
+        <!-- Master Item: All Discovered Opportunities (Reset Topic Filter) -->
         <div class="p-2 border-b border-slate-800/80 bg-slate-950/40 shrink-0">
           <button @click="clearRootTerm()"
                   class="w-full text-left p-2.5 rounded-lg border transition flex items-center justify-between cursor-pointer"
@@ -216,7 +218,7 @@
             <div class="flex items-center space-x-2 truncate">
               <span class="text-sm" x-text="selectedRootTerm ? '↩' : '⭐'"></span>
               <span class="text-sm font-bold truncate" 
-                    x-text="selectedRootTerm ? 'Reset Filter: View All (' + (stats.total_queries || 0) + ')' : (filters.category !== 'all' ? ('All ' + filters.category) : 'All Verticals')"></span>
+                    x-text="selectedRootTerm ? 'Reset Filter: View All (' + (stats.total_queries || 0) + ')' : (filters.category !== 'all' ? ('All in ' + filters.category) : 'All Categories')"></span>
             </div>
             <span class="text-xs font-mono font-black shrink-0 ml-1.5 px-2 py-0.5 rounded-full"
                   :class="!selectedRootTerm ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-slate-800 text-slate-300'"
@@ -224,7 +226,7 @@
           </button>
         </div>
 
-        <!-- Scrollable List of Input Keywords (Vibrant Color-Coded, Readable from Distance) -->
+        <!-- Scrollable List of Target Topics (Vibrant Color-Coded, Readable from Distance) -->
         <div class="flex-1 overflow-y-auto p-2 space-y-2">
           <template x-for="item in inputKeywords" :key="item.id">
             <div @click="selectRootTerm(item.niche_term)"
@@ -250,22 +252,22 @@
                       x-text="item.niche_term"></h4>
                 </div>
                 
-                <!-- Status & Query Count Badge (High Contrast Large Pill) -->
+                <!-- Status & Opportunity Count Badge -->
                 <template x-if="item.status === 'completed' || item.queries_extracted > 0">
                   <span class="shrink-0 text-xs font-mono px-2.5 py-0.5 rounded-full font-black bg-emerald-500/25 text-emerald-300 border border-emerald-400/60 flex items-center gap-1 shadow-xs"
-                        :title="'Completed: ' + (item.queries_extracted || 0) + ' candidate queries evaluated'">
+                        :title="'Completed: ' + (item.queries_extracted || 0) + ' candidate opportunities evaluated'">
                     <span class="text-emerald-400 font-black">✓</span>
-                    <span x-text="(item.queries_extracted || 0) + ' Mined'"></span>
+                    <span x-text="(item.queries_extracted || 0) + ' Found'"></span>
                   </span>
                 </template>
                 <template x-if="item.status === 'claimed'">
                   <span class="shrink-0 text-xs font-mono px-2.5 py-0.5 rounded-full font-bold bg-cyan-500/25 text-cyan-300 border border-cyan-400/50 animate-pulse">
-                    ⚡ Mining...
+                    ⚡ Scanning...
                   </span>
                 </template>
                 <template x-if="item.status === 'pending' && !item.queries_extracted">
                   <span class="shrink-0 text-xs font-mono px-2.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                    ⏳ Queue
+                    ⏳ In Queue
                   </span>
                 </template>
               </div>
@@ -275,24 +277,24 @@
                       :class="item.status === 'completed' || item.queries_extracted > 0 ? 'text-slate-400' : 'text-slate-500'"
                       x-text="item.category"></span>
                 <div class="flex items-center space-x-1.5 shrink-0">
-                  <!-- Instant Mine Action for Queue roots -->
+                  <!-- Instant Scan Action for Queue topics -->
                   <template x-if="item.status === 'pending' && !item.queries_extracted">
                     <button @click.stop="recheckNiche(item.niche_term, item.category)"
                             :disabled="recheckingTerm === item.niche_term"
                             class="text-xs px-2 py-0.5 rounded bg-amber-500/25 hover:bg-amber-500/40 text-amber-200 border border-amber-500/40 font-bold transition cursor-pointer flex items-center gap-1 shadow-xs"
-                            title="Instant Live Mine This Root">
-                      <span x-show="recheckingTerm !== item.niche_term">⚡ Mine</span>
+                            title="Instant live scan for this topic">
+                      <span x-show="recheckingTerm !== item.niche_term">⚡ Scan Now</span>
                       <span x-show="recheckingTerm === item.niche_term" class="animate-pulse">...</span>
                     </button>
                   </template>
 
-                  <!-- Re-mine Action for Completed roots -->
+                  <!-- Re-scan Action for Completed topics -->
                   <template x-if="item.status === 'completed' || item.queries_extracted > 0">
                     <button @click.stop="recheckNiche(item.niche_term, item.category)"
                             :disabled="recheckingTerm === item.niche_term"
                             class="text-xs text-slate-400 hover:text-emerald-300 p-1 rounded hover:bg-slate-800 transition cursor-pointer"
-                            title="Re-run Live Probe & Refresh">
-                      <span x-show="recheckingTerm !== item.niche_term">↻</span>
+                            title="Refresh live search results">
+                      <span x-show="recheckingTerm !== item.niche_term">↻ Rescan</span>
                       <span x-show="recheckingTerm === item.niche_term" class="animate-pulse">...</span>
                     </button>
                   </template>
@@ -302,92 +304,56 @@
           </template>
 
           <div x-show="!inputKeywords.length" class="p-4 text-center text-xs text-slate-500 italic">
-            No matching input keywords found.
+            No matching topics found.
           </div>
         </div>
 
         <!-- Left Pane Footer -->
-        <div class="p-2 border-t border-slate-800 bg-slate-900/80 text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-          <span x-text="inputKeywordsTotal + ' total roots in pool'"></span>
-          <button @click="triggerHarvester()" class="text-indigo-400 hover:underline">Harvest More</button>
+        <div class="p-2.5 border-t border-slate-800 bg-slate-900/80 text-[11px] text-slate-400 flex items-center justify-between shrink-0">
+          <span x-text="inputKeywordsTotal + ' total topics in database'"></span>
+          <button @click="triggerHarvester()" class="text-indigo-400 hover:underline cursor-pointer font-semibold">Find More Topics ↗</button>
         </div>
       </aside>
 
-      <!-- RIGHT PANE: DISCOVERED SEARCH GAPS RESULTS (FLEX-1) -->
+      <!-- RIGHT PANE: DISCOVERED SEARCH OPPORTUNITIES (FLEX-1) -->
       <section class="flex-1 flex flex-col overflow-hidden bg-slate-950">
         
-        <!-- Unified Command & Filter Toolbar (52px, High-Contrast & Uncluttered) -->
-        <div class="h-13 border-b border-slate-800 bg-slate-900/60 px-3 lg:px-4 flex items-center justify-between shrink-0 gap-2 text-xs select-none">
-          <!-- Left: Scope Pill & Unified 1-Click Actionable KPI Filters -->
-          <div class="flex items-center space-x-1.5 overflow-x-auto py-1 flex-1 min-w-0 mr-1.5 scrollbar-none">
-            <!-- Active Input Term Scope Pill -->
-            <div x-show="selectedRootTerm" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/30 text-indigo-100 border border-indigo-400/60 font-mono font-bold shrink-0 shadow-md">
-              <span class="text-[11px] text-indigo-300 uppercase tracking-wider">Root:</span>
-              <span class="max-w-[120px] truncate text-xs font-black text-white" x-text="selectedRootTerm"></span>
-              <button @click="clearRootTerm()" class="hover:text-white ml-0.5 text-slate-300 hover:bg-indigo-700/60 rounded p-0.5 text-xs cursor-pointer" title="Clear root filter">✕</button>
-            </div>
-
-            <!-- Unified Actionable KPI Filters (Big, Bold & High Readability) -->
-            <button @click="setQuickFilter('all')"
-                    class="px-2 py-1 rounded-lg transition text-xs font-bold shrink-0 cursor-pointer shadow-sm flex items-center space-x-1"
-                    :class="quickFilter === 'all' ? 'bg-cyan-500/25 text-cyan-200 border border-cyan-400 ring-1 ring-cyan-400/40 shadow-cyan-950' : 'text-slate-300 hover:text-white border border-slate-800 bg-slate-900 hover:bg-slate-800'">
-              <span>📊</span>
-              <span x-text="selectedRootTerm ? 'Matches' : 'All'"></span>
-              <span class="font-mono font-black text-xs text-cyan-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="selectedRootTerm ? totalItems : (stats.total_queries || 0)">0</span>
-            </button>
-
-            <button @click="setQuickFilter('voids')"
-                    class="px-2 py-1 rounded-lg transition text-xs font-bold shrink-0 cursor-pointer flex items-center space-x-1 shadow-sm"
-                    :class="quickFilter === 'voids' ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400 ring-1 ring-emerald-400/60 shadow-emerald-950' : 'text-slate-300 hover:text-emerald-300 border border-slate-800 bg-slate-900 hover:bg-slate-800'"
-                    title="Filter genuinely verified untouched search voids (0/10 exact title matches with confirmed SERP)">
-              <span>🛡️</span>
-              <span>Voids</span>
-              <span class="font-mono font-black text-xs text-emerald-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="stats.verified_voids || 0">0</span>
-            </button>
-
-            <button @click="setQuickFilter('critical_85')"
-                    class="px-2 py-1 rounded-lg transition text-xs font-bold shrink-0 cursor-pointer flex items-center space-x-1 shadow-sm"
-                    :class="quickFilter === 'critical_85' ? 'bg-amber-500/30 text-amber-200 border border-amber-400 ring-1 ring-amber-400/60 shadow-amber-950' : 'text-slate-300 hover:text-amber-300 border border-slate-800 bg-slate-900 hover:bg-slate-800'"
-                    title="Filter by Critical Search Gaps (Score 85+)">
-              <span>💎</span>
-              <span>Critical</span>
-              <span class="font-mono font-black text-xs text-amber-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="stats.critical_gold || 0">0</span>
-            </button>
-
-            <button @click="setQuickFilter('high_65')"
-                    class="px-2 py-1 rounded-lg transition text-xs font-bold shrink-0 cursor-pointer flex items-center space-x-1 shadow-sm"
-                    :class="quickFilter === 'high_65' ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/60 ring-1 ring-emerald-400/40 shadow-emerald-950' : 'text-slate-300 hover:text-emerald-300 border border-slate-800 bg-slate-900 hover:bg-slate-800'"
-                    title="Filter by High Gap Opportunities (Score 65+)">
-              <span>⚡</span>
-              <span>High</span>
-              <span class="font-mono font-black text-xs text-emerald-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="stats.high_opportunity || 0">0</span>
-            </button>
-
-            <button @click="setQuickFilter('breakouts')"
-                    class="px-2 py-1 rounded-lg transition text-xs font-bold shrink-0 cursor-pointer flex items-center space-x-1 shadow-sm"
-                    :class="quickFilter === 'breakouts' ? 'bg-rose-500/30 text-rose-200 border border-rose-400 ring-1 ring-rose-400/60 shadow-rose-950' : 'text-slate-300 hover:text-rose-300 border border-slate-800 bg-slate-900 hover:bg-slate-800'"
-                    title="Filter by Breakout Velocity Queries (+5000% Surge)">
-              <span>🔥</span>
-              <span>Breakouts</span>
-              <span class="font-mono font-black text-xs text-rose-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="stats.breakouts || 0">0</span>
-            </button>
-
-            <button @click="setQuickFilter('competed')"
-                    class="px-2 py-1 rounded-lg transition text-xs font-bold shrink-0 cursor-pointer flex items-center space-x-1 shadow-sm"
-                    :class="quickFilter === 'competed' ? 'bg-amber-500/30 text-amber-200 border border-amber-400 ring-1 ring-amber-400/60 shadow-amber-950' : 'text-slate-300 hover:text-amber-300 border border-slate-800 bg-slate-900 hover:bg-slate-800'"
-                    title="Filter by Competed SERPs (>2 exact matches)">
-              <span>⚠️</span>
-              <span>Competed</span>
-              <span class="font-mono font-black text-xs text-slate-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="stats.competed_queries || 0">0</span>
-            </button>
+        <!-- TWO-TIER UNCLUTTERED COMMAND & FILTER HEADER (NEVER SQUISHED) -->
+        <!-- Tier 1: Search, Topic Context & Global Controls (44px) -->
+        <div class="h-11 border-b border-slate-800/80 bg-slate-900/70 px-4 flex items-center justify-between shrink-0 gap-3 text-xs select-none">
+          <!-- Left: Active Topic Breadcrumb / Context Badge -->
+          <div class="flex items-center space-x-2 shrink-0">
+            <template x-if="selectedRootTerm">
+              <div class="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/25 text-indigo-200 border border-indigo-400/50 font-bold text-xs shadow-sm">
+                <span class="text-indigo-300 font-semibold uppercase text-[10px] tracking-wider">Topic:</span>
+                <span class="font-extrabold text-white max-w-[140px] truncate" x-text="selectedRootTerm"></span>
+                <button @click="clearRootTerm()" class="ml-1 text-slate-400 hover:text-white hover:bg-indigo-700/60 rounded px-1 text-xs cursor-pointer" title="View all topics">✕</button>
+              </div>
+            </template>
+            <template x-if="!selectedRootTerm">
+              <div class="flex items-center space-x-1.5 text-xs text-slate-300 font-bold">
+                <span>🎯</span>
+                <span x-text="filters.category !== 'all' ? filters.category : 'All Categories'"></span>
+              </div>
+            </template>
+            <span class="text-xs text-slate-400 font-medium hidden sm:inline" x-text="'(' + totalItems + ' opportunities)'"></span>
           </div>
 
-          <!-- Right: Vertical, Sort, Archetype, Search, View Mode, Audit & Export -->
-          <div class="flex items-center space-x-1.5 shrink-0">
-            <!-- 12-Vertical Selector -->
+          <!-- Right: Search Input, Category Selector, Sort, View, Live Check & Export -->
+          <div class="flex items-center space-x-2 shrink-0">
+            <!-- In-Results Keyword Search -->
+            <div class="relative w-36 lg:w-48">
+              <input type="text" x-model="filters.search" @input.debounce.300ms="loadQueries(1)"
+                     placeholder="Search opportunities..."
+                     class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-7 pr-6 py-1 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-amber-500 shadow-inner">
+              <span class="absolute left-2 top-1.5 text-slate-500 text-xs">🔍</span>
+              <button x-show="filters.search" @click="filters.search = ''; loadQueries(1)" class="absolute right-2 top-1 text-slate-400 hover:text-white text-xs">✕</button>
+            </div>
+
+            <!-- Category / Industry Selector -->
             <select x-model="filters.category" @change="setCategory($event.target.value)"
-                    class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-slate-200 text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer shadow-sm">
-              <option value="all">🌐 All Verticals</option>
+                    class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-200 text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer shadow-sm">
+              <option value="all">🌐 All Categories</option>
               <template x-for="cat in categories" :key="cat">
                 <option :value="cat" x-text="cat"></option>
               </template>
@@ -396,66 +362,43 @@
             <!-- Sort Selector -->
             <select :value="sortBy === 'pending_first' ? 'pending_first' : (sortBy === 'exact_title_matches' ? (sortOrder === 'DESC' ? 'competed_first' : 'exact_title_matches') : sortBy)"
                     @change="handleSortChange($event.target.value)"
-                    class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-slate-200 text-xs font-medium focus:outline-none focus:border-amber-500 cursor-pointer shadow-sm">
-              <option value="gap_score">Sort: Highest Score</option>
-              <option value="exact_title_matches">Sort: Voids (0/10)</option>
-              <option value="competed_first">Sort: Competed</option>
-              <option value="pending_first">Sort: Pending</option>
-              <option value="last_updated">Sort: Recent</option>
-              <option value="keyword">Sort: Name (A-Z)</option>
+                    class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-200 text-xs font-medium focus:outline-none focus:border-amber-500 cursor-pointer shadow-sm">
+              <option value="gap_score">↕ Highest Opportunity</option>
+              <option value="exact_title_matches">↕ Zero Competition First</option>
+              <option value="competed_first">↕ High Competition First</option>
+              <option value="pending_first">↕ Not Checked First</option>
+              <option value="last_updated">↕ Recently Discovered</option>
+              <option value="keyword">↕ Alphabetical (A-Z)</option>
             </select>
 
-            <!-- Archetype Dropdown (hidden on small displays to guarantee zero wrapping) -->
-            <select x-model="filters.archetype" @change="loadQueries(1)"
-                    class="hidden 2xl:block bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-slate-200 text-xs font-medium focus:outline-none focus:border-amber-500 cursor-pointer shadow-sm">
-              <option value="all">All Archetypes</option>
-              <option value="Micro-Tool">Micro-Tool</option>
-              <option value="Config Generator">Config Generator</option>
-              <option value="Cost Estimator">Cost Estimator</option>
-              <option value="Workaround">Workaround / Bug Fix</option>
-              <option value="Compliance Checklist">Compliance Checklist</option>
-              <option value="Interactive Visualizer">Interactive Visualizer</option>
-              <option value="Recipe">Recipe / Boilerplate</option>
-              <option value="Breaking News">Breaking News</option>
-              <option value="Navigational">Navigational</option>
-            </select>
-
-            <!-- In-Results Keyword Search -->
-            <div class="relative w-28 lg:w-36">
-              <input type="text" x-model="filters.search" @input.debounce.300ms="loadQueries(1)"
-                     placeholder="Search..."
-                     class="w-full bg-slate-900 border border-slate-800 rounded-lg pl-6 pr-2 py-1 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-amber-500 shadow-sm">
-              <span class="absolute left-1.5 top-1.5 text-slate-400 text-xs">🔍</span>
-            </div>
-
-            <!-- Cards vs Density View Switcher -->
-            <div class="flex items-center bg-slate-900 p-0.5 rounded-lg border border-slate-800">
+            <!-- Cards vs Table View Switcher -->
+            <div class="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800">
               <button @click="feedView = 'cards'"
                       :class="feedView === 'cards' ? 'bg-slate-800 text-amber-400 font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
                       class="px-2 py-0.5 rounded text-xs transition flex items-center space-x-1 cursor-pointer">
                 <span>🗂️</span>
-                <span class="hidden sm:inline">Cards</span>
+                <span class="hidden md:inline">Cards</span>
               </button>
               <button @click="feedView = 'compact'"
                       :class="feedView === 'compact' ? 'bg-slate-800 text-amber-400 font-bold shadow' : 'text-slate-400 hover:text-slate-200'"
                       class="px-2 py-0.5 rounded text-xs transition flex items-center space-x-1 cursor-pointer">
                 <span>📑</span>
-                <span class="hidden sm:inline">Density</span>
+                <span class="hidden md:inline">Table</span>
               </button>
             </div>
 
-            <!-- Batch Audit Page Button -->
+            <!-- Check Google Top 10 Button -->
             <button @click="auditBatchLive()" :disabled="isAuditingBatch"
-                    class="px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 text-xs font-bold flex items-center gap-1 transition cursor-pointer shadow-sm"
-                    title="Audit pending SERPs on this page live from your Mac">
-              <span x-show="!isAuditingBatch">⚡ Audit</span>
-              <span x-show="isAuditingBatch" class="animate-pulse">...</span>
+                    class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 text-xs font-bold flex items-center gap-1 transition cursor-pointer shadow-sm"
+                    title="Verify Google top 10 competition live for this page">
+              <span x-show="!isAuditingBatch">⚡ Check Google</span>
+              <span x-show="isAuditingBatch" class="animate-pulse">Checking...</span>
             </button>
 
-            <!-- Export Opportunities Dropdown -->
+            <!-- Export Dropdown -->
             <div class="relative" x-data="{ exportOpen: false }">
               <button @click="exportOpen = !exportOpen"
-                      class="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-slate-600 text-xs font-bold flex items-center gap-1 transition cursor-pointer shadow-sm"
+                      class="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-slate-700 text-xs font-bold flex items-center gap-1 transition cursor-pointer shadow-sm"
                       title="Export current opportunities">
                 <span>📥</span>
                 <span class="hidden xl:inline">Export</span>
@@ -473,6 +416,68 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Tier 2: Dedicated Full-Width Opportunity Filter Pills (38px, Never Truncates) -->
+        <div class="h-9.5 border-b border-slate-800 bg-slate-900/40 px-4 flex items-center space-x-2 overflow-x-auto scrollbar-none select-none text-xs">
+          <!-- All Opportunities -->
+          <button @click="setQuickFilter('all')"
+                  class="px-3 py-1 rounded-lg transition text-xs font-bold shrink-0 cursor-pointer shadow-sm flex items-center space-x-1.5"
+                  :class="quickFilter === 'all' ? 'bg-cyan-500/25 text-cyan-200 border border-cyan-400 ring-1 ring-cyan-400/40 shadow-cyan-950' : 'text-slate-300 hover:text-white border border-slate-800 bg-slate-900 hover:bg-slate-800'">
+            <span>📊</span>
+            <span x-text="selectedRootTerm ? 'All Matches' : 'All Opportunities'"></span>
+            <span class="font-mono font-black text-xs text-cyan-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="selectedRootTerm ? totalItems : (stats.total_queries || 0)">0</span>
+          </button>
+
+          <!-- Zero Competition (0/10) -->
+          <button @click="setQuickFilter('voids')"
+                  class="px-3 py-1 rounded-lg transition text-xs font-bold shrink-0 cursor-pointer flex items-center space-x-1.5 shadow-sm"
+                  :class="quickFilter === 'voids' ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400 ring-1 ring-emerald-400/60 shadow-emerald-950' : 'text-slate-300 hover:text-emerald-300 border border-slate-800 bg-slate-900 hover:bg-slate-800'"
+                  title="0 of top 10 Google results target this keyword in their title — completely uncontested">
+            <span>🛡️</span>
+            <span>Zero Competition (0/10)</span>
+            <span class="font-mono font-black text-xs text-emerald-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="stats.verified_voids || 0">0</span>
+          </button>
+
+          <!-- Top Opportunities (Score 85+) -->
+          <button @click="setQuickFilter('critical_85')"
+                  class="px-3 py-1 rounded-lg transition text-xs font-bold shrink-0 cursor-pointer flex items-center space-x-1.5 shadow-sm"
+                  :class="quickFilter === 'critical_85' ? 'bg-amber-500/30 text-amber-200 border border-amber-400 ring-1 ring-amber-400/60 shadow-amber-950' : 'text-slate-300 hover:text-amber-300 border border-slate-800 bg-slate-900 hover:bg-slate-800'"
+                  title="Highest-scoring search gaps (Score 85+ out of 100)">
+            <span>💎</span>
+            <span>Top Opportunities (85+)</span>
+            <span class="font-mono font-black text-xs text-amber-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="stats.critical_gold || 0">0</span>
+          </button>
+
+          <!-- Good Potential (Score 65+) -->
+          <button @click="setQuickFilter('high_65')"
+                  class="px-3 py-1 rounded-lg transition text-xs font-bold shrink-0 cursor-pointer flex items-center space-x-1.5 shadow-sm"
+                  :class="quickFilter === 'high_65' ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/60 ring-1 ring-emerald-400/40 shadow-emerald-950' : 'text-slate-300 hover:text-emerald-300 border border-slate-800 bg-slate-900 hover:bg-slate-800'"
+                  title="Strong search gap opportunities (Score 65+ out of 100)">
+            <span>⚡</span>
+            <span>Good Potential (65+)</span>
+            <span class="font-mono font-black text-xs text-emerald-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="stats.high_opportunity || 0">0</span>
+          </button>
+
+          <!-- Fast Rising / Trending -->
+          <button @click="setQuickFilter('breakouts')"
+                  class="px-3 py-1 rounded-lg transition text-xs font-bold shrink-0 cursor-pointer flex items-center space-x-1.5 shadow-sm"
+                  :class="quickFilter === 'breakouts' ? 'bg-rose-500/30 text-rose-200 border border-rose-400 ring-1 ring-rose-400/60 shadow-rose-950' : 'text-slate-300 hover:text-rose-300 border border-slate-800 bg-slate-900 hover:bg-slate-800'"
+                  title="Fast-rising queries on Google Trends with +5000% breakout search surge">
+            <span>🔥</span>
+            <span>Trending (+5000%)</span>
+            <span class="font-mono font-black text-xs text-rose-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="stats.breakouts || 0">0</span>
+          </button>
+
+          <!-- High Competition / Saturated -->
+          <button @click="setQuickFilter('competed')"
+                  class="px-3 py-1 rounded-lg transition text-xs font-bold shrink-0 cursor-pointer flex items-center space-x-1.5 shadow-sm"
+                  :class="quickFilter === 'competed' ? 'bg-amber-500/30 text-amber-200 border border-amber-400 ring-1 ring-amber-400/60 shadow-amber-950' : 'text-slate-300 hover:text-amber-300 border border-slate-800 bg-slate-900 hover:bg-slate-800'"
+                  title="Keywords where 3 or more of top 10 Google results already target the title">
+            <span>⚠️</span>
+            <span>High Competition</span>
+            <span class="font-mono font-black text-xs text-slate-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="stats.competed_queries || 0">0</span>
+          </button>
         </div>
 
         <!-- RESULTS CONTENT VIEWPORT (SCROLLABLE INSIDE) -->
@@ -526,20 +531,20 @@
                   <h3 class="text-base lg:text-lg font-black text-white my-2 leading-snug break-words tracking-tight group-hover:text-amber-300 transition-colors"
                       x-text="item.keyword"></h3>
 
-                  <!-- Top 10 SERP Competitors & Title Gap Breakdown (Truthful 10-Slot Meter) -->
+                  <!-- Google Top 10 Competition Breakdown (Truthful 10-Slot Meter) -->
                   <div class="space-y-2 mb-3 bg-slate-950/80 p-3 rounded-xl border border-slate-800/90 shadow-inner">
                     <div class="flex items-center justify-between text-xs">
-                      <span class="text-slate-300 text-xs font-bold uppercase tracking-wider">SERP Competition:</span>
+                      <span class="text-slate-300 text-xs font-bold uppercase tracking-wider">Google Top 10 Competition:</span>
 
-                      <!-- Verified Untouched Void (0/10) -->
+                      <!-- Verified Zero Competition (0/10) -->
                       <template x-if="item.exact_title_matches === 0">
                         <span class="font-mono text-xs font-bold text-emerald-400 flex items-center gap-1.5">
                           <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 font-black">0/10</span>
-                          <span class="text-emerald-300 font-black">🛡️ Untouched Void</span>
+                          <span class="text-emerald-300 font-black">🛡️ Zero Competition</span>
                           <button @click.stop="auditSerpLive(item)" 
                                   :disabled="item._auditing"
                                   class="text-xs px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 ml-0.5 cursor-pointer"
-                                  title="Re-verify SERP top 10 live from your Mac">
+                                  title="Re-verify Google results live">
                             <span x-show="!item._auditing">🔄</span>
                             <span x-show="item._auditing" class="animate-pulse">...</span>
                           </button>
@@ -550,49 +555,49 @@
                       <template x-if="item.exact_title_matches > 0 && item.exact_title_matches <= 2">
                         <span class="font-mono text-xs font-bold text-amber-400 flex items-center gap-1.5">
                           <span class="px-2.5 py-0.5 rounded-full bg-amber-500/25 text-amber-300 border border-amber-400/50 font-black" x-text="item.exact_title_matches + '/10'"></span>
-                          <span class="text-amber-300 font-bold">⚡ Low Comp</span>
+                          <span class="text-amber-300 font-bold">⚡ Low Competition</span>
                           <button @click.stop="auditSerpLive(item)" 
                                   :disabled="item._auditing"
                                   class="text-xs px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 ml-0.5 cursor-pointer"
-                                  title="Re-verify SERP live">
+                                  title="Re-verify Google results live">
                             <span x-show="!item._auditing">🔄</span>
                             <span x-show="item._auditing" class="animate-pulse">...</span>
                           </button>
                         </span>
                       </template>
 
-                      <!-- Competed (>2/10) -->
+                      <!-- High Competition (>2/10) -->
                       <template x-if="item.exact_title_matches > 2">
                         <span class="font-mono text-xs font-medium text-slate-300 flex items-center gap-1.5">
                           <span class="px-2.5 py-0.5 rounded-full bg-rose-500/25 text-rose-300 border border-rose-500/50 font-bold" x-text="item.exact_title_matches + '/10'"></span>
-                          <span class="text-rose-400 font-bold">⚠️ Saturated</span>
+                          <span class="text-rose-400 font-bold">⚠️ High Competition</span>
                           <button @click.stop="auditSerpLive(item)" 
                                   :disabled="item._auditing"
                                   class="text-xs px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 ml-0.5 cursor-pointer"
-                                  title="Re-verify SERP live">
+                                  title="Re-verify Google results live">
                             <span x-show="!item._auditing">🔄</span>
                             <span x-show="item._auditing" class="animate-pulse">...</span>
                           </button>
                         </span>
                       </template>
 
-                      <!-- Unverified / Pending Live Audit -->
+                      <!-- Not Checked Yet -->
                       <template x-if="item.exact_title_matches === null || item.exact_title_matches === undefined">
                         <span class="text-xs flex items-center gap-1.5">
-                          <span class="text-slate-400 text-xs italic">⏳ Pending Audit</span>
+                          <span class="text-slate-400 text-xs italic">⏳ Not Checked Yet</span>
                           <button @click.stop="auditSerpLive(item)" 
                                   :disabled="item._auditing"
                                   class="px-2 py-0.5 rounded bg-amber-500/25 hover:bg-amber-500/35 text-amber-200 border border-amber-500/50 text-xs font-bold transition cursor-pointer flex items-center gap-1"
-                                  title="Audit SERP live from your Mac (100% accurate)">
-                            <span x-show="!item._auditing">⚡ Audit Now</span>
-                            <span x-show="item._auditing" class="animate-pulse">Auditing...</span>
+                                  title="Check Google results live">
+                            <span x-show="!item._auditing">⚡ Check Google</span>
+                            <span x-show="item._auditing" class="animate-pulse">Checking...</span>
                           </button>
                         </span>
                       </template>
                     </div>
 
-                    <!-- 10-Slot SERP Slot Competition Meter (Positions #1 to #10 on Google, Higher Track) -->
-                    <div class="flex items-center space-x-1.5 py-1" title="Top 10 Google SERP positions: red=competitor targeting title, dark=uncontested open slot">
+                    <!-- 10-Slot SERP Slot Competition Meter (Positions #1 to #10 on Google) -->
+                    <div class="flex items-center space-x-1.5 py-1" title="Top 10 Google positions: red=competitor targeting title, dark=open slot">
                       <template x-for="slot in 10" :key="slot">
                         <div class="h-3.5 flex-1 rounded-sm transition-all"
                              :class="{
@@ -608,23 +613,23 @@
                     <div class="text-xs flex items-center justify-between text-slate-300">
                       <template x-if="item.exact_title_matches === 0">
                         <span class="text-emerald-300 font-semibold flex items-center gap-1">
-                          <span>✨</span> 100% Uncontested SERP — 0 of 10 pages target this title
+                          <span>✨</span> 100% Uncontested — None of top 10 Google results target this title
                         </span>
                       </template>
                       <template x-if="item.exact_title_matches > 0 && item.exact_title_matches <= 2">
-                        <span class="text-amber-300 font-semibold" x-text="item.exact_title_matches + ' of 10 pages target title (' + (10 - item.exact_title_matches) + ' positions open)'"></span>
+                        <span class="text-amber-300 font-semibold" x-text="item.exact_title_matches + ' of 10 pages target title (' + (10 - item.exact_title_matches) + ' open slots)'"></span>
                       </template>
                       <template x-if="item.exact_title_matches > 2">
-                        <span class="text-rose-300 font-medium" x-text="item.exact_title_matches + ' pages target this title — Saturated SERP'"></span>
+                        <span class="text-rose-300 font-medium" x-text="item.exact_title_matches + ' pages target this title — High Competition'"></span>
                       </template>
                       <template x-if="item.exact_title_matches === null || item.exact_title_matches === undefined">
-                        <span class="text-slate-400 italic">SERP snippets awaiting local audit</span>
+                        <span class="text-slate-400 italic">Click "Check Google" to verify live results</span>
                       </template>
                     </div>
 
                     <!-- Top Competitor Title -->
                     <div class="text-xs text-slate-200 truncate pt-1 border-t border-slate-800/60 mt-1 flex items-center space-x-1.5" x-show="item.top_competitor_title">
-                      <span class="text-slate-400 font-bold shrink-0">#1 Rank:</span>
+                      <span class="text-slate-400 font-bold shrink-0">#1 on Google:</span>
                       <span class="text-slate-300 truncate font-medium" x-text="item.top_competitor_title"></span>
                     </div>
                   </div>
@@ -638,7 +643,7 @@
                        class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-amber-300 hover:text-amber-200 font-bold border border-slate-700/80 transition shadow-xs text-xs">Google</a>
                     <a :href="item.google_allintitle_url" target="_blank"
                        class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-emerald-300 hover:text-emerald-200 font-bold border border-slate-700/80 transition shadow-xs text-xs"
-                       title="Verify exact title matches on Google with allintitle:">Title</a>
+                       title="Verify exact title matches on Google with allintitle:">Title Check</a>
                     <a :href="item.ddg_verify_url" target="_blank"
                        class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 transition shadow-xs text-xs">DDG</a>
                     <a :href="item.trends_verify_url" target="_blank"
@@ -647,18 +652,18 @@
 
                   <!-- Right Action Buttons -->
                   <div class="flex items-center space-x-1 shrink-0">
-                    <!-- AI Blueprint Trigger -->
+                    <!-- AI Build Plan Trigger -->
                     <button @click="openBlueprint(item)"
-                            class="px-2 py-1 rounded-lg bg-indigo-600/35 hover:bg-indigo-600/55 text-indigo-200 border border-indigo-400/50 text-xs font-bold transition flex items-center space-x-1 cursor-pointer shadow-md shadow-indigo-950"
-                            title="1-Click AI Builder Blueprint">
+                            class="px-2.5 py-1 rounded-lg bg-indigo-600/35 hover:bg-indigo-600/55 text-indigo-200 border border-indigo-400/50 text-xs font-bold transition flex items-center space-x-1 cursor-pointer shadow-md shadow-indigo-950"
+                            title="Generate 1-click prompt to build this tool with AI">
                       <span>🤖</span>
-                      <span class="text-xs">Blueprint</span>
+                      <span class="text-xs">Build Plan</span>
                     </button>
 
                     <!-- SERP Comparison Trigger -->
                     <button @click="openCompare(item.keyword)"
                             class="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs transition cursor-pointer"
-                            title="Compare SERP Overlap (Ahrefs-Grade)">
+                            title="Compare Google results with another term">
                       <span>⚖️</span>
                     </button>
 
@@ -666,12 +671,12 @@
                     <button @click="setVerdict(item.id, 'confirmed_gold')"
                             class="p-1 rounded-lg hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-300 text-xs transition cursor-pointer"
                             :class="item.human_verdict === 'confirmed_gold' ? 'text-emerald-400 font-bold bg-emerald-500/25 ring-1 ring-emerald-400' : ''"
-                            title="Confirm Gold">⭐</button>
+                            title="Save as Opportunity">⭐</button>
 
                     <button @click="setVerdict(item.id, 'already_served')"
                             class="p-1 rounded-lg hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 text-xs transition cursor-pointer"
                             :class="item.human_verdict === 'already_served' ? 'text-rose-400 font-bold bg-rose-500/25 ring-1 ring-rose-400' : ''"
-                            title="Reject Query">✕</button>
+                            title="Dismiss">✕</button>
                   </div>
                 </div>
 
@@ -687,12 +692,12 @@
               <thead class="bg-slate-900/95 border-b border-slate-800 text-xs text-slate-300 uppercase tracking-wider sticky top-0">
                 <tr>
                   <th class="py-3 px-3.5 font-bold">Score</th>
-                  <th class="py-3 px-3.5 font-bold">Search Void Query</th>
-                  <th class="py-3 px-3.5 font-bold">Velocity</th>
-                  <th class="py-3 px-3.5 font-bold">Archetype</th>
+                  <th class="py-3 px-3.5 font-bold">Search Keyword</th>
+                  <th class="py-3 px-3.5 font-bold">Trend</th>
+                  <th class="py-3 px-3.5 font-bold">Tool Format</th>
                   <th class="py-3 px-3.5 font-bold">Category</th>
-                  <th class="py-3 px-3.5 font-bold">Void Level</th>
-                  <th class="py-3 px-3.5 font-bold text-center">Verify</th>
+                  <th class="py-3 px-3.5 font-bold">Google Competition</th>
+                  <th class="py-3 px-3.5 font-bold text-center">Verify Live</th>
                   <th class="py-3 px-3.5 font-bold text-right">Actions</th>
                 </tr>
               </thead>
@@ -714,13 +719,13 @@
                       <template x-if="item.exact_title_matches !== null && item.exact_title_matches !== undefined">
                         <span class="text-xs font-bold font-mono px-2 py-0.5 rounded-full"
                               :class="item.exact_title_matches === 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40' : (item.exact_title_matches <= 2 ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40')"
-                              x-text="item.exact_title_matches + '/10 ' + (item.exact_title_matches === 0 ? '🛡️ Void' : '')"></span>
+                              x-text="item.exact_title_matches + '/10 ' + (item.exact_title_matches === 0 ? '🛡️ Zero Comp' : '')"></span>
                       </template>
                       <template x-if="item.exact_title_matches === null || item.exact_title_matches === undefined">
                         <button @click.stop="auditSerpLive(item)" 
                                 :disabled="item._auditing"
                                 class="text-xs px-2 py-0.5 rounded bg-amber-500/25 text-amber-200 border border-amber-500/40 hover:bg-amber-500/35 cursor-pointer font-bold">
-                          <span x-show="!item._auditing">⚡ Audit</span>
+                          <span x-show="!item._auditing">⚡ Check Google</span>
                           <span x-show="item._auditing" class="animate-pulse">...</span>
                         </button>
                       </template>
@@ -731,10 +736,10 @@
                       <a :href="item.trends_verify_url" target="_blank" class="text-indigo-300 hover:text-indigo-200 font-bold hover:underline">Trends ↗</a>
                     </td>
                     <td class="py-2.5 px-3.5 whitespace-nowrap text-right space-x-1.5 text-xs">
-                      <button @click="openBlueprint(item)" class="text-xs font-bold px-2.5 py-1 rounded-md bg-indigo-600/30 text-indigo-200 hover:bg-indigo-600/50 border border-indigo-500/40 cursor-pointer shadow-sm">AI Blueprint</button>
-                      <button @click="openCompare(item.keyword)" class="text-xs p-1 px-1.5 rounded bg-slate-800 text-amber-300 hover:bg-slate-700 border border-slate-700 cursor-pointer" title="Compare SERP Overlap">⚖️</button>
-                      <button @click="setVerdict(item.id, 'confirmed_gold')" class="text-sm hover:text-emerald-400 p-0.5 cursor-pointer" title="Confirm Gold">⭐</button>
-                      <button @click="setVerdict(item.id, 'already_served')" class="text-sm hover:text-rose-400 p-0.5 cursor-pointer" title="Reject Query">✕</button>
+                      <button @click="openBlueprint(item)" class="text-xs font-bold px-2.5 py-1 rounded-md bg-indigo-600/30 text-indigo-200 hover:bg-indigo-600/50 border border-indigo-500/40 cursor-pointer shadow-sm">Build Plan</button>
+                      <button @click="openCompare(item.keyword)" class="text-xs p-1 px-1.5 rounded bg-slate-800 text-amber-300 hover:bg-slate-700 border border-slate-700 cursor-pointer" title="Compare Google Results">⚖️</button>
+                      <button @click="setVerdict(item.id, 'confirmed_gold')" class="text-sm hover:text-emerald-400 p-0.5 cursor-pointer" title="Save Opportunity">⭐</button>
+                      <button @click="setVerdict(item.id, 'already_served')" class="text-sm hover:text-rose-400 p-0.5 cursor-pointer" title="Dismiss">✕</button>
                     </td>
                   </tr>
                 </template>
@@ -751,9 +756,9 @@
                   ⏳
                 </div>
                 <div>
-                  <h3 class="text-base font-black text-amber-300">Frontier Root in Queue</h3>
+                  <h3 class="text-base font-black text-amber-300">Topic In Scan Queue</h3>
                   <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
-                    "<span class="font-bold text-white font-mono" x-text="selectedRootTerm"></span>" is queued in the Frontier Discovery Pool and has not been mined yet.
+                    "<span class="font-bold text-white font-mono" x-text="selectedRootTerm"></span>" is waiting in the queue and has not been scanned yet.
                   </p>
                 </div>
                 <div class="pt-2">
@@ -761,8 +766,8 @@
                           :disabled="recheckingTerm === selectedRootTerm"
                           class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/25 transition cursor-pointer flex items-center gap-2 mx-auto disabled:opacity-50">
                     <span>⚡</span>
-                    <span x-show="recheckingTerm !== selectedRootTerm">Mine "<span x-text="selectedRootTerm"></span>" Now (Live Sweep)</span>
-                    <span x-show="recheckingTerm === selectedRootTerm" class="animate-pulse">Mining live in background...</span>
+                    <span x-show="recheckingTerm !== selectedRootTerm">Scan "<span x-text="selectedRootTerm"></span>" Now (Live Search)</span>
+                    <span x-show="recheckingTerm === selectedRootTerm" class="animate-pulse">Scanning live in background...</span>
                   </button>
                 </div>
               </div>
@@ -775,17 +780,17 @@
                   🔍
                 </div>
                 <div>
-                  <h3 class="text-base font-black text-slate-100">No matching search voids under this filter</h3>
+                  <h3 class="text-base font-black text-slate-100">No opportunities match this filter</h3>
                   <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
-                    "<span class="font-bold text-amber-300 font-mono" x-text="selectedRootTerm"></span>" has evaluated queries, but none match the current filter selection.
+                    "<span class="font-bold text-amber-300 font-mono" x-text="selectedRootTerm"></span>" has opportunities found, but none match your current filter.
                   </p>
                 </div>
                 <div class="pt-2 flex items-center justify-center gap-2.5">
                   <button @click="setQuickFilter('all')" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow transition cursor-pointer">
-                    View All Queries for "<span x-text="selectedRootTerm"></span>"
+                    View All for "<span x-text="selectedRootTerm"></span>"
                   </button>
                   <button @click="clearRootTerm(); setQuickFilter('all')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs border border-slate-700 transition cursor-pointer">
-                    Reset Root Filter
+                    View All Topics
                   </button>
                 </div>
               </div>
@@ -796,7 +801,7 @@
               <div class="text-center py-16 space-y-3 max-w-sm mx-auto">
                 <span class="text-4xl">⛏️</span>
                 <h3 class="text-base font-bold text-slate-200">No opportunities match current criteria</h3>
-                <p class="text-xs text-slate-400">Try adjusting the filter pills, clearing search, or switching archetypes.</p>
+                <p class="text-xs text-slate-400">Try selecting a different filter pill or clearing your search term.</p>
                 <button @click="clearRootTerm(); setQuickFilter('all')" class="px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition cursor-pointer mt-1">
                   Reset All Filters
                 </button>
@@ -823,7 +828,7 @@
     </div>
 
     <!-- ======================================================== -->
-    <!-- TAB 2: 🌐 FRONTIER HARVESTER & DEPTH QUEUE               -->
+    <!-- TAB 2: 🌐 TOPIC EXPLORER & DISCOVERY QUEUE               -->
     <!-- ======================================================== -->
     <div x-show="activeTab === 'frontier'" class="h-full overflow-y-auto p-6 space-y-6">
       <!-- Harvester Action Banner -->
@@ -831,19 +836,19 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 class="text-base font-bold text-slate-100 flex items-center space-x-2">
-              <span>Universal Frontier Queue & Harvester</span>
-              <span class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs border border-indigo-500/30 font-mono" x-text="frontierStats.total + ' Total Niches'"></span>
+              <span>Automatic Topic Explorer & Scanner</span>
+              <span class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-xs border border-indigo-500/30 font-mono" x-text="frontierStats.total + ' Total Topics'"></span>
             </h3>
-            <p class="text-xs text-slate-400 mt-1">Multi-source root harvester feeding autonomous recursive sweeps across 12 verticals.</p>
+            <p class="text-xs text-slate-400 mt-1">Discovers new target topics from Wikipedia, StackOverflow & Google to find uncontested search gaps.</p>
           </div>
           <div class="flex items-center space-x-2">
             <button @click="triggerHarvester()"
                     class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/20 transition cursor-pointer">
-              📚 Run Wikipedia & SO Harvester
+              📚 Discover New Topics
             </button>
             <button @click="showAddSeedModal = true"
                     class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition cursor-pointer">
-              ➕ Add Seed Term
+              ➕ Add Topic
             </button>
           </div>
         </div>
@@ -852,19 +857,19 @@
       <!-- Frontier Stats Grid -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-          <span class="text-xs text-slate-400">Total Root Niches</span>
+          <span class="text-xs text-slate-400">Total Topics</span>
           <h4 class="text-lg font-bold text-slate-100 mt-1 font-mono" x-text="frontierStats.total || 0">0</h4>
         </div>
         <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-          <span class="text-xs text-slate-400">Pending Exploration</span>
+          <span class="text-xs text-slate-400">Waiting to Scan</span>
           <h4 class="text-lg font-bold text-amber-400 mt-1 font-mono" x-text="frontierStats.pending || 0">0</h4>
         </div>
         <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-          <span class="text-xs text-slate-400">Completed Sweeps</span>
+          <span class="text-xs text-slate-400">Completed Scans</span>
           <h4 class="text-lg font-bold text-emerald-400 mt-1 font-mono" x-text="frontierStats.completed || 0">0</h4>
         </div>
         <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
-          <span class="text-xs text-slate-400">Recursive Sub-Niches (D1+)</span>
+          <span class="text-xs text-slate-400">Sub-Topics Discovered</span>
           <h4 class="text-lg font-bold text-cyan-400 mt-1 font-mono" x-text="(frontierStats.by_depth && frontierStats.by_depth['1']) || 0">0</h4>
         </div>
       </div>
@@ -873,7 +878,7 @@
       <div class="flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-900/60 p-3 rounded-xl border border-slate-800">
         <div class="flex items-center space-x-2">
           <input type="text" x-model="frontierSearch" @input.debounce.300ms="loadFrontier(1)"
-                 placeholder="Search frontier niches..."
+                 placeholder="Search topics..."
                  class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 w-64 focus:outline-none focus:border-indigo-500">
           
           <select x-model="frontierCategory" @change="loadFrontier(1)"
@@ -887,12 +892,12 @@
           <select x-model="frontierStatus" @change="loadFrontier(1)"
                   class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-300 text-xs focus:outline-none">
             <option value="all">All Status</option>
-            <option value="pending">Pending</option>
+            <option value="pending">Waiting in Queue</option>
             <option value="completed">Completed</option>
           </select>
         </div>
 
-        <button @click="loadFrontier(1)" class="text-indigo-400 hover:underline">Refresh Queue</button>
+        <button @click="loadFrontier(1)" class="text-indigo-400 hover:underline cursor-pointer">Refresh Topics</button>
       </div>
 
       <!-- Frontier Table -->
@@ -900,11 +905,11 @@
         <table class="w-full text-left text-xs text-slate-300">
           <thead class="bg-slate-900/90 border-b border-slate-800 text-[11px] text-slate-400 uppercase tracking-wider">
             <tr>
-              <th class="py-2.5 px-4 font-semibold">Niche Term</th>
+              <th class="py-2.5 px-4 font-semibold">Topic Name</th>
               <th class="py-2.5 px-4 font-semibold">Category</th>
-              <th class="py-2.5 px-4 font-semibold">Depth</th>
+              <th class="py-2.5 px-4 font-semibold">Topic Level</th>
               <th class="py-2.5 px-4 font-semibold">Status</th>
-              <th class="py-2.5 px-4 font-semibold">Gaps Yielded</th>
+              <th class="py-2.5 px-4 font-semibold">Opportunities Found</th>
               <th class="py-2.5 px-4 font-semibold text-right">Actions</th>
             </tr>
           </thead>
@@ -914,19 +919,19 @@
                 <td class="py-2.5 px-4 font-sans font-bold text-slate-100" x-text="item.niche_term"></td>
                 <td class="py-2.5 px-4 font-sans text-slate-400" x-text="item.category"></td>
                 <td class="py-2.5 px-4">
-                  <span class="px-1.5 py-0.5 rounded text-[10px]"
+                  <span class="px-2 py-0.5 rounded text-[10px] font-sans font-medium"
                         :class="item.depth_level === 0 ? 'bg-slate-800 text-slate-300' : 'bg-cyan-500/20 text-cyan-300'"
-                        x-text="'Depth ' + item.depth_level"></span>
+                        x-text="item.depth_level === 0 ? 'Main Topic' : 'Sub-Topic'"></span>
                 </td>
                 <td class="py-2.5 px-4">
-                  <span class="px-2 py-0.5 rounded text-[10px]"
+                  <span class="px-2 py-0.5 rounded text-[10px] font-sans font-semibold"
                         :class="item.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'"
-                        x-text="item.status"></span>
+                        x-text="item.status === 'completed' ? 'Done' : 'In Queue'"></span>
                 </td>
                 <td class="py-2.5 px-4 text-emerald-400 font-bold" x-text="item.queries_extracted || 0"></td>
                 <td class="py-2.5 px-4 text-right">
                   <button @click="selectRootTerm(item.niche_term); activeTab = 'feed'"
-                          class="text-xs text-amber-400 hover:underline cursor-pointer">View Results ↗</button>
+                          class="text-xs text-amber-400 hover:underline cursor-pointer font-sans font-medium">View Opportunities ↗</button>
                 </td>
               </tr>
             </template>
@@ -936,7 +941,7 @@
     </div>
 
     <!-- ======================================================== -->
-    <!-- TAB 3: 📊 DATA MATRIX & BULK TRIAGE                      -->
+    <!-- TAB 3: 📊 ALL OPPORTUNITIES TABLE & BULK ACTIONS         -->
     <!-- ======================================================== -->
     <div x-show="activeTab === 'matrix'" class="h-full flex flex-col overflow-hidden p-4 space-y-3">
       <!-- Bulk Toolbar -->
@@ -949,11 +954,11 @@
           <div x-show="selectedRows.length" class="flex items-center space-x-2">
             <span class="font-mono text-amber-400 font-bold" x-text="selectedRows.length + ' selected'"></span>
             <button @click="executeBulkVerdict('confirmed_gold')"
-                    class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-semibold cursor-pointer">⭐ Confirm</button>
+                    class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-semibold cursor-pointer">⭐ Save</button>
             <button @click="executeBulkVerdict('snoozed')"
-                    class="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-500 text-slate-950 font-semibold cursor-pointer">⏳ Snooze</button>
+                    class="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-500 text-slate-950 font-semibold cursor-pointer">⏳ Later</button>
             <button @click="executeBulkVerdict('already_served')"
-                    class="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-semibold cursor-pointer">✕ Reject</button>
+                    class="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-semibold cursor-pointer">✕ Dismiss</button>
           </div>
         </div>
 
@@ -972,13 +977,13 @@
             <tr>
               <th class="py-2.5 px-3 w-8"></th>
               <th class="py-2.5 px-3 font-semibold">Score</th>
-              <th class="py-2.5 px-3 font-semibold">Search Void Keyword</th>
-              <th class="py-2.5 px-3 font-semibold">Archetype</th>
+              <th class="py-2.5 px-3 font-semibold">Search Keyword</th>
+              <th class="py-2.5 px-3 font-semibold">Tool Format</th>
               <th class="py-2.5 px-3 font-semibold">Category</th>
-              <th class="py-2.5 px-3 font-semibold">Velocity</th>
-              <th class="py-2.5 px-3 font-semibold">Title Void</th>
-              <th class="py-2.5 px-3 font-semibold">Triage</th>
-              <th class="py-2.5 px-3 font-semibold text-right">Blueprint</th>
+              <th class="py-2.5 px-3 font-semibold">Trend</th>
+              <th class="py-2.5 px-3 font-semibold">Google Competition</th>
+              <th class="py-2.5 px-3 font-semibold">Status</th>
+              <th class="py-2.5 px-3 font-semibold text-right">Build Plan</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-800/60 font-mono text-xs">
@@ -1000,13 +1005,13 @@
                 <td class="py-2 px-3">
                   <template x-if="item.exact_title_matches !== null && item.exact_title_matches !== undefined">
                     <span :class="item.exact_title_matches === 0 ? 'text-emerald-400 font-bold' : 'text-slate-400'"
-                          x-text="item.exact_title_matches + '/10'"></span>
+                          x-text="item.exact_title_matches + '/10 ' + (item.exact_title_matches === 0 ? '🛡️ Zero' : '')"></span>
                   </template>
                   <template x-if="item.exact_title_matches === null || item.exact_title_matches === undefined">
                     <button @click.stop="auditSerpLive(item)" 
                             :disabled="item._auditing"
                             class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 cursor-pointer">
-                      <span x-show="!item._auditing">⚡ Audit</span>
+                      <span x-show="!item._auditing">⚡ Check</span>
                       <span x-show="item._auditing" class="animate-pulse">...</span>
                     </button>
                   </template>
@@ -1019,11 +1024,11 @@
                           'bg-rose-500/20 text-rose-300': item.human_verdict === 'already_served',
                           'bg-slate-800 text-slate-500': item.human_verdict === 'pending'
                         }"
-                        x-text="item.human_verdict"></span>
+                        x-text="item.human_verdict === 'confirmed_gold' ? 'Saved' : (item.human_verdict === 'already_served' ? 'Dismissed' : (item.human_verdict === 'snoozed' ? 'Later' : 'Pending'))"></span>
                 </td>
                 <td class="py-2 px-3 text-right font-sans space-x-1">
-                  <button @click="openCompare(item.keyword)" class="text-xs px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 hover:bg-amber-500/30 cursor-pointer" title="Compare SERP Overlap">⚖️</button>
-                  <button @click="openBlueprint(item)" class="text-xs px-2 py-0.5 rounded bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600/50 cursor-pointer">Prompt ↗</button>
+                  <button @click="openCompare(item.keyword)" class="text-xs px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 hover:bg-amber-500/30 cursor-pointer" title="Compare Google Results">⚖️</button>
+                  <button @click="openBlueprint(item)" class="text-xs px-2 py-0.5 rounded bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600/50 cursor-pointer">Build Plan ↗</button>
                 </td>
               </tr>
             </template>
@@ -1033,12 +1038,12 @@
     </div>
 
     <!-- ======================================================== -->
-    <!-- TAB 4: 📝 DAILY BRIEFS READER                            -->
+    <!-- TAB 4: 📝 DAILY REPORTS READER                           -->
     <!-- ======================================================== -->
     <div x-show="activeTab === 'reports'" class="h-full flex overflow-hidden">
       <!-- Left Reports List -->
       <aside class="w-72 border-r border-slate-800 bg-slate-900/50 flex flex-col shrink-0 overflow-y-auto p-3 space-y-1.5">
-        <h3 class="text-xs font-bold text-slate-300 mb-2 px-1">Daily Intelligence Reports</h3>
+        <h3 class="text-xs font-bold text-slate-300 mb-2 px-1">Saved Daily Reports</h3>
         <template x-for="r in reports" :key="r.filename">
           <button @click="viewReport(r.filename)"
                   class="w-full text-left p-2.5 rounded-lg border transition cursor-pointer"
@@ -1053,7 +1058,7 @@
             </div>
           </button>
         </template>
-        <div x-show="!reports.length" class="text-xs text-slate-500 italic p-3">No reports generated yet.</div>
+        <div x-show="!reports.length" class="text-xs text-slate-500 italic p-3">No daily reports generated yet.</div>
       </aside>
 
       <!-- Right Report Content -->
@@ -1063,7 +1068,7 @@
     </div>
 
     <!-- ======================================================== -->
-    <!-- TAB 5: 🚀 CLOUD SWARM FLEET (20 RUNNERS)                 -->
+    <!-- TAB 5: 🚀 CLOUD SCANNERS FLEET (20 WORKERS)              -->
     <!-- ======================================================== -->
     <div x-show="activeTab === 'fleet'" class="h-full overflow-y-auto p-6 space-y-6">
       <!-- Fleet Header Banner -->
@@ -1074,23 +1079,23 @@
               <span class="text-2xl">🚀</span>
               <div>
                 <h3 class="text-base font-bold text-slate-100 flex items-center space-x-2">
-                  <span>5-Repository Cloud Swarm Fleet</span>
-                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs border border-emerald-500/30 font-mono">⚡ 20 Parallel Runners</span>
-                  <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs border border-cyan-500/30 font-mono">Public / 100% Free Forever</span>
+                  <span>20 Free Cloud Background Scanners</span>
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs border border-emerald-500/30 font-mono">⚡ 20 Parallel Workers</span>
+                  <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs border border-cyan-500/30 font-mono">100% Free Forever</span>
                 </h3>
-                <p class="text-xs text-slate-400 mt-1">Multi-repository distributed matrix probe covering all 12 universal industry verticals with $0.00 spend.</p>
+                <p class="text-xs text-slate-400 mt-1">Distributed scanners continuously evaluating Google Trends and search results across all 12 industries with $0.00 spend.</p>
               </div>
             </div>
           </div>
           <div class="flex items-center space-x-3 shrink-0">
             <button @click="dispatchFleet(3)" :disabled="fleetDispatching"
                     class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 flex items-center space-x-2 transition disabled:opacity-50 cursor-pointer">
-              <span x-show="!fleetDispatching">⚡ Dispatch 20 Runners</span>
-              <span x-show="fleetDispatching">🚀 Triggering Swarm...</span>
+              <span x-show="!fleetDispatching">⚡ Run 20 Scanners</span>
+              <span x-show="fleetDispatching">🚀 Starting Cloud Scanners...</span>
             </button>
             <button @click="syncFleet()" :disabled="fleetSyncing"
                     class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs flex items-center space-x-2 transition disabled:opacity-50 cursor-pointer">
-              <span x-show="!fleetSyncing">🔄 Sync Fleet Reports</span>
+              <span x-show="!fleetSyncing">🔄 Sync Scanner Results</span>
               <span x-show="fleetSyncing">⏳ Syncing...</span>
             </button>
           </div>
@@ -1108,15 +1113,15 @@
                   <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                   <a :href="repo.url" target="_blank" class="font-mono text-sm font-bold text-slate-200 hover:text-amber-400 transition" x-text="repo.name"></a>
                 </div>
-                <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold" x-text="'Shards ' + repo.shards.join(', ')"></span>
+                <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold" x-text="'Workers ' + repo.shards.map(s => s + 1).join(', ')"></span>
               </div>
               <p class="text-xs text-slate-400 mb-2" x-text="repo.description"></p>
               <div class="text-[11px] text-indigo-300 font-medium bg-slate-950/80 p-2 rounded-lg border border-slate-800" x-text="repo.verticals.join(' · ')"></div>
             </div>
 
             <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
-              <span class="text-slate-500 text-[11px]">4 Ubuntu Runners</span>
-              <a :href="repo.url + '/actions'" target="_blank" class="text-cyan-400 hover:underline">View Actions ↗</a>
+              <span class="text-slate-500 text-[11px]">4 Ubuntu Cloud Workers</span>
+              <a :href="repo.url + '/actions'" target="_blank" class="text-cyan-400 hover:underline">View Live Runs ↗</a>
             </div>
           </div>
         </template>
@@ -1126,10 +1131,10 @@
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
         <div class="flex items-center justify-between mb-3">
           <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2">
-            <span>Execution Terminal Stream</span>
+            <span>Live Scanner Activity Log</span>
             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
           </h3>
-          <button @click="loadLogs()" class="text-xs text-amber-400 hover:underline cursor-pointer">Refresh</button>
+          <button @click="loadLogs()" class="text-xs text-amber-400 hover:underline cursor-pointer">Refresh Log</button>
         </div>
         <div class="bg-slate-950 rounded-lg p-3 font-mono text-xs text-slate-300 h-64 overflow-y-auto space-y-1">
           <template x-for="log in logs" :key="log.id">
@@ -1139,7 +1144,7 @@
               <span class="text-slate-300" x-text="log.log_message"></span>
             </div>
           </template>
-          <div x-show="!logs.length" class="text-slate-500 italic">No execution logs recorded yet.</div>
+          <div x-show="!logs.length" class="text-slate-500 italic">No activity logs recorded yet.</div>
         </div>
       </div>
     </div>
@@ -1147,7 +1152,7 @@
   </main>
 
   <!-- ======================================================== -->
-  <!-- MODAL 1: 1-CLICK AI BUILDER BLUEPRINT                    -->
+  <!-- MODAL 1: 1-CLICK AI BUILD PLAN PROMPT                    -->
   <!-- ======================================================== -->
   <div x-show="showBlueprintModal"
        @keydown.escape.window="showBlueprintModal = false"
@@ -1158,34 +1163,34 @@
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
         <div class="flex items-center space-x-2">
           <span class="text-xl">🤖</span>
-          <h3 class="text-base font-bold text-amber-400">1-Click AI Builder Blueprint</h3>
+          <h3 class="text-base font-bold text-amber-400">1-Click Build Plan (AI Prompt)</h3>
         </div>
         <button @click="showBlueprintModal = false" class="text-slate-400 hover:text-slate-200 text-lg">✕</button>
       </div>
 
       <div class="space-y-4 text-xs">
         <div>
-          <span class="text-slate-400 font-medium">Target Search Void:</span>
+          <span class="text-slate-400 font-medium">Target Keyword Opportunity:</span>
           <h4 class="text-base font-bold text-slate-100 mt-0.5" x-text="activeBlueprint.keyword"></h4>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-            <span class="text-slate-500 font-mono text-[10px] uppercase">Recommended $0 Stack</span>
+            <span class="text-slate-500 font-mono text-[10px] uppercase">Recommended $0 Tech Stack</span>
             <div class="font-bold text-emerald-400 text-xs mt-1" x-text="activeBlueprint.stack"></div>
           </div>
           <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-            <span class="text-slate-500 font-mono text-[10px] uppercase">Programmatic SEO Title</span>
+            <span class="text-slate-500 font-mono text-[10px] uppercase">Page Title & SEO Headline</span>
             <div class="font-bold text-slate-200 text-xs mt-1" x-text="activeBlueprint.seo_title"></div>
           </div>
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-1.5">
-            <span class="text-slate-400 font-medium">Ready-to-Use Prompt (Claude / GPT-4o / Gemini):</span>
+            <span class="text-slate-400 font-medium">Ready-to-Use Prompt (Paste into Claude, ChatGPT, or Cursor):</span>
             <button @click="copyBlueprintPrompt()"
                     class="px-3 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center space-x-1 cursor-pointer">
-              <span x-show="!copiedPrompt">📋 Copy Prompt</span>
+              <span x-show="!copiedPrompt">📋 Copy AI Prompt</span>
               <span x-show="copiedPrompt" class="text-emerald-950">✓ Copied to Clipboard!</span>
             </button>
           </div>
@@ -1196,7 +1201,7 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- MODAL 2: ADD CUSTOM SEED & AI PRESET EXPANDER             -->
+  <!-- MODAL 2: ADD NEW TOPIC & GENERATE IDEAS                  -->
   <!-- ======================================================== -->
   <div x-show="showAddSeedModal"
        @keydown.escape.window="showAddSeedModal = false"
@@ -1207,20 +1212,20 @@
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
         <h3 class="text-sm font-bold text-slate-100 flex items-center space-x-2">
           <span>➕</span>
-          <span>Add Custom Input Seed & AI Angle Expander</span>
+          <span>Add New Topic & Generate Ideas</span>
         </h3>
         <button @click="showAddSeedModal = false" class="text-slate-400 hover:text-slate-200 text-lg">✕</button>
       </div>
 
       <div class="space-y-4 text-xs">
         <div>
-          <label class="block text-slate-400 mb-1">Input Keyword / Root Niche:</label>
-          <input type="text" x-model="newSeedTerm" placeholder="e.g. mortgage calculator, docker compose, tiny house..."
+          <label class="block text-slate-400 mb-1">Topic or Keyword to Explore:</label>
+          <input type="text" x-model="newSeedTerm" placeholder="e.g. mortgage calculator, docker compose, pdf editor..."
                  class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
         </div>
 
         <div>
-          <label class="block text-slate-400 mb-1">Assigned Vertical:</label>
+          <label class="block text-slate-400 mb-1">Select Industry / Category:</label>
           <select x-model="newSeedCategory" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
             <template x-for="cat in categories" :key="cat">
               <option :value="cat" x-text="cat"></option>
@@ -1228,23 +1233,23 @@
           </select>
         </div>
 
-        <!-- Ahrefs-Grade AI Angle Expander -->
+        <!-- AI Topic Angle Generator -->
         <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-          <label class="block text-slate-400 text-[11px] font-semibold">Brainstorming Angle Presets (from Ahrefs):</label>
+          <label class="block text-slate-400 text-[11px] font-semibold">Generate Topic Angles with AI:</label>
           <div class="flex items-center space-x-2">
             <select x-model="selectedPresetAngle"
                     class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
               <option value="tools">🧮 Products, Micro-Tools & Calculators</option>
-              <option value="pain_points">⚠️ Challenges, Errors & Pain Points</option>
-              <option value="technical">🛠️ Technical, CLI & Specialized Terms</option>
-              <option value="comparative">⚖️ Comparative Phrases (X vs Y)</option>
-              <option value="emerging">🚀 Emerging Trends & Innovations (2026)</option>
+              <option value="pain_points">⚠️ Challenges, Errors & Bug Fixes</option>
+              <option value="technical">🛠️ Technical, CLI & Developer Tools</option>
+              <option value="comparative">⚖️ Comparative Searches (X vs Y)</option>
+              <option value="emerging">🚀 Emerging Trends & Fast-Rising Searches</option>
               <option value="subtopics">🧭 Subtopics & Niche Areas</option>
-              <option value="myth_busting">❌ Myth-Busting & Anti-Patterns</option>
+              <option value="myth_busting">❌ Mistakes, Guides & Anti-Patterns</option>
             </select>
             <button @click="expandPresetSeeds()" :disabled="expandingSeeds"
                     class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer shrink-0">
-              <span x-show="!expandingSeeds">✨ AI Expand (10 Seeds)</span>
+              <span x-show="!expandingSeeds">✨ Generate 10 Topics</span>
               <span x-show="expandingSeeds">Generating...</span>
             </button>
           </div>
@@ -1252,10 +1257,10 @@
           <!-- Generated Seed Pack Preview -->
           <div x-show="expandedSeeds.length" class="space-y-2 pt-2 border-t border-slate-800 mt-2">
             <div class="flex items-center justify-between text-xs">
-              <span class="font-bold text-indigo-300" x-text="expandedSeeds.length + ' Targeted Seeds Generated'"></span>
+              <span class="font-bold text-indigo-300" x-text="expandedSeeds.length + ' Related Topics Generated'"></span>
               <button @click="queueExpandedSeeds()"
                       class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer shadow">
-                🚀 Queue All into Frontier
+                🚀 Add All to Scan Queue
               </button>
             </div>
             <div class="max-h-36 overflow-y-auto space-y-1 font-mono text-[11px] text-slate-300">
@@ -1271,10 +1276,10 @@
 
         <div class="flex items-center space-x-2 pt-2">
           <button @click="addCustomSeed()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition cursor-pointer">
-            Queue into Frontier Pool
+            Add to Queue
           </button>
           <button @click="recheckNiche(newSeedTerm, newSeedCategory); showAddSeedModal = false;" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition cursor-pointer flex items-center justify-center space-x-1">
-            <span>⚡ Probe Live Now</span>
+            <span>⚡ Scan Immediately</span>
           </button>
         </div>
       </div>
@@ -1282,7 +1287,7 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- MODAL 3: AHREFS-GRADE SERP COMPARISON & OVERLAP ENGINE   -->
+  <!-- MODAL 3: GOOGLE COMPETITOR OVERLAP COMPARISON            -->
   <!-- ======================================================== -->
   <div x-show="showCompareModal"
        @keydown.escape.window="showCompareModal = false"
@@ -1295,8 +1300,8 @@
         <div class="flex items-center space-x-2">
           <span class="text-xl">⚖️</span>
           <div>
-            <h3 class="text-base font-bold text-amber-400">SERP Overlap & Intent Similarity (Ahrefs-Grade)</h3>
-            <p class="text-[11px] text-slate-400">Determines if Google treats two keywords as 1 single problem or 2 independent search voids.</p>
+            <h3 class="text-base font-bold text-amber-400">Google Competitor Overlap Comparison</h3>
+            <p class="text-[11px] text-slate-400">Check if Google shows the same websites for both searches. If they have 0% overlap, they are two separate opportunities you can target independently!</p>
           </div>
         </div>
         <button @click="showCompareModal = false" class="text-slate-400 hover:text-slate-200 text-lg">✕</button>
@@ -1305,27 +1310,27 @@
       <!-- Compare Inputs Bar -->
       <div class="py-3 border-b border-slate-800 flex flex-wrap items-center gap-2 shrink-0 bg-slate-950/60 p-3 rounded-xl mt-3">
         <div class="flex-1 min-w-[200px]">
-          <label class="text-[10px] text-slate-400 uppercase font-mono block mb-0.5">Keyword A</label>
+          <label class="text-[10px] text-slate-400 uppercase font-mono block mb-0.5">Search Term 1</label>
           <input type="text" x-model="compareQ1" @keydown.enter="runCompare()"
                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-100 focus:outline-none focus:border-amber-400">
         </div>
         <span class="text-slate-500 font-bold text-xs pt-3">vs</span>
         <div class="flex-1 min-w-[200px]">
-          <label class="text-[10px] text-slate-400 uppercase font-mono block mb-0.5">Keyword B (Compare With)</label>
+          <label class="text-[10px] text-slate-400 uppercase font-mono block mb-0.5">Search Term 2</label>
           <input type="text" x-model="compareQ2" @keydown.enter="runCompare()"
                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-100 focus:outline-none focus:border-indigo-400">
         </div>
         <button @click="runCompare()" :disabled="compareLoading"
                 class="mt-3 px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition disabled:opacity-50 cursor-pointer">
-          <span x-show="!compareLoading">⚡ Run Comparison</span>
-          <span x-show="compareLoading">Comparing SERPs...</span>
+          <span x-show="!compareLoading">⚡ Compare Google Results</span>
+          <span x-show="compareLoading">Comparing results on Google...</span>
         </button>
       </div>
 
       <!-- Loading State -->
       <div x-show="compareLoading" class="flex items-center justify-center py-12 space-x-2 text-slate-400 text-xs">
         <span class="w-3 h-3 rounded-full bg-amber-400 animate-ping"></span>
-        <span>Fetching live SERPs and computing similarity overlap...</span>
+        <span>Fetching live Google results and computing similarity overlap...</span>
       </div>
 
       <!-- Similarity Score Banner -->
@@ -1336,13 +1341,13 @@
             <div class="flex items-center space-x-2">
               <span class="text-xs font-bold font-mono px-2 py-0.5 rounded shadow-sm"
                     :class="compareResult && compareResult.similarity_pct >= 50 ? 'bg-amber-400 text-slate-950 font-extrabold' : (compareResult && compareResult.similarity_pct >= 20 ? 'bg-indigo-500 text-white font-bold' : 'bg-emerald-400 text-slate-950 font-extrabold')"
-                    x-text="(compareResult ? compareResult.similarity_pct : 0) + '% SERP Similarity'"></span>
-              <span class="text-xs font-semibold text-slate-200" x-text="(compareResult ? compareResult.common_count : 0) + ' common domains in Top 10'"></span>
+                    x-text="(compareResult ? compareResult.similarity_pct : 0) + '% Google Results Similarity'"></span>
+              <span class="text-xs font-semibold text-slate-200" x-text="(compareResult ? compareResult.common_count : 0) + ' common domains in top 10'"></span>
             </div>
             <p class="text-xs text-slate-300" x-text="compareResult ? compareResult.verdict : ''"></p>
           </div>
           <div class="text-left sm:text-right shrink-0">
-            <span class="text-[10px] text-slate-400 uppercase font-mono block">Actionable Blueprint</span>
+            <span class="text-[10px] text-slate-400 uppercase font-mono block">Recommendation</span>
             <span class="text-xs font-bold text-amber-300" x-text="compareResult ? compareResult.action : ''"></span>
           </div>
         </div>

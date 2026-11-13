@@ -530,18 +530,18 @@ function radarApp() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `gold_miner_gaps_${timestamp}.json`;
+        a.download = `gold_miner_opportunities_${timestamp}.json`;
         a.click();
         URL.revokeObjectURL(url);
       } else {
-        const headers = ['Keyword', 'Score', 'Archetype', 'Category', 'Velocity', 'Title Matches', 'Top Competitor Title', 'Top Competitor URL', 'Status'];
+        const headers = ['Search Keyword', 'Opportunity Score', 'Tool Format', 'Category', 'Trend Velocity', 'Google Top 10 Matches', 'Top Competitor Title', 'Top Competitor URL', 'Status'];
         const rows = this.queries.map(q => [
           `"${(q.keyword || '').replace(/"/g, '""')}"`,
           q.gap_score || 0,
           `"${(q.archetype || '').replace(/"/g, '""')}"`,
           `"${(q.category || '').replace(/"/g, '""')}"`,
           `"${(q.trend_velocity || '').replace(/"/g, '""')}"`,
-          q.exact_title_matches !== null ? `${q.exact_title_matches}/10` : 'Unaudited',
+          q.exact_title_matches !== null ? `${q.exact_title_matches}/10` : 'Not Checked',
           `"${(q.top_competitor_title || '').replace(/"/g, '""')}"`,
           `"${(q.top_competitor_url || '').replace(/"/g, '""')}"`,
           `"${(q.human_verdict || 'pending')}"`
@@ -551,7 +551,7 @@ function radarApp() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `gold_miner_gaps_${timestamp}.csv`;
+        a.download = `gold_miner_opportunities_${timestamp}.csv`;
         a.click();
         URL.revokeObjectURL(url);
       }
