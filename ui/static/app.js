@@ -504,7 +504,48 @@ function radarApp() {
     },
 
     // -------------------------------------------------------------
-    // 1-CLICK AI BUILDER BLUEPRINT GENERATOR
+    // EXPORT OPPORTUNITIES (CSV / JSON)
+    // -------------------------------------------------------------
+    exportData(format = 'csv') {
+      if (!this.queries || !this.queries.length) {
+        alert('No search gap opportunities available to export.');
+        return;
+      }
+      const timestamp = new Date().toISOString().slice(0, 10);
+      if (format === 'json') {
+        const blob = new Blob([JSON.stringify(this.queries, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `gold_miner_gaps_${timestamp}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        const headers = ['Keyword', 'Score', 'Archetype', 'Category', 'Velocity', 'Title Matches', 'Top Competitor Title', 'Top Competitor URL', 'Status'];
+        const rows = this.queries.map(q => [
+          `"${(q.keyword || '').replace(/"/g, '""')}"`,
+          q.gap_score || 0,
+          `"${(q.archetype || '').replace(/"/g, '""')}"`,
+          `"${(q.category || '').replace(/"/g, '""')}"`,
+          `"${(q.trend_velocity || '').replace(/"/g, '""')}"`,
+          q.exact_title_matches !== null ? `${q.exact_title_matches}/10` : 'Unaudited',
+          `"${(q.top_competitor_title || '').replace(/"/g, '""')}"`,
+          `"${(q.top_competitor_url || '').replace(/"/g, '""')}"`,
+          `"${(q.human_verdict || 'pending')}"`
+        ]);
+        const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `gold_miner_gaps_${timestamp}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    },
+
+    // -------------------------------------------------------------
+    // 1-CLICK AI BUILDER BLUEPRINT GENERATOR (8 ARCHETYPES)
     // -------------------------------------------------------------
     openBlueprint(item) {
       const q = item.keyword;
@@ -512,7 +553,7 @@ function radarApp() {
       const cat = item.category || 'General';
 
       let stack = 'Static HTML + Alpine.js + Tailwind CSS (Cloudflare Pages / Vercel)';
-      let seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Free Online Tool (2025)`;
+      let seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Free Online Tool (2026)`;
       let prompt = '';
 
       if (arch === 'Micro-Tool') {
@@ -523,32 +564,64 @@ function radarApp() {
 - Architecture: Pure clientside JavaScript/Wasm with dark mode styling using Tailwind CSS.
 - Key Features:
   1. Instant input slider/fields with zero required login.
-  2. Live recalculation on change.
+  2. Live recalculation on change without latency.
   3. One-click copy/export to clipboard or PDF.
   4. Structured JSON-LD FAQ Schema markup for programmatic SEO.
-Make it production-ready in a single self-contained index.html file.`;
+Make it production-ready in a single self-contained index.html file with $0 monthly hosting cost.`;
+      } else if (arch === 'Config Generator') {
+        stack = 'Interactive Web UI with CodeMirror / Prism + 1-Click Download';
+        seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Interactive Generator & Validator`;
+        prompt = `Act as a senior DevOps & Cloud architect. Build an interactive web configuration generator for: "${q}".
+- Core Capability: Visual form controls that generate valid, syntax-checked configurations in real time.
+- Syntax Validation: Validate YAML / JSON / Dockerfile syntax live in browser.
+- Preset Profiles: Provide production, development, and high-performance presets.
+- 1-Click Actions: Copy to clipboard and download raw configuration file.
+Deliver a complete single-page application with modern dark UI.`;
+      } else if (arch === 'Cost Estimator') {
+        stack = 'Interactive Calculator + Formula Engine + Affiliate Card CTAs';
+        seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Real-Time Cost & Fee Calculator (2026)`;
+        prompt = `Act as a fintech product engineer. Build a high-converting, accurate pricing and cost estimator for: "${q}".
+- Calculation Engine: Dynamic tiers, percentage cuts, hidden fees, and net profit calculations.
+- Visual Breakdown: Interactive chart/donut breakdown of fee components.
+- Monetization Angles: Affiliate referral banners and high-CPC related tools.
+- PDF Export: Printable summary estimate for client quotes.
+Deliver a standalone responsive single-page tool.`;
+      } else if (arch === 'Compliance Checklist') {
+        stack = 'Interactive LocalStorage Checklist + Progress Ring + PDF Audit';
+        seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Interactive Audit Checklist & Template`;
+        prompt = `Act as a compliance and legal technology expert. Build an interactive checklist web tool for: "${q}".
+- Structure: Categorized requirements (Critical, Recommended, Optional) with pass/fail toggles.
+- Persistence: Saves progress automatically in browser localStorage.
+- Risk Score: Real-time compliance health score (0-100%) with actionable next steps.
+- Export: 1-click export to CSV / formatted PDF audit report.
+Deliver a polished, enterprise-grade dark-themed web utility.`;
+      } else if (arch === 'Interactive Visualizer') {
+        stack = 'SVG / Canvas Visualization (D3.js or Chart.js) + Embeddable Iframe';
+        seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Interactive Chart & Visualizer`;
+        prompt = `Act as a data visualization engineer. Build an interactive chart and visualizer for: "${q}".
+- Interaction: Zoom, pan, filter, hover tooltips, and data point inspection.
+- Shareability: 1-click "Copy Embed HTML" snippet for bloggers and documentation sites.
+- SVG/PNG Download: High-resolution export for reports.
+Deliver an interactive single-page visualizer.`;
       } else if (arch === 'Workaround') {
-        stack = 'Astro / Next.js Static Markdown Guide with Copy Snippets';
-        seoTitle = `How to Fix ${q} — Step-by-Step Workaround (2025)`;
+        stack = 'Astro / Next.js Static Markdown Guide with Verified Patch Scripts';
+        seoTitle = `How to Fix ${q} — Verified Step-by-Step Workaround (2026)`;
         prompt = `Act as a senior technical documentation engineer. Write a definitive, minimal, high-ranking troubleshooting guide for: "${q}".
 - Exact Problem: Why does "${q}" happen in practice?
-- Quick Fix: 30-second copy-paste solution for 80% of users.
+- Quick Fix: 30-second copy-paste terminal command / code snippet.
 - Deep Dive: Root cause explanation with step-by-step verified instructions.
-- Edge Cases: Alternative OS/environment configurations.
+- Edge Cases: OS-specific differences (Linux vs macOS vs Windows).
 Format in clean Markdown with copyable syntax-highlighted code blocks.`;
-      } else if (arch === 'Template') {
-        stack = 'Downloadable Template (Google Sheets / Notion / GitHub Scaffold)';
-        seoTitle = `${q.charAt(0).toUpperCase() + q.slice(1)} — Free Download & Template`;
-        prompt = `Design a comprehensive, professional template and boilerplate for: "${q}".
-- Target Persona: Teams and indie makers looking for "${q}".
-- Core Structure: Clean layout, pre-filled formulas/configs, and instructions.
-- Provide both a copyable raw config/scaffold and a printable checklist.`;
-      } else {
-        stack = 'Production-Ready Boilerplate & Canonical Recipe';
+      } else if (arch === 'Recipe') {
+        stack = 'Production-Ready Boilerplate & Canonical GitHub Repository';
         seoTitle = `${q} — Canonical Recipe & Production Boilerplate`;
         prompt = `Build a high-quality developer boilerplate repository for: "${q}".
 - Include full docker-compose / setup commands, clean modular structure, zero deprecated packages.
 - Add comprehensive README with 1-click deploy to Vercel/Render.`;
+      } else {
+        stack = 'Static Documentation & Technical Changelog Breakdown';
+        seoTitle = `${q} — Latest Updates & Migration Guide`;
+        prompt = `Write a comprehensive, technical overview and implementation cheatsheet for: "${q}".`;
       }
 
       this.activeBlueprint = {

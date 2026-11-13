@@ -244,25 +244,49 @@
           </div>
 
           <!-- Filter & Sort Bar -->
-          <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-            <div class="flex items-center space-x-1">
-              <span>Status:</span>
-              <select x-model="inputStatus" @change="loadInputKeywords()"
-                      class="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-slate-300 text-[11px] focus:outline-none">
-                <option value="all">All</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-              </select>
+          <div class="space-y-1.5 pt-1">
+            <!-- Quick Status Filter Pills -->
+            <div class="flex items-center gap-1 overflow-x-auto pb-0.5 text-[10px]">
+              <button @click="inputStatus = 'all'; loadInputKeywords()"
+                      class="px-2 py-0.5 rounded font-semibold transition cursor-pointer shrink-0"
+                      :class="inputStatus === 'all' ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/50' : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'">
+                All (<span x-text="frontierStats.total || inputKeywordsTotal || 0"></span>)
+              </button>
+              <button @click="inputStatus = 'completed'; loadInputKeywords()"
+                      class="px-2 py-0.5 rounded font-semibold transition cursor-pointer flex items-center gap-1 shrink-0"
+                      :class="inputStatus === 'completed' ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/50' : 'bg-slate-950 text-slate-400 hover:text-emerald-300 border border-slate-800'">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                Done (<span x-text="frontierStats.completed || 0"></span>)
+              </button>
+              <button @click="inputStatus = 'pending'; loadInputKeywords()"
+                      class="px-2 py-0.5 rounded font-semibold transition cursor-pointer flex items-center gap-1 shrink-0"
+                      :class="inputStatus === 'pending' ? 'bg-amber-500/25 text-amber-300 border border-amber-500/50' : 'bg-slate-950 text-slate-400 hover:text-amber-300 border border-slate-800'">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                Queue (<span x-text="frontierStats.pending || 0"></span>)
+              </button>
             </div>
-            <div class="flex items-center space-x-1">
-              <span>Sort:</span>
-              <select x-model="inputSort" @change="loadInputKeywords()"
-                      class="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-slate-300 text-[11px] focus:outline-none">
-                <option value="gaps">Most Queries</option>
-                <option value="recent">Recently Explored</option>
-                <option value="name">A-Z</option>
-                <option value="depth">Depth</option>
-              </select>
+
+            <div class="flex items-center justify-between text-[11px] text-slate-400">
+              <div class="flex items-center space-x-1">
+                <span>Filter:</span>
+                <select x-model="inputStatus" @change="loadInputKeywords()"
+                        class="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-slate-300 text-[11px] focus:outline-none">
+                  <option value="all">All Statuses</option>
+                  <option value="completed">🟢 Completed</option>
+                  <option value="claimed">🔵 In Progress</option>
+                  <option value="pending">🟡 Pending Queue</option>
+                </select>
+              </div>
+              <div class="flex items-center space-x-1">
+                <span>Sort:</span>
+                <select x-model="inputSort" @change="loadInputKeywords()"
+                        class="bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-slate-300 text-[11px] focus:outline-none">
+                  <option value="gaps">Most Queries</option>
+                  <option value="recent">Recently Explored</option>
+                  <option value="name">A-Z</option>
+                  <option value="depth">Depth</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -286,27 +310,54 @@
         <div class="flex-1 overflow-y-auto p-2 space-y-1.5">
           <template x-for="item in inputKeywords" :key="item.id">
             <div @click="selectRootTerm(item.niche_term)"
-                 class="p-2.5 rounded-lg border transition cursor-pointer relative group"
-                 :class="selectedRootTerm === item.niche_term ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200 shadow-md shadow-indigo-500/10' : 'bg-slate-950/70 border-slate-800/80 hover:border-slate-700 text-slate-300'">
+                 class="p-2.5 rounded-lg border transition cursor-pointer relative group text-left"
+                 :class="{
+                   'border-l-4 border-l-indigo-400 ring-2 ring-indigo-500/50 bg-indigo-950/40 text-indigo-100 shadow-md shadow-indigo-500/10': selectedRootTerm === item.niche_term,
+                   'border-l-4 border-l-emerald-500 bg-slate-950/80 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900/60': selectedRootTerm !== item.niche_term && (item.status === 'completed' || item.queries_extracted > 0),
+                   'border-l-4 border-l-cyan-400 bg-slate-950/80 border-slate-800/80 hover:border-slate-700': selectedRootTerm !== item.niche_term && item.status === 'claimed',
+                   'border-l-4 border-l-amber-500/60 bg-slate-950/40 border-slate-800/80 hover:border-slate-700': selectedRootTerm !== item.niche_term && item.status === 'pending' && !item.queries_extracted
+                 }">
               
-              <div class="flex items-start justify-between gap-1 mb-1">
-                <h4 class="text-xs font-bold leading-tight line-clamp-1"
-                    :class="selectedRootTerm === item.niche_term ? 'text-amber-300 font-bold' : 'text-slate-200'"
-                    x-text="item.niche_term"></h4>
+              <div class="flex items-start justify-between gap-1.5 mb-1.5">
+                <div class="flex items-center gap-1.5 flex-1 min-w-0">
+                  <!-- Status Indicator Dot -->
+                  <span class="w-2 h-2 rounded-full shrink-0"
+                        :class="{
+                          'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]': item.status === 'completed' || item.queries_extracted > 0,
+                          'bg-cyan-400 animate-ping': item.status === 'claimed',
+                          'bg-amber-400/80': item.status === 'pending' && !item.queries_extracted
+                        }"></span>
+                  <h4 class="text-xs font-bold leading-tight truncate"
+                      :class="selectedRootTerm === item.niche_term ? 'text-amber-300 font-bold' : (item.status === 'completed' || item.queries_extracted > 0 ? 'text-slate-100' : 'text-slate-300')"
+                      x-text="item.niche_term"></h4>
+                </div>
                 
-                <!-- Evaluated Queries Count Badge -->
-                <span class="shrink-0 text-[10px] font-mono px-1.5 py-0.2 rounded font-semibold"
-                      :class="item.queries_extracted > 0 ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-slate-800 text-slate-500'"
-                      :title="'Google Trends Evaluated: ' + (item.queries_extracted || 0) + ' candidate queries'"
-                      x-text="(item.queries_extracted || 0) + ' queries'"></span>
+                <!-- Status & Query Count Badge -->
+                <template x-if="item.status === 'completed' || item.queries_extracted > 0">
+                  <span class="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1"
+                        :title="'Completed: ' + (item.queries_extracted || 0) + ' candidate queries evaluated'">
+                    <span>✓</span>
+                    <span x-text="(item.queries_extracted || 0) + ' queries'"></span>
+                  </span>
+                </template>
+                <template x-if="item.status === 'claimed'">
+                  <span class="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 animate-pulse">
+                    ⚡ Exploring
+                  </span>
+                </template>
+                <template x-if="item.status === 'pending' && !item.queries_extracted">
+                  <span class="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded font-medium bg-amber-500/10 text-amber-400/80 border border-amber-500/20">
+                    ⏳ In Queue
+                  </span>
+                </template>
               </div>
 
               <div class="flex items-center justify-between text-[11px] text-slate-400">
-                <span class="truncate pr-1 text-slate-400 text-[10px]" x-text="item.category"></span>
+                <span class="truncate pr-1 text-[10px]"
+                      :class="item.status === 'completed' || item.queries_extracted > 0 ? 'text-slate-400 font-medium' : 'text-slate-500'"
+                      x-text="item.category"></span>
                 <div class="flex items-center space-x-1 shrink-0">
-                  <span class="text-[9px] px-1 py-0.2 rounded bg-slate-800 font-mono text-slate-400" x-text="'D' + (item.depth_level || 0)"></span>
-                  <span x-show="item.status === 'completed'" class="text-emerald-400 text-[10px]">✓</span>
-                  <span x-show="item.status === 'pending'" class="text-slate-500 text-[10px]">⏳</span>
+                  <span class="text-[9px] px-1 py-0.2 rounded bg-slate-900 border border-slate-800 font-mono text-slate-400" x-text="'D' + (item.depth_level || 0)"></span>
                   <button @click.stop="recheckNiche(item.niche_term, item.category)"
                           :disabled="recheckingTerm === item.niche_term"
                           class="text-[10px] text-slate-400 hover:text-amber-300 p-0.5 rounded hover:bg-slate-800 transition cursor-pointer ml-0.5"
@@ -426,6 +477,27 @@
               <span x-show="!isAuditingBatch">⚡ Audit Page Voids</span>
               <span x-show="isAuditingBatch" class="animate-pulse">Auditing...</span>
             </button>
+
+            <!-- Export Opportunities Dropdown -->
+            <div class="relative" x-data="{ exportOpen: false }">
+              <button @click="exportOpen = !exportOpen"
+                      class="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 hover:border-slate-600 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                      title="Export current opportunities">
+                <span>📥</span>
+                <span class="hidden sm:inline">Export</span>
+                <span class="text-[9px]">▼</span>
+              </button>
+              <div x-show="exportOpen" @click.away="exportOpen = false"
+                   x-transition
+                   class="absolute right-0 mt-1 w-36 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl z-30 py-1 text-xs">
+                <button @click="exportData('csv'); exportOpen = false" class="w-full text-left px-3 py-1.5 hover:bg-slate-800 text-slate-200 flex items-center gap-2 cursor-pointer">
+                  <span>📊</span> Export CSV
+                </button>
+                <button @click="exportData('json'); exportOpen = false" class="w-full text-left px-3 py-1.5 hover:bg-slate-800 text-slate-200 flex items-center gap-2 cursor-pointer">
+                  <span>📄</span> Export JSON
+                </button>
+              </div>
+            </div>
 
             <span class="text-slate-500 text-xs font-mono font-medium hidden xl:inline" x-text="totalItems + ' items'"></span>
           </div>
