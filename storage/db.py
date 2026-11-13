@@ -543,56 +543,60 @@ def get_queries(
     trend_type: Optional[str] = None,
     untouched_only: bool = False,
     competition_status: Optional[str] = None,
-    sort_by: str = "gap_score",
+    sort_by: str = "best_to_build",
     sort_order: str = "DESC",
     limit: int = 50,
     offset: int = 0,
     db_path: Optional[str] = None,
 ) -> Tuple[List[Dict[str, Any]], int]:
-    """Retrieves paginated queries with filtering and total count."""
+    """Retrieves paginated queries with filtering, cluster aggregation, and intelligent doability ranking."""
     conn = get_connection(db_path)
-    conditions = ["gap_score >= ?"]
+    conditions = ["q.gap_score >= ?"]
     params: List[Any] = [min_score]
 
     if category and category.lower() != "all":
-        conditions.append("category = ?")
+        conditions.append("q.category = ?")
         params.append(category)
 
     if archetype and archetype.lower() != "all":
-        conditions.append("archetype = ?")
+        conditions.append("q.archetype = ?")
         params.append(archetype)
 
     if verdict and verdict.lower() != "all":
-        conditions.append("human_verdict = ?")
+        conditions.append("q.human_verdict = ?")
         params.append(verdict)
 
     if search:
-        conditions.append("keyword LIKE ?")
+        conditions.append("q.keyword LIKE ?")
         params.append(f"%{search}%")
 
     if root:
-        conditions.append("(json_extract(evidence_json, '$.parent_niche') = ? OR keyword = ? OR keyword LIKE ? OR keyword LIKE ? OR keyword LIKE ?)")
+        conditions.append("(json_extract(q.evidence_json, '$.parent_niche') = ? OR q.keyword = ? OR q.keyword LIKE ? OR q.keyword LIKE ? OR q.keyword LIKE ?)")
         params.extend([root, root, f"{root} %", f"% {root}", f"% {root} %"])
 
     if trend_type and trend_type.lower() != "all":
-        conditions.append("trend_type = ?")
+        conditions.append("q.trend_type = ?")
         params.append(trend_type.upper())
 
     if untouched_only:
-        conditions.append("exact_title_matches = 0")
+        conditions.append("q.exact_title_matches = 0")
 
     if competition_status and competition_status.lower() != "all":
         cs = competition_status.lower()
         if cs in ("void", "untouched", "voids"):
-            conditions.append("exact_title_matches = 0")
+            conditions.append("q.exact_title_matches = 0")
         elif cs == "competed":
-            conditions.append("exact_title_matches > 0")
+            conditions.append("q.exact_title_matches > 0")
         elif cs == "pending":
-            conditions.append("exact_title_matches IS NULL")
+            conditions.append("q.exact_title_matches IS NULL")
+        elif cs == "best_picks":
+            conditions.append("(q.exact_title_matches <= 1 AND c.cluster_zeros >= 2 AND c.cluster_kws >= 8)")
 
     where_clause = " WHERE " + " AND ".join(conditions)
 
     allowed_sorts = {
+        "best_to_build": "best_to_build",
+        "doability": "best_to_build",
         "gap_score": "gap_score",
         "last_updated": "last_updated",
         "keyword": "keyword",
@@ -601,29 +605,68 @@ def get_queries(
         "exact_title_matches": "exact_title_matches",
         "pending_first": "pending_first",
     }
-    sort_col = allowed_sorts.get(sort_by, "gap_score")
+    sort_col = allowed_sorts.get(sort_by, "best_to_build")
     order = "ASC" if sort_order.upper() == "ASC" else "DESC"
 
-    if sort_col == "exact_title_matches":
+    if sort_col == "best_to_build":
+        order_clause = "doability_rank DESC, q.gap_score DESC, q.id ASC"
+    elif sort_col == "exact_title_matches":
         if order == "ASC":
-            order_clause = "CASE WHEN exact_title_matches IS NULL THEN 2 WHEN exact_title_matches = 0 THEN 0 ELSE 1 END, exact_title_matches ASC, gap_score DESC"
+            order_clause = "CASE WHEN q.exact_title_matches IS NULL THEN 2 WHEN q.exact_title_matches = 0 THEN 0 ELSE 1 END, q.exact_title_matches ASC, q.gap_score DESC"
         else:
-            order_clause = "CASE WHEN exact_title_matches IS NULL THEN 2 ELSE 0 END, exact_title_matches DESC, gap_score DESC"
+            order_clause = "CASE WHEN q.exact_title_matches IS NULL THEN 2 ELSE 0 END, q.exact_title_matches DESC, q.gap_score DESC"
     elif sort_col == "pending_first":
-        order_clause = "CASE WHEN exact_title_matches IS NULL THEN 0 ELSE 1 END, gap_score DESC"
+        order_clause = "CASE WHEN q.exact_title_matches IS NULL THEN 0 ELSE 1 END, q.gap_score DESC"
     elif sort_col == "gap_score":
-        order_clause = f"gap_score {order}, CASE WHEN exact_title_matches IS NULL THEN 2 ELSE 0 END, exact_title_matches ASC"
+        order_clause = f"q.gap_score {order}, CASE WHEN q.exact_title_matches IS NULL THEN 2 ELSE 0 END, q.exact_title_matches ASC"
     else:
-        order_clause = f"{sort_col} {order}"
+        order_clause = f"q.{sort_col} {order}"
+
+    cte_sql = """
+        WITH cluster_stats AS (
+            SELECT 
+                COALESCE(json_extract(evidence_json, '$.parent_niche'), category) as c_niche,
+                COUNT(*) as cluster_kws,
+                SUM(CASE WHEN exact_title_matches = 0 THEN 1 ELSE 0 END) as cluster_zeros
+            FROM queries
+            GROUP BY c_niche
+        )
+    """
 
     try:
         with conn:
             cursor = conn.cursor()
-            cursor.execute(f"SELECT COUNT(*) as count FROM queries {where_clause}", params)
+            count_query = f"""
+                {cte_sql}
+                SELECT COUNT(*) as count 
+                FROM queries q
+                LEFT JOIN cluster_stats c ON c.c_niche = COALESCE(json_extract(q.evidence_json, '$.parent_niche'), q.category)
+                {where_clause}
+            """
+            cursor.execute(count_query, params)
             total = cursor.fetchone()["count"]
 
             query = f"""
-                SELECT * FROM queries 
+                {cte_sql}
+                SELECT 
+                    q.*,
+                    COALESCE(json_extract(q.evidence_json, '$.parent_niche'), q.category) as cluster_name,
+                    COALESCE(c.cluster_kws, 1) as cluster_kws,
+                    COALESCE(c.cluster_zeros, 0) as cluster_zeros,
+                    (
+                        (CASE WHEN q.exact_title_matches = 0 THEN 450
+                              WHEN q.exact_title_matches = 1 THEN 250
+                              WHEN q.exact_title_matches = 2 THEN 100
+                              WHEN q.exact_title_matches IS NULL THEN 40
+                              ELSE 0 END)
+                        + (q.gap_score * 3)
+                        + (COALESCE(c.cluster_zeros, 0) * 35)
+                        + (COALESCE(c.cluster_kws, 1) * 6)
+                        + (CASE WHEN q.trend_type = 'BREAKOUT' THEN 75 ELSE 0 END)
+                        + (CASE WHEN q.archetype IN ('Micro-Tool', 'Cost Estimator', 'Config Generator', 'Workaround') THEN 40 ELSE 0 END)
+                    ) as doability_rank
+                FROM queries q
+                LEFT JOIN cluster_stats c ON c.c_niche = COALESCE(json_extract(q.evidence_json, '$.parent_niche'), q.category)
                 {where_clause} 
                 ORDER BY {order_clause} 
                 LIMIT ? OFFSET ?
@@ -680,6 +723,25 @@ def get_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
 
             cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches IS NULL")
             stats["pending_audits"] = cursor.fetchone()["c"]
+
+            # Calculate intelligent top website picks (high demand cluster + 0/10 or 1/10 SERP competition)
+            cursor.execute("""
+                WITH cluster_stats AS (
+                    SELECT 
+                        COALESCE(json_extract(evidence_json, '$.parent_niche'), category) as c_niche,
+                        COUNT(*) as cluster_kws,
+                        SUM(CASE WHEN exact_title_matches = 0 THEN 1 ELSE 0 END) as cluster_zeros
+                    FROM queries
+                    GROUP BY c_niche
+                )
+                SELECT COUNT(*) as c
+                FROM queries q
+                JOIN cluster_stats c ON c.c_niche = COALESCE(json_extract(q.evidence_json, '$.parent_niche'), q.category)
+                WHERE (q.exact_title_matches <= 1)
+                  AND (c.cluster_zeros >= 2)
+                  AND (c.cluster_kws >= 8)
+            """)
+            stats["best_picks"] = cursor.fetchone()["c"]
 
             cursor.execute("SELECT archetype, COUNT(*) as c FROM queries GROUP BY archetype")
             for r in cursor.fetchall():

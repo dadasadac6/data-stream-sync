@@ -239,7 +239,7 @@ def get_queries(
     trend_type: Optional[str] = None,
     untouched_only: bool = False,
     competition_status: Optional[str] = None,
-    sort_by: str = "gap_score",
+    sort_by: str = "best_to_build",
     sort_order: str = "DESC",
     page: int = 1,
     limit: int = 30,
@@ -294,7 +294,7 @@ def get_input_keywords(
     category: Optional[str] = "all",
     status: Optional[str] = "all",
     search: Optional[str] = None,
-    sort_by: str = "queries_extracted",
+    sort_by: str = "best_clusters",
     limit: int = 150,
     offset: int = 0,
 ):
@@ -304,30 +304,58 @@ def get_input_keywords(
         conditions = []
         params = []
         if category and category.lower() != "all":
-            conditions.append("category = ?")
+            conditions.append("f.category = ?")
             params.append(category)
         if status and status.lower() != "all":
-            conditions.append("status = ?")
+            conditions.append("f.status = ?")
             params.append(status)
         if search:
-            conditions.append("niche_term LIKE ?")
+            conditions.append("f.niche_term LIKE ?")
             params.append(f"%{search}%")
 
         where_sql = (" WHERE " + " AND ".join(conditions)) if conditions else ""
 
-        cursor.execute(f"SELECT COUNT(*) as c FROM frontier_niches {where_sql}", params)
+        cursor.execute(f"SELECT COUNT(*) as c FROM frontier_niches f {where_sql}", params)
         total = cursor.fetchone()["c"]
 
+        cte_sql = """
+            WITH topic_stats AS (
+                SELECT 
+                    COALESCE(json_extract(evidence_json, '$.parent_niche'), keyword) as topic,
+                    COUNT(*) as total_kws,
+                    SUM(CASE WHEN exact_title_matches = 0 THEN 1 ELSE 0 END) as zero_comp,
+                    SUM(CASE WHEN gap_score >= 65 THEN 1 ELSE 0 END) as high_scores,
+                    MAX(gap_score) as max_score
+                FROM queries
+                GROUP BY topic
+            )
+        """
+
         if sort_by == "recent":
-            order_clause = "last_explored_at DESC, id DESC"
-        elif sort_by == "term":
-            order_clause = "niche_term ASC"
-        else:
-            order_clause = "queries_extracted DESC, last_explored_at DESC, id ASC"
+            order_clause = "f.last_explored_at DESC, f.id DESC"
+        elif sort_by in ("name", "term"):
+            order_clause = "f.niche_term ASC"
+        elif sort_by == "gaps":
+            order_clause = "f.queries_extracted DESC, f.last_explored_at DESC, f.id ASC"
+        elif sort_by == "depth":
+            order_clause = "f.depth_level ASC, f.queries_extracted DESC"
+        else:  # "best_clusters" or default
+            order_clause = "cluster_doability_rank DESC, f.queries_extracted DESC, f.id ASC"
 
         query = f"""
-            SELECT id, niche_term, category, status, queries_extracted, depth_level, created_at, last_explored_at
-            FROM frontier_niches
+            {cte_sql}
+            SELECT 
+                f.id, f.niche_term, f.category, f.status, f.queries_extracted, f.depth_level, f.created_at, f.last_explored_at,
+                COALESCE(t.zero_comp, 0) as zero_comp_count,
+                COALESCE(t.high_scores, 0) as high_score_count,
+                (
+                    (COALESCE(t.zero_comp, 0) * 60)
+                    + (COALESCE(t.high_scores, 0) * 20)
+                    + (f.queries_extracted * 3)
+                    + COALESCE(t.max_score, 0)
+                ) as cluster_doability_rank
+            FROM frontier_niches f
+            LEFT JOIN topic_stats t ON t.topic = f.niche_term
             {where_sql}
             ORDER BY {order_clause}
             LIMIT ? OFFSET ?

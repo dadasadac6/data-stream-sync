@@ -26,15 +26,15 @@ function radarApp() {
     inputSearch: '',
     inputCategory: 'all',
     inputStatus: 'all',
-    inputSort: 'gaps', // 'gaps', 'name', 'depth'
+    inputSort: 'best_clusters', // 'best_clusters', 'gaps', 'recent', 'name', 'depth'
 
     // Result Pagination & Filtering
     page: 1,
     limit: 24,
     totalItems: 0,
     totalPages: 1,
-    quickFilter: 'all', // 'all', 'voids', 'competed', 'pending', 'pure_gold', 'critical_85', 'high_65', 'breakouts', 'confirmed'
-    sortBy: 'gap_score',
+    quickFilter: 'all', // 'all', 'best_picks', 'voids', 'competed', 'pending', 'pure_gold', 'critical_85', 'high_65', 'breakouts', 'confirmed'
+    sortBy: 'best_to_build',
     sortOrder: 'DESC',
 
     filters: {
@@ -173,6 +173,7 @@ function radarApp() {
           category: this.inputCategory,
           status: this.inputStatus,
           search: this.inputSearch,
+          sort_by: this.inputSort,
           limit: '200',
         });
         const resp = await fetch(`/api/input-keywords?${params.toString()}`);
@@ -180,7 +181,9 @@ function radarApp() {
         let items = data.items || [];
 
         // Sorting
-        if (this.inputSort === 'gaps') {
+        if (this.inputSort === 'best_clusters') {
+          items.sort((a, b) => (b.cluster_doability_rank || 0) - (a.cluster_doability_rank || 0));
+        } else if (this.inputSort === 'gaps') {
           items.sort((a, b) => (b.queries_extracted || 0) - (a.queries_extracted || 0));
         } else if (this.inputSort === 'recent') {
           items.sort((a, b) => (b.last_explored_at || '').localeCompare(a.last_explored_at || ''));
@@ -228,7 +231,9 @@ function radarApp() {
       let effectiveUntouchedOnly = false;
       let effectiveCompetition = 'all';
 
-      if (this.quickFilter === 'voids') {
+      if (this.quickFilter === 'best_picks') {
+        effectiveCompetition = 'best_picks';
+      } else if (this.quickFilter === 'voids') {
         effectiveCompetition = 'void';
       } else if (this.quickFilter === 'competed') {
         effectiveCompetition = 'competed';
@@ -292,7 +297,10 @@ function radarApp() {
     },
 
     handleSortChange(val) {
-      if (val === 'competed_first') {
+      if (val === 'best_to_build') {
+        this.sortBy = 'best_to_build';
+        this.sortOrder = 'DESC';
+      } else if (val === 'competed_first') {
         this.sortBy = 'exact_title_matches';
         this.sortOrder = 'DESC';
       } else if (val === 'exact_title_matches') {

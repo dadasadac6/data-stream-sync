@@ -201,6 +201,7 @@
               </span>
               <select x-model="inputSort" @change="loadInputKeywords()"
                       class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500 cursor-pointer">
+                <option value="best_clusters">🏆 Best to Build (Most 0/10 Gaps)</option>
                 <option value="gaps">Most Opportunities Found</option>
                 <option value="recent">Recently Scanned</option>
                 <option value="name">Name (A to Z)</option>
@@ -252,24 +253,33 @@
                       x-text="item.niche_term"></h4>
                 </div>
                 
-                <!-- Status & Opportunity Count Badge -->
-                <template x-if="item.status === 'completed' || item.queries_extracted > 0">
-                  <span class="shrink-0 text-xs font-mono px-2.5 py-0.5 rounded-full font-black bg-emerald-500/25 text-emerald-300 border border-emerald-400/60 flex items-center gap-1 shadow-xs"
-                        :title="'Completed: ' + (item.queries_extracted || 0) + ' candidate opportunities evaluated'">
-                    <span class="text-emerald-400 font-black">✓</span>
-                    <span x-text="(item.queries_extracted || 0) + ' Found'"></span>
-                  </span>
-                </template>
-                <template x-if="item.status === 'claimed'">
-                  <span class="shrink-0 text-xs font-mono px-2.5 py-0.5 rounded-full font-bold bg-cyan-500/25 text-cyan-300 border border-cyan-400/50 animate-pulse">
-                    ⚡ Scanning...
-                  </span>
-                </template>
-                <template x-if="item.status === 'pending' && !item.queries_extracted">
-                  <span class="shrink-0 text-xs font-mono px-2.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                    ⏳ In Queue
-                  </span>
-                </template>
+                <!-- Status & Opportunity Count Badges -->
+                <div class="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                  <template x-if="item.zero_comp_count > 0">
+                    <span class="text-xs font-mono px-2 py-0.5 rounded-full font-black bg-emerald-500/25 text-emerald-300 border border-emerald-400/60 shadow-xs flex items-center gap-1"
+                          :title="item.zero_comp_count + ' zero-competition openings (0/10 title matches on Google)'">
+                      <span>🛡️</span>
+                      <span x-text="item.zero_comp_count + ' Voids'"></span>
+                    </span>
+                  </template>
+                  <template x-if="item.status === 'completed' || item.queries_extracted > 0">
+                    <span class="text-xs font-mono px-2 py-0.5 rounded-full font-bold bg-slate-800 text-slate-300 border border-slate-700/80 flex items-center gap-1"
+                          :title="'Completed: ' + (item.queries_extracted || 0) + ' candidate opportunities evaluated'">
+                      <span class="text-slate-400 font-bold">✓</span>
+                      <span x-text="(item.queries_extracted || 0) + ' Found'"></span>
+                    </span>
+                  </template>
+                  <template x-if="item.status === 'claimed'">
+                    <span class="text-xs font-mono px-2.5 py-0.5 rounded-full font-bold bg-cyan-500/25 text-cyan-300 border border-cyan-400/50 animate-pulse">
+                      ⚡ Scanning...
+                    </span>
+                  </template>
+                  <template x-if="item.status === 'pending' && !item.queries_extracted">
+                    <span class="text-xs font-mono px-2.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                      ⏳ In Queue
+                    </span>
+                  </template>
+                </div>
               </div>
 
               <div class="flex items-center justify-between text-xs">
@@ -363,6 +373,7 @@
             <select :value="sortBy === 'pending_first' ? 'pending_first' : (sortBy === 'exact_title_matches' ? (sortOrder === 'DESC' ? 'competed_first' : 'exact_title_matches') : sortBy)"
                     @change="handleSortChange($event.target.value)"
                     class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-200 text-xs font-medium focus:outline-none focus:border-amber-500 cursor-pointer shadow-sm">
+              <option value="best_to_build">🏆 Best to Build First (Zero Comp + High Demand)</option>
               <option value="gap_score">↕ Highest Opportunity</option>
               <option value="exact_title_matches">↕ Zero Competition First</option>
               <option value="competed_first">↕ High Competition First</option>
@@ -427,6 +438,16 @@
             <span>📊</span>
             <span x-text="selectedRootTerm ? 'All Matches' : 'All Opportunities'"></span>
             <span class="font-mono font-black text-xs text-cyan-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="selectedRootTerm ? totalItems : (stats.total_queries || 0)">0</span>
+          </button>
+
+          <!-- Top Website Ideas (Best Picks) -->
+          <button @click="setQuickFilter('best_picks')"
+                  class="px-3 py-1 rounded-lg transition text-xs font-bold shrink-0 cursor-pointer flex items-center space-x-1.5 shadow-sm"
+                  :class="quickFilter === 'best_picks' ? 'bg-gradient-to-r from-amber-500/35 to-amber-600/35 text-amber-200 border border-amber-400 ring-1 ring-amber-400/60 shadow-amber-950' : 'text-slate-300 hover:text-amber-300 border border-slate-800 bg-slate-900 hover:bg-slate-800'"
+                  title="High-demand topics with multiple keywords and zero Google title competition">
+            <span>🏆</span>
+            <span>Top Website Ideas</span>
+            <span class="font-mono font-black text-xs text-amber-300 px-1.5 py-0.2 rounded bg-slate-950" x-text="stats.best_picks || 0">0</span>
           </button>
 
           <!-- Zero Competition (0/10) -->
@@ -504,7 +525,7 @@
                 <!-- Card Header: Badges & Category -->
                 <div>
                   <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                    <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
                       <!-- Score Badge (Large, Bold, High Contrast) -->
                       <span class="px-2.5 py-1 rounded-lg font-mono font-black text-sm shadow-sm"
                             :class="{
@@ -512,6 +533,13 @@
                               'bg-emerald-500/25 text-emerald-300 border border-emerald-400/50': item.gap_score >= 65 && item.gap_score < 85,
                               'bg-slate-800 text-slate-300 border border-slate-700': item.gap_score < 65
                             }" x-text="item.gap_score + '/100'"></span>
+
+                      <!-- Top Build Pick Badge -->
+                      <template x-if="item.doability_rank >= 1000 || (item.exact_title_matches === 0 && item.cluster_zeros >= 2)">
+                        <span class="px-2 py-0.5 rounded-md text-xs font-black bg-gradient-to-r from-amber-500/30 to-amber-600/30 text-amber-200 border border-amber-400/70 shadow-xs flex items-center gap-1">
+                          <span>🏆</span> Top Pick
+                        </span>
+                      </template>
 
                       <!-- Velocity Surge Badge -->
                       <span class="px-2 py-0.5 rounded-md text-xs font-mono font-bold"
@@ -523,8 +551,18 @@
                             x-text="item.archetype"></span>
                     </div>
 
-                    <!-- Category Pill -->
-                    <span class="text-xs text-slate-300 font-bold truncate max-w-[120px]" x-text="item.category"></span>
+                    <!-- Category & Cluster Pill -->
+                    <div class="flex items-center space-x-1.5 shrink-0">
+                      <template x-if="item.cluster_name">
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-slate-950/80 border border-slate-800 text-slate-300 font-medium hidden sm:flex items-center gap-1"
+                              :title="'Cluster: ' + item.cluster_name + ' (' + (item.cluster_kws || 1) + ' keywords, ' + (item.cluster_zeros || 0) + ' zero-comp voids)'">
+                          <span class="text-indigo-400">📦</span>
+                          <span class="text-slate-200 font-semibold max-w-[90px] truncate" x-text="item.cluster_name"></span>
+                          <span class="text-slate-400 font-mono text-[10px]" x-text="'(' + (item.cluster_kws || 1) + 'k · ' + (item.cluster_zeros || 0) + 'v)'"></span>
+                        </span>
+                      </template>
+                      <span class="text-xs text-slate-300 font-bold truncate max-w-[100px]" x-text="item.category"></span>
+                    </div>
                   </div>
 
                   <!-- Keyword Title (Large, Clear, Readable from Afar) -->
@@ -709,7 +747,17 @@
                             :class="item.gap_score >= 85 ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950' : (item.gap_score >= 65 ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-400/40' : 'bg-slate-800 text-slate-400 border border-slate-700')"
                             x-text="item.gap_score"></span>
                     </td>
-                    <td class="py-2.5 px-3.5 font-bold text-sm text-white whitespace-nowrap" x-text="item.keyword"></td>
+                    <td class="py-2.5 px-3.5 whitespace-nowrap">
+                      <div class="flex items-center space-x-2">
+                        <template x-if="item.doability_rank >= 1000 || (item.exact_title_matches === 0 && item.cluster_zeros >= 2)">
+                          <span class="text-xs font-black text-amber-300" title="Top Website Pick">🏆</span>
+                        </template>
+                        <span class="font-bold text-sm text-white" x-text="item.keyword"></span>
+                        <template x-if="item.cluster_name">
+                          <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-950 border border-slate-800 text-slate-400 font-mono" x-text="item.cluster_name"></span>
+                        </template>
+                      </div>
+                    </td>
                     <td class="py-2.5 px-3.5 whitespace-nowrap font-mono text-xs font-bold" :class="item.trend_type === 'BREAKOUT' ? 'text-rose-400' : 'text-slate-300'" x-text="item.trend_velocity"></td>
                     <td class="py-2.5 px-3.5 whitespace-nowrap">
                       <span class="px-2 py-0.5 rounded text-xs font-semibold bg-indigo-500/20 text-indigo-200 border border-indigo-500/35" x-text="item.archetype"></span>
