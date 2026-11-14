@@ -1134,15 +1134,23 @@ def export_data(
             "Group the keywords into topical clusters and choose the single most lucrative, easiest-to-rank niche silo.",
             "",
             "CRITERIA FOR THE #1 BEST NICHE:",
-            "1. Deep Cluster of 0/10 Voids: Must have at least 5 to 15 related zero-competition search voids in this dataset so the new site has an entire topical cluster ready to launch.",
-            "2. High Commercial Intent & RPM: Must have proven monetization ($50 to $150 RPM through lead generation, high-ticket affiliate, or high-CPM display ads).",
-            "3. Beatable Google SERP: The current ranking pages on Google are weak Reddit/Quora threads, outdated articles, or generic root pages that don't directly answer the query.",
-            "4. Interactive Tool / Calculator Potential: Can be anchored by a simple 1-page interactive web tool (e.g. calculator, decision tree, or template generator) that acts as a link magnet.",
+            "1. The 'AI-Proof Moat' (Crucial in the Modern AI Era):",
+            "   Today, simple text questions and generic informational queries are answered directly by AI chatbots and Google AI Overviews.",
+            "   DO NOT select a niche that can be replaced by a simple ChatGPT answer or generic summary.",
+            "   Select a niche that requires what AI CHATBOTS CANNOT DO DIRECTLY IN SEARCH, such as:",
+            "   - Interactive, dynamic multi-variable calculations with visual schedules and sliders (e.g. customized amortization, tax exemption scenarios).",
+            "   - Official, legally structured fillable and downloadable instruments/templates (e.g. state-specific error affidavits, asset agreements).",
+            "   - Deterministic, high-stakes decision engines where users require exact mathematical precision and verified real-world liability.",
+            "   - A functional web utility that users bookmark and re-use repeatedly rather than a one-time blog article.",
+            "2. Deep Cluster of 0/10 Voids: Must have at least 5 to 15 related zero-competition search voids in this dataset so the new site has an entire topical cluster ready to launch.",
+            "3. High Commercial Intent & RPM: Must have proven monetization ($50 to $150 RPM through lead generation, high-ticket affiliate, or high-CPM display ads).",
+            "4. Beatable Google SERP: The current ranking pages on Google are weak Reddit/Quora threads, outdated articles, or generic root pages that don't directly answer the query.",
             "",
             "DELIVERABLES:",
             "1. The Winning Niche Selection:",
             "   - Name of the Niche & Core Target Audience.",
             "   - Why this beat all other niches in the dataset (ROI vs effort analysis).",
+            "   - The 'AI-Proof Moat' Explanation: Explicitly explain WHY an AI chatbot or Google AI Overview cannot replace this website.",
             "   - 3 Brandable .com Domain Name ideas.",
             "   - Projected Revenue Model (how this site reaches $3,000–$10,000/month).",
             "",
@@ -1158,7 +1166,7 @@ def export_data(
             "   - Days 12-14: Schema markup, sitemap submission & monetization integration.",
             "",
             "4. Top 2 Runner-Up Niches:",
-            "   - In case I want to build in an alternative vertical, provide the #2 and #3 best niche clusters with their revenue potential.",
+            "   - In case I want to build in an alternative vertical, provide the #2 and #3 best niche clusters with their revenue potential and AI-moat.",
             "```",
             "",
             "---",
@@ -1220,10 +1228,11 @@ def export_data(
             "exported_at": datetime.utcnow().isoformat() + "Z",
             "ai_prompt_instructions": (
                 "Identify the #1 SINGLE BEST NICHE CLUSTER in this dataset to build a complete new authority website from scratch. "
-                "Group opportunities by parent_cluster and select the cluster with the highest monetization potential ($50-$150 RPM) "
-                "and at least 5-15 zero-competition voids (is_zero_competition_void=true). "
+                "CRITICAL REQUIREMENT: Select a niche with an 'AI-Proof Moat' — avoid generic informational queries that AI chatbots easily answer. "
+                "Choose a niche requiring dynamic interactive calculation, legally compliant fillable templates, or high-stakes decision utilities. "
+                "Group opportunities by parent_cluster with $50-$150 RPM and at least 5-15 zero-competition voids (is_zero_competition_void=true). "
                 "Deliver a turnkey website plan: 3 brandable domain names, 1-page interactive tool specification (the hook), "
-                "a 2,500-word cornerstone pillar page outline, and 8 supporting cluster articles selected directly from the dataset."
+                "a 2,500-word cornerstone pillar page outline, 8 supporting cluster articles from the dataset, and an AI-Resistance Moat breakdown."
             ),
         },
         "opportunities": enriched_items,
