@@ -492,14 +492,11 @@ def _autopilot_worker_loop():
 
 @app.on_event("startup")
 def startup_event():
-    """Starts the autonomous recursive discovery daemon automatically on application boot."""
+    """Startup hook: Auto-pilot is kept in Standby by default so Antigravity AI Orchestrator has deterministic control."""
     global autopilot_thread, autopilot_stop_event
-    if not autopilot_state["is_active"]:
-        autopilot_stop_event.clear()
-        autopilot_state["is_active"] = True
-        autopilot_thread = threading.Thread(target=_autopilot_worker_loop, daemon=True)
-        autopilot_thread.start()
-        logger.info("⚡ Autonomous Discovery Auto-Pilot automatically started on startup!")
+    autopilot_state["is_active"] = False
+    autopilot_state["current_status"] = "Standby (Controlled by Antigravity AI)"
+    logger.info("⚡ Background Auto-Pilot set to Standby — Antigravity AI has primary control.")
 
 
 @app.get("/api/autopilot/status")
@@ -1348,6 +1345,52 @@ def read_report(filename: str):
         raise HTTPException(status_code=404, detail="Report file not found")
     with open(fpath, "r", encoding="utf-8") as f:
         return PlainTextResponse(content=f.read())
+
+
+# -----------------------------------------------------------------
+# AI Strategic Blueprints & Intelligent Orchestration Endpoints
+# -----------------------------------------------------------------
+
+@app.get("/api/blueprints")
+def get_blueprints():
+    """Returns all AI Strategic Blueprints vetted by Antigravity intelligence."""
+    return db.get_all_ai_blueprints()
+
+
+@app.get("/api/blueprints/{blueprint_id}")
+def get_blueprint_detail(blueprint_id: int):
+    bp = db.get_ai_blueprint_by_id(blueprint_id)
+    if not bp:
+        raise HTTPException(status_code=404, detail="Blueprint not found")
+    return bp
+
+
+class SaveBlueprintRequest(BaseModel):
+    cluster_name: str
+    category: str
+    rpm_estimate: float
+    zero_comp_count: int
+    total_queries: int
+    defensive_moat_score: int
+    competitor_landscape: str
+    flagship_tool_spec: str
+    prototype_url: Optional[str] = None
+    full_dossier_markdown: str
+    status: Optional[str] = "active"
+
+
+@app.post("/api/blueprints")
+def save_blueprint(bp: SaveBlueprintRequest):
+    row_id = db.save_ai_blueprint(bp.dict())
+    return {"status": "success", "id": row_id, "cluster_name": bp.cluster_name}
+
+
+@app.post("/api/orchestrator/run-cycle")
+def run_orchestrator_cycle(background_tasks: BackgroundTasks, max_batches: int = 2):
+    """Triggers an autonomous intelligent scan cycle via IntelligentOrchestrator."""
+    from engines.intelligent_orchestrator import run_intelligent_cycle
+    background_tasks.add_task(run_intelligent_cycle, max_batches=max_batches)
+    return {"status": "started", "message": f"Intelligent discovery cycle started (batches={max_batches})"}
 
 
 if __name__ == "__main__":

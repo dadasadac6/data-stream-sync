@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IRS Retirement Penalty & Rollover Relief Screener (SECURE 2.0)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              900: '#14532d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
+
+  <!-- Navigation / Header -->
+  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 font-bold text-slate-950">
+          IRS
+        </div>
+        <div>
+          <span class="font-extrabold text-base tracking-tight text-white flex items-center gap-2">
+            RetireWaiver<span class="text-emerald-400">.org</span>
+            <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono uppercase tracking-wider font-semibold">SECURE 2.0 Ready</span>
+          </span>
+          <p class="text-[11px] text-slate-400">IRS Form 5329 & 60-Day Rollover Relief Engine</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 text-xs font-medium">
+        <span class="hidden sm:inline-flex items-center gap-1.5 text-slate-400">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 2025/2026 IRS Rules Live
+        </span>
+        <button onclick="window.print()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+          🖨️ Print Form Packet
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="max-w-5xl mx-auto px-4 sm:px-6 pt-10 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-800/60 text-emerald-300 text-xs font-semibold mb-4">
+      <span>🛡️ Don't Give the IRS an Extra 10%</span>
+      <span class="text-emerald-500">•</span>
+      <span>100% Free & Anonymous</span>
+    </div>
+    <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white max-w-3xl mx-auto leading-tight">
+      Find Out If Your Retirement Withdrawal is <span class="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">Penalty-Free</span>
+    </h1>
+    <p class="mt-3 text-base sm:text-lg text-slate-400 max-w-2xl mx-auto">
+      The IRS provides legal exceptions to the 10% early withdrawal tax and emergency waivers for missed 60-day rollover deadlines. Check your eligibility in 60 seconds.
+    </p>
+
+    <!-- Master Mode Tabs -->
+    <div class="mt-8 flex justify-center">
+      <div class="inline-flex p-1.5 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl">
+        <button id="tab-penalty" onclick="switchMode('penalty')" class="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-md">
+          <span>⚡ 10% Early Withdrawal Penalty Screener</span>
+        </button>
+        <button id="tab-rollover" onclick="switchMode('rollover')" class="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 text-slate-400 hover:text-white">
+          <span>🔄 60-Day Rollover Waiver Generator</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Container -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 pb-20">
+
+    <!-- ==================== MODE 1: 10% PENALTY SCREENER ==================== -->
+    <div id="mode-penalty" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Left: Input Controls -->
+      <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xl space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-mono">1</span>
+            Account & Withdrawal Details
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">IRS penalty rules differ drastically between 401(k) plans and IRAs.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Account Type</label>
+            <select id="p-account" onchange="runPenaltyCalculation()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition">
+              <option value="401k">Traditional 401(k) / 403(b)</option>
+              <option value="trad_ira">Traditional IRA</option>
+              <option value="roth_ira">Roth IRA (Earnings Distribution)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Your Age at Distribution</label>
+            <input type="number" id="p-age" value="52" min="18" max="100" oninput="runPenaltyCalculation()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Gross Withdrawal Amount ($)</label>
+            <input type="number" id="p-amount" value="15000" step="500" oninput="runPenaltyCalculation()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Estimated Income Tax Bracket</label>
+            <select id="p-taxrate" onchange="runPenaltyCalculation()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-emerald-500 transition">
+              <option value="0.12">12% (Single &lt; $47k / Married &lt; $94k)</option>
+              <option value="0.22" selected>22% (Single $47k-$100k / Married $94k-$201k)</option>
+              <option value="0.24">24% (Single $100k-$191k / Married $201k-$383k)</option>
+              <option value="0.32">32% (Single $191k-$243k / Married $383k-$487k)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-800 pt-5">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2 mb-1">
+            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-mono">2</span>
+            Qualifying Life Circumstance
+          </h2>
+          <p class="text-xs text-slate-400 mb-3">Select the primary reason for taking funds early:</p>
+
+          <select id="p-exception" onchange="runPenaltyCalculation()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:border-emerald-500 transition">
+            <option value="emergency_personal">🚨 Personal / Family Emergency (SECURE 2.0: Up to $1,000/yr)</option>
+            <option value="rule_55">💼 Left Job at Age 55+ (Rule of 55 / Public Safety 50+)</option>
+            <option value="medical_expenses">🏥 Unreimbursed Medical Expenses (Exceeding 7.5% of AGI)</option>
+            <option value="disability">♿ Total and Permanent Disability (IRS Code 03)</option>
+            <option value="domestic_abuse">🕊️ Domestic Abuse Survivor (SECURE 2.0: Up to $10,000)</option>
+            <option value="birth_adoption">👶 Birth or Legal Adoption of Child (Up to $5,000)</option>
+            <option value="disaster">🌪️ Qualified Federally Declared Disaster (Up to $22,000)</option>
+            <option value="terminal_illness">🩺 Certified Terminal Illness (SECURE 2.0)</option>
+            <option value="qdro_divorce">⚖️ Qualified Domestic Relations Order (Divorce QDRO)</option>
+            <option value="first_home">🏠 First-Time Homebuyer (Up to $10,000 lifetime)</option>
+            <option value="higher_education">🎓 Qualified Higher Education Tuition</option>
+            <option value="none">❌ General / Non-hardship Cash Need (No specific exception)</option>
+          </select>
+        </div>
+
+        <!-- Conditional Helper Details -->
+        <div id="conditional-helper" class="p-3.5 bg-slate-950/70 border border-slate-800 rounded-xl text-xs text-slate-300">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Right: Live Verdict Card & Calculation Breakdown -->
+      <div class="lg:col-span-5 space-y-6">
+        <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+          <!-- Status Badge -->
+          <div id="verdict-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold font-mono tracking-wider uppercase mb-3">
+            <!-- Dynamic -->
+          </div>
+
+          <h3 id="verdict-title" class="text-xl font-extrabold text-white leading-tight">
+            <!-- Dynamic -->
+          </h3>
+          <p id="verdict-desc" class="text-xs text-slate-400 mt-2 leading-relaxed">
+            <!-- Dynamic -->
+          </p>
+
+          <!-- Numbers Matrix -->
+          <div class="mt-6 space-y-2.5 font-mono text-xs border-y border-slate-800/80 py-4">
+            <div class="flex justify-between text-slate-400">
+              <span>Gross Withdrawal:</span>
+              <span id="num-gross" class="text-white font-semibold">$15,000</span>
+            </div>
+            <div class="flex justify-between text-slate-400">
+              <span>Estimated Income Tax:</span>
+              <span id="num-incometax" class="text-amber-400 font-semibold">-$3,300</span>
+            </div>
+            <div class="flex justify-between text-slate-400">
+              <span>10% Early Penalty (Standard):</span>
+              <span id="num-stdpenalty" class="text-rose-400 line-through">-$1,500</span>
+            </div>
+            <div class="flex justify-between font-bold text-sm pt-2 border-t border-slate-800">
+              <span class="text-slate-200">Penalty Actually Owed:</span>
+              <span id="num-penaltyowed" class="text-emerald-400">$0</span>
+            </div>
+            <div class="flex justify-between font-bold text-sm">
+              <span class="text-white">Estimated Net Cash in Hand:</span>
+              <span id="num-netcash" class="text-emerald-400 text-base">$11,700</span>
+            </div>
+          </div>
+
+          <!-- Tax Form Action Box -->
+          <div class="mt-5 p-4 bg-emerald-950/30 border border-emerald-500/30 rounded-xl space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-emerald-300">IRS Tax Filing Requirement:</span>
+              <span id="irs-code-tag" class="font-mono bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[11px] font-bold">Code 12</span>
+            </div>
+            <p id="irs-filing-text" class="text-[11px] text-slate-300 leading-normal">
+              File <strong>IRS Form 5329, Part I</strong> with your annual Form 1040. Enter Exception Code on Line 2 to zero out the penalty.
+            </p>
+          </div>
+
+          <button onclick="downloadFilingGuide()" class="mt-5 w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2">
+            <span>📥 Download IRS Form 5329 Exemption Guide</span>
+          </button>
+        </div>
+
+        <!-- High-Intent Affiliate / Alternate Cash Flow Card -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 text-xs text-slate-400 space-y-2">
+          <span class="font-bold text-slate-200 text-sm flex items-center gap-1.5">
+            💡 Need Cash Without Paying Income Tax?
+          </span>
+          <p class="leading-relaxed">
+            Even with penalty waivers, you still owe ordinary income tax on traditional 401(k) withdrawals. Consider a <strong>401(k) Loan</strong> (borrow from yourself at ~8.5% interest paid back to your own account) or check 0% intro APR alternatives before liquidating retirement assets.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== MODE 2: 60-DAY ROLLOVER WAIVER ==================== -->
+    <div id="mode-rollover" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xl space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span class="w-6 h-6 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center text-xs font-mono">A</span>
+            Missed 60-Day Rollover Self-Certification
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Under <strong>IRS Revenue Procedure 2016-47</strong>, financial institutions can accept late rollovers if you certify one of 11 approved hardship conditions without requesting an expensive formal IRS private letter ruling.
+          </p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Qualifying Hardship Reason (IRS Approved)</label>
+            <select id="ro-reason" onchange="updateRolloverLetter()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm font-semibold text-white focus:outline-none focus:border-teal-500 transition">
+              <option value="bank_error">1. Financial institution committed an error</option>
+              <option value="lost_check">2. Distribution check was misplaced and never cashed</option>
+              <option value="wrong_account">3. Deposited into account mistakenly believed to be eligible</option>
+              <option value="severe_illness">4. Taxpayer or family member suffered serious illness / hospitalization</option>
+              <option value="death_family">5. Death of a member of the taxpayer's family</option>
+              <option value="home_damage">6. Principal residence was severely damaged (fire, flood, storm)</option>
+              <option value="postal_error">7. Postal or courier service error / delivery delay</option>
+              <option value="foreign_restriction">8. Restrictions imposed by a foreign country</option>
+              <option value="custodian_delay">9. Distributing custodian delayed providing required transfer info</option>
+              <option value="incarceration">10. Taxpayer was incarcerated</option>
+              <option value="irs_levy">11. Distribution was made due to IRS levy and proceeds returned</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Original Distribution Date</label>
+              <input type="date" id="ro-date" value="2025-08-15" onchange="updateRolloverLetter()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-teal-500 transition">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Receiving Institution (Bank / Broker)</label>
+              <input type="text" id="ro-bank" value="Fidelity Investments" oninput="updateRolloverLetter()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-teal-500 transition">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Your Full Name</label>
+              <input type="text" id="ro-name" value="Jane Doe" oninput="updateRolloverLetter()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-teal-500 transition">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Rollover Amount ($)</label>
+              <input type="number" id="ro-amount" value="35000" oninput="updateRolloverLetter()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-teal-500 transition">
+            </div>
+          </div>
+
+          <div class="p-4 bg-teal-950/40 border border-teal-800/60 rounded-xl text-xs text-teal-200 leading-relaxed">
+            <strong>⏱️ The 30-Day Resolution Rule:</strong> Once the obstacle above has ended (e.g., leaving the hospital or finding the check), you must deposit the funds into your new retirement account as soon as practicable, typically within <strong>30 days</strong>.
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Generated Self-Certification Letter Preview -->
+      <div class="lg:col-span-5 space-y-6">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+            <span class="text-xs font-mono font-bold text-teal-400 uppercase tracking-wider">IRS Model Certification Letter</span>
+            <span class="text-[10px] text-slate-500 font-mono">Rev. Proc. 2016-47</span>
+          </div>
+
+          <div id="letter-content" class="bg-slate-950 p-4 rounded-xl border border-slate-800/80 font-mono text-[11px] text-slate-300 whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto">
+            <!-- Dynamic generated letter -->
+          </div>
+
+          <div class="mt-4 flex gap-3">
+            <button onclick="copyLetter()" id="copy-btn" class="flex-1 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs border border-slate-700 transition">
+              📋 Copy Letter
+            </button>
+            <button onclick="window.print()" class="flex-1 py-2.5 px-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition shadow-lg shadow-teal-500/20">
+              🖨️ Print for Bank
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl text-xs text-slate-400">
+          <span class="font-bold text-slate-200">How to use this letter:</span> Deliver this signed letter directly to the receiving financial institution when depositing your rollover check. Keep a copy in your personal tax records for 3 years.
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Script Logic -->
+  <script>
+    function switchMode(mode) {
+      const penaltyTab = document.getElementById('tab-penalty');
+      const rolloverTab = document.getElementById('tab-rollover');
+      const penaltyDiv = document.getElementById('mode-penalty');
+      const rolloverDiv = document.getElementById('mode-rollover');
+
+      if (mode === 'penalty') {
+        penaltyDiv.classList.remove('hidden');
+        rolloverDiv.classList.add('hidden');
+        penaltyTab.className = 'px-5 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-md';
+        rolloverTab.className = 'px-5 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 text-slate-400 hover:text-white';
+        runPenaltyCalculation();
+      } else {
+        penaltyDiv.classList.add('hidden');
+        rolloverDiv.classList.remove('hidden');
+        rolloverTab.className = 'px-5 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 bg-teal-500 text-slate-950 shadow-md';
+        penaltyTab.className = 'px-5 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 text-slate-400 hover:text-white';
+        updateRolloverLetter();
+      }
+    }
+
+    function runPenaltyCalculation() {
+      const account = document.getElementById('p-account').value;
+      const age = parseFloat(document.getElementById('p-age').value) || 0;
+      const amount = parseFloat(document.getElementById('p-amount').value) || 0;
+      const taxRate = parseFloat(document.getElementById('p-taxrate').value) || 0.22;
+      const exception = document.getElementById('p-exception').value;
+
+      const helper = document.getElementById('conditional-helper');
+      const vBadge = document.getElementById('verdict-badge');
+      const vTitle = document.getElementById('verdict-title');
+      const vDesc = document.getElementById('verdict-desc');
+      const irsCodeTag = document.getElementById('irs-code-tag');
+      const irsFilingText = document.getElementById('irs-filing-text');
+
+      let qualifies = false;
+      let exemptAmount = 0;
+      let irsCode = 'None';
+      let reasonNote = '';
+
+      // Check Age 59.5 Threshold
+      if (age >= 59.5) {
+        qualifies = true;
+        exemptAmount = amount;
+        irsCode = 'N/A (Age 59½+)';
+        reasonNote = 'Because you are 59½ or older, early withdrawal penalties do not apply to you. No Form 5329 is required.';
+        helper.innerHTML = '✨ <strong>Age Qualified:</strong> You have reached the standard IRS retirement age threshold (59½). You only owe regular income tax.';
+      } else {
+        // Exception rules logic
+        switch (exception) {
+          case 'emergency_personal':
+            qualifies = true;
+            exemptAmount = Math.min(amount, 1000);
+            irsCode = 'Code 12';
+            reasonNote = 'Under SECURE 2.0 (IRC §72(t)(2)(I)), up to $1,000 per calendar year can be taken penalty-free for unforeseeable personal or family emergencies.';
+            helper.innerHTML = 'ℹ️ <strong>SECURE 2.0 Rule:</strong> Limited to $1,000/year. Any withdrawal beyond $1,000 remains subject to the 10% penalty unless repaid within 3 years.';
+            break;
+
+          case 'rule_55':
+            if (account === '401k' && age >= 55) {
+              qualifies = true;
+              exemptAmount = amount;
+              irsCode = 'Code 01';
+              reasonNote = 'Under the Rule of 55, employees separating from service during or after the year they turn 55 can access that employer’s 401(k) penalty-free.';
+              helper.innerHTML = '✅ <strong>Rule of 55 Valid:</strong> Applies only to the 401(k) of the employer you separated from at 55+. Does NOT apply to IRAs.';
+            } else if (account !== '401k') {
+              qualifies = false;
+              exemptAmount = 0;
+              irsCode = 'None';
+              reasonNote = 'The Rule of 55 ONLY applies to employer-sponsored qualified plans (401k/403b). It does NOT apply to IRAs.';
+              helper.innerHTML = '⚠️ <strong>IRA Limitation:</strong> The Rule of 55 does NOT cover IRAs. To use Rule of 55, funds must stay in your 401(k).';
+            } else {
+              qualifies = false;
+              exemptAmount = 0;
+              irsCode = 'None';
+              reasonNote = 'You must be at least age 55 in the calendar year you separate from service.';
+              helper.innerHTML = '⚠️ <strong>Age Requirement:</strong> You must reach age 55 during the year of employment separation.';
+            }
+            break;
+
+          case 'medical_expenses':
+            qualifies = true;
+            exemptAmount = amount;
+            irsCode = 'Code 05';
+            reasonNote = 'Unreimbursed medical expenses that exceed 7.5% of your Adjusted Gross Income (AGI) are exempt from the 10% penalty.';
+            helper.innerHTML = 'ℹ️ <strong>Documentation:</strong> You must retain medical receipts and medical bill statements proving unreimbursed expenses exceeded 7.5% of AGI.';
+            break;
+
+          case 'disability':
+            qualifies = true;
+            exemptAmount = amount;
+            irsCode = 'Code 03';
+            reasonNote = 'Total and permanent disability certified by a physician waives the 10% penalty under IRC §72(m)(7).';
+            helper.innerHTML = '✅ <strong>Full Exemption:</strong> Certified disability waives the 10% penalty on 100% of the distribution across 401(k)s and IRAs.';
+            break;
+
+          case 'domestic_abuse':
+            qualifies = true;
+            exemptAmount = Math.min(amount, 10000);
+            irsCode = 'Code 11';
+            reasonNote = 'SECURE 2.0 permits survivors of domestic abuse to withdraw up to $10,000 (or 50% of the vested balance) penalty-free within 1 year of abuse.';
+            helper.innerHTML = 'ℹ️ <strong>Self-Certification:</strong> You can self-certify eligibility for this exemption without submitting sensitive police reports to HR.';
+            break;
+
+          case 'birth_adoption':
+            qualifies = true;
+            exemptAmount = Math.min(amount, 5000);
+            irsCode = 'Code 08';
+            reasonNote = 'Up to $5,000 per parent may be withdrawn penalty-free within 1 year of a qualified birth or legal adoption.';
+            helper.innerHTML = '👶 <strong>Per Parent:</strong> Both parents can take $5,000 each ($10,000 total) from their respective retirement accounts.';
+            break;
+
+          case 'disaster':
+            qualifies = true;
+            exemptAmount = Math.min(amount, 22000);
+            irsCode = 'Code 10';
+            reasonNote = 'Up to $22,000 may be withdrawn penalty-free for sustained economic loss in a FEMA-declared disaster area.';
+            helper.innerHTML = '🌪️ <strong>Tax Spread:</strong> Income tax can also be spread over 3 years instead of paid all at once.';
+            break;
+
+          case 'terminal_illness':
+            qualifies = true;
+            exemptAmount = amount;
+            irsCode = 'Code 09';
+            reasonNote = 'SECURE 2.0 exempts withdrawals for individuals certified by a physician as having a terminal illness expected to result in death within 84 months.';
+            helper.innerHTML = '🩺 <strong>Physician Certification:</strong> Retain the written certification from your physician in your tax records.';
+            break;
+
+          case 'qdro_divorce':
+            if (account === '401k') {
+              qualifies = true;
+              exemptAmount = amount;
+              irsCode = 'Code 06';
+              reasonNote = 'Distributions paid to an alternate payee (spouse/ex-spouse) under a court-approved Qualified Domestic Relations Order (QDRO) are penalty-free.';
+              helper.innerHTML = '⚖️ <strong>QDRO Specific:</strong> Applies to 401(k) court divisions. Note: You still owe regular income tax if cashed out instead of rolled over.';
+            } else {
+              qualifies = false;
+              exemptAmount = 0;
+              irsCode = 'None';
+              reasonNote = 'QDRO exceptions apply strictly to qualified employer plans (401k/403b). IRAs use incident-to-divorce transfer rules.';
+              helper.innerHTML = '⚠️ <strong>IRA Notice:</strong> For an IRA, divorce transfers must be executed as a direct transfer, not a check payable to you.';
+            }
+            break;
+
+          case 'first_home':
+            if (account === 'trad_ira' || account === 'roth_ira') {
+              qualifies = true;
+              exemptAmount = Math.min(amount, 10000);
+              irsCode = 'Code 09';
+              reasonNote = 'Up to $10,000 lifetime can be withdrawn penalty-free from an IRA to buy, build, or rebuild a first home.';
+              helper.innerHTML = '🏠 <strong>IRA Only:</strong> The $10k first-home exemption is an IRA-ONLY provision. 401(k) plans do NOT offer this (consider a 401k loan instead).';
+            } else {
+              qualifies = false;
+              exemptAmount = 0;
+              irsCode = 'None';
+              reasonNote = 'The IRS $10,000 First-Time Homebuyer exemption applies ONLY to IRAs, NOT 401(k) plans.';
+              helper.innerHTML = '❌ <strong>Not Valid for 401(k):</strong> IRS rules do not exempt 401(k) home withdrawals from the 10% fee. You must take a 401k loan or roll to an IRA first.';
+            }
+            break;
+
+          case 'higher_education':
+            if (account === 'trad_ira' || account === 'roth_ira') {
+              qualifies = true;
+              exemptAmount = amount;
+              irsCode = 'Code 08';
+              reasonNote = 'Withdrawals from an IRA for tuition, fees, books, and supplies at an eligible postsecondary institution are penalty-free.';
+              helper.innerHTML = '🎓 <strong>IRA Only:</strong> Higher education exceptions apply exclusively to IRAs, not 401(k) plans.';
+            } else {
+              qualifies = false;
+              exemptAmount = 0;
+              irsCode = 'None';
+              reasonNote = 'Qualified higher education exceptions apply ONLY to IRAs, not 401(k) employer plans.';
+              helper.innerHTML = '❌ <strong>Not Valid for 401(k):</strong> Employer 401(k)s do not qualify for education penalty waivers.';
+            }
+            break;
+
+          default:
+            qualifies = false;
+            exemptAmount = 0;
+            irsCode = 'None';
+            reasonNote = 'Standard early withdrawals without a statutory exemption incur the full 10% IRS excise penalty.';
+            helper.innerHTML = '💡 <strong>No Exception Selected:</strong> The IRS will assess a mandatory 10% additional tax ($' + (amount * 0.10).toLocaleString() + ') on this withdrawal.';
+        }
+      }
+
+      // Calculations
+      const standardPenalty = amount * 0.10;
+      const penaltySaved = exemptAmount * 0.10;
+      const actualPenaltyOwed = Math.max(0, standardPenalty - penaltySaved);
+      const estimatedIncomeTax = amount * taxRate;
+      const netCash = amount - estimatedIncomeTax - actualPenaltyOwed;
+
+      // Update DOM numbers
+      document.getElementById('num-gross').innerText = '$' + amount.toLocaleString();
+      document.getElementById('num-incometax').innerText = '-$' + Math.round(estimatedIncomeTax).toLocaleString();
+      document.getElementById('num-stdpenalty').innerText = '-$' + Math.round(standardPenalty).toLocaleString();
+      document.getElementById('num-penaltyowed').innerText = '$' + Math.round(actualPenaltyOwed).toLocaleString();
+      document.getElementById('num-netcash').innerText = '$' + Math.round(netCash).toLocaleString();
+
+      // Update Verdict UI
+      if (qualifies && actualPenaltyOwed === 0) {
+        vBadge.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold font-mono tracking-wider uppercase mb-3 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+        vBadge.innerHTML = '<span>✅ 10% PENALTY FULLY WAIVED</span>';
+        vTitle.innerText = 'You Save $' + Math.round(penaltySaved).toLocaleString() + ' in IRS Penalties';
+        vDesc.innerText = reasonNote;
+        irsCodeTag.innerText = irsCode;
+        irsFilingText.innerHTML = `File <strong>IRS Form 5329, Part I</strong>. Enter <strong>${irsCode}</strong> on Line 2 to declare this exemption.`;
+      } else if (qualifies && actualPenaltyOwed > 0) {
+        vBadge.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold font-mono tracking-wider uppercase mb-3 bg-amber-500/20 text-amber-400 border border-amber-500/30';
+        vBadge.innerHTML = '<span>⚠️ PARTIALLY EXEMPT</span>';
+        vTitle.innerText = 'You Save $' + Math.round(penaltySaved).toLocaleString() + ' (Capped Exception)';
+        vDesc.innerText = reasonNote + ` The remaining $${(amount - exemptAmount).toLocaleString()} is subject to the 10% penalty.`;
+        irsCodeTag.innerText = irsCode;
+        irsFilingText.innerHTML = `File <strong>IRS Form 5329</strong>. Claim exemption on $${exemptAmount.toLocaleString()} using <strong>${irsCode}</strong>.`;
+      } else {
+        vBadge.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold font-mono tracking-wider uppercase mb-3 bg-rose-500/20 text-rose-400 border border-rose-500/30';
+        vBadge.innerHTML = '<span>❌ 10% PENALTY APPLIES</span>';
+        vTitle.innerText = 'You Owe $' + Math.round(standardPenalty).toLocaleString() + ' Penalty';
+        vDesc.innerText = reasonNote;
+        irsCodeTag.innerText = 'No Code';
+        irsFilingText.innerHTML = `Report the full 10% tax ($${Math.round(standardPenalty).toLocaleString()}) on Schedule 2 (Form 1040) Line 8.`;
+      }
+    }
+
+    function updateRolloverLetter() {
+      const reasonSelect = document.getElementById('ro-reason');
+      const reasonText = reasonSelect.options[reasonSelect.selectedIndex].text;
+      const date = document.getElementById('ro-date').value || '[Date]';
+      const bank = document.getElementById('ro-bank').value || '[Receiving Financial Institution]';
+      const name = document.getElementById('ro-name').value || '[Your Name]';
+      const amount = parseFloat(document.getElementById('ro-amount').value) || 0;
+
+      const letter = `MODEL SELF-CERTIFICATION LETTER (IRS REV. PROC. 2016-47)
+To: ${bank}
+From: ${name}
+Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+Subject: Self-Certification of Late Rollover Contribution
+
+Dear Retirement Plan Administrator,
+
+Pursuant to IRS Revenue Procedure 2016-47, I am submitting this written self-certification that my late contribution of $${amount.toLocaleString()} qualifies for a waiver of the 60-day rollover requirement.
+
+1. ORIGINAL DISTRIBUTION:
+On or about ${date}, I received a distribution from an eligible retirement plan or IRA.
+
+2. QUALIFYING REASON FOR DELAY:
+I missed the 60-day deadline due to the following IRS-approved reason:
+--> ${reasonText}
+
+3. 30-DAY TIMELY DEPOSIT DECLARATION:
+I certify that the condition or event preventing me from making a timely rollover deposit ended within the past 30 days, and I am depositing the funds as soon as practicable.
+
+4. ACCURACY AND IRS AUDIT NOTICE:
+I understand that this self-certification is made under penalties of perjury and that I must maintain a copy of this certification in my personal records. I acknowledge that the IRS may examine whether this contribution met the requirements during an audit.
+
+Respectfully submitted,
+
+_____________________________________________
+Signature: ${name}
+SSN / Account #: [On File with Institution]`;
+
+      document.getElementById('letter-content').innerText = letter;
+    }
+
+    function copyLetter() {
+      const text = document.getElementById('letter-content').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerText = '✅ Copied to Clipboard!';
+        setTimeout(() => btn.innerText = '📋 Copy Letter', 2500);
+      });
+    }
+
+    function downloadFilingGuide() {
+      alert('Generating your printable IRS Form 5329 Exemption Checklist with your exact codes...');
+      window.print();
+    }
+
+    // Initialize on page load
+    window.onload = function() {
+      runPenaltyCalculation();
+    };
+  </script>
+</body>
+</html>

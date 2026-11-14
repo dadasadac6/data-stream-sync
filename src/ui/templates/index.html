@@ -100,6 +100,17 @@
         <span class="text-xs px-2 py-0.5 rounded-full font-mono font-bold"
               :class="activeTab === 'fleet' ? 'bg-purple-400 text-slate-950' : 'bg-purple-500/20 text-purple-300'">20 Runners</span>
       </button>
+
+      <!-- Tab 4: AI Strategic Blueprints (Vetted Turnkey Websites & Moats) -->
+      <button @click="activeTab = 'blueprints'; loadBlueprints()"
+              class="px-4 py-2 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
+              :class="activeTab === 'blueprints' ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 shadow-emerald-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
+        <span>🤖</span>
+        <span>AI Blueprints</span>
+        <span class="text-xs px-2 py-0.5 rounded-full font-mono font-bold"
+              :class="activeTab === 'blueprints' ? 'bg-emerald-400 text-slate-950' : 'bg-emerald-500/20 text-emerald-300'"
+              x-text="(blueprints && blueprints.length ? blueprints.length : 0) + ' Ready'"></span>
+      </button>
     </div>
 
     <!-- Global Quick Actions -->
@@ -1172,6 +1183,87 @@
           </template>
           <div x-show="!logs.length" class="text-slate-500 italic">No activity logs recorded yet.</div>
         </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 4: 🤖 AI STRATEGIC BLUEPRINTS & DEFENSIVE MOATS      -->
+    <!-- ======================================================== -->
+    <div x-show="activeTab === 'blueprints'" class="h-full overflow-y-auto p-6 space-y-6">
+      <!-- Section Header with Autonomous Controls -->
+      <div class="bg-gradient-to-r from-emerald-950/40 via-slate-900 to-slate-900 border border-emerald-500/30 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold mb-2">
+            <span>🛡️ AI-Proof Defensive Moats</span>
+            <span>•</span>
+            <span>Zero Corporate Monopolies</span>
+          </div>
+          <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+            <span>AI Strategic Blueprints Feed</span>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono" x-text="blueprints.length + ' Opportunities Vetted'"></span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+            Antigravity AI continuously audits search voids, eliminates heavyweight traps (Bankrate/Calculator.net), and publishes finished, build-ready authority website blueprints.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3 shrink-0">
+          <button @click="triggerIntelligentCycle()" 
+                  class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition flex items-center gap-2">
+            <span>⚡ Run Autonomous AI Cycle</span>
+          </button>
+          <button @click="loadBlueprints()" 
+                  class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition">
+            🔄 Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Blueprints Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
+        <template x-for="bp in blueprints" :key="bp.id">
+          <div class="bg-slate-900 border border-slate-800 hover:border-emerald-500/40 rounded-2xl p-5 shadow-xl transition-all flex flex-col justify-between space-y-4">
+            <div>
+              <div class="flex items-start justify-between gap-2 mb-2">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-300" x-text="bp.category"></span>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" x-text="'$' + bp.rpm_estimate + ' RPM'"></span>
+              </div>
+              <h3 class="text-base font-bold text-white leading-snug" x-text="bp.cluster_name"></h3>
+              
+              <div class="mt-3 flex items-center gap-3 text-xs text-slate-400 font-mono">
+                <span class="text-emerald-400 font-bold" x-text="bp.zero_comp_count + ' Zero-Comp Voids'"></span>
+                <span>•</span>
+                <span class="text-slate-300" x-text="'Moat: ' + bp.defensive_moat_score + '/100'"></span>
+              </div>
+
+              <!-- Competitor Landscape -->
+              <div class="mt-3 p-3 bg-slate-950/80 rounded-xl border border-slate-800/80 text-[11px] text-slate-300 leading-relaxed">
+                <strong class="text-slate-200 block mb-1">🥊 Competitor Vulnerability:</strong>
+                <span x-text="bp.competitor_landscape"></span>
+              </div>
+
+              <!-- Tool Spec -->
+              <div class="mt-2.5 text-[11px] text-slate-400 leading-relaxed">
+                <strong class="text-slate-300 block mb-0.5">🛠️ Flagship Tool Spec:</strong>
+                <span x-text="bp.flagship_tool_spec"></span>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-3 border-t border-slate-800 flex items-center gap-2">
+              <template x-if="bp.prototype_url">
+                <a :href="bp.prototype_url" target="_blank" 
+                   class="flex-1 py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold text-center shadow-md shadow-emerald-500/10 transition">
+                  👁️ Test Prototype
+                </a>
+              </template>
+              <button @click="viewBlueprintDetail(bp)" 
+                      class="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 text-center transition">
+                📄 View Blueprint
+              </button>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
 

@@ -91,6 +91,26 @@ def init_db(db_path: Optional[str] = None) -> None:
             );
 
             CREATE INDEX IF NOT EXISTS idx_signature_date ON explored_signatures(explored_at);
+
+            CREATE TABLE IF NOT EXISTS ai_blueprints (
+                id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+                cluster_name            TEXT UNIQUE NOT NULL,
+                category                TEXT NOT NULL,
+                rpm_estimate            REAL NOT NULL,
+                zero_comp_count         INTEGER NOT NULL,
+                total_queries           INTEGER NOT NULL,
+                defensive_moat_score    INTEGER NOT NULL,
+                competitor_landscape    TEXT NOT NULL,
+                flagship_tool_spec      TEXT NOT NULL,
+                prototype_url           TEXT,
+                full_dossier_markdown   TEXT NOT NULL,
+                status                  TEXT DEFAULT 'active',
+                created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_updated            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_blueprint_score ON ai_blueprints(defensive_moat_score DESC);
+            CREATE INDEX IF NOT EXISTS idx_blueprint_cat ON ai_blueprints(category);
             """
         )
     conn.close()
@@ -805,6 +825,84 @@ def get_recent_logs(limit: int = 50, db_path: Optional[str] = None) -> List[Dict
             )
             logs = [dict(r) for r in cursor.fetchall()]
         return logs
+    finally:
+        conn.close()
+
+
+def save_ai_blueprint(blueprint_data: Dict[str, Any], db_path: Optional[str] = None) -> int:
+    """Saves or updates an AI Strategic Blueprint in the database."""
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO ai_blueprints (
+                    cluster_name, category, rpm_estimate, zero_comp_count, 
+                    total_queries, defensive_moat_score, competitor_landscape, 
+                    flagship_tool_spec, prototype_url, full_dossier_markdown, status, last_updated
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(cluster_name) DO UPDATE SET
+                    category = excluded.category,
+                    rpm_estimate = excluded.rpm_estimate,
+                    zero_comp_count = excluded.zero_comp_count,
+                    total_queries = excluded.total_queries,
+                    defensive_moat_score = excluded.defensive_moat_score,
+                    competitor_landscape = excluded.competitor_landscape,
+                    flagship_tool_spec = excluded.flagship_tool_spec,
+                    prototype_url = excluded.prototype_url,
+                    full_dossier_markdown = excluded.full_dossier_markdown,
+                    status = excluded.status,
+                    last_updated = CURRENT_TIMESTAMP
+                """,
+                (
+                    blueprint_data["cluster_name"],
+                    blueprint_data["category"],
+                    blueprint_data.get("rpm_estimate", 50.0),
+                    blueprint_data.get("zero_comp_count", 0),
+                    blueprint_data.get("total_queries", 0),
+                    blueprint_data.get("defensive_moat_score", 90),
+                    blueprint_data.get("competitor_landscape", ""),
+                    blueprint_data.get("flagship_tool_spec", ""),
+                    blueprint_data.get("prototype_url", ""),
+                    blueprint_data.get("full_dossier_markdown", ""),
+                    blueprint_data.get("status", "active"),
+                ),
+            )
+            return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def get_all_ai_blueprints(status: Optional[str] = None, db_path: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Fetches all AI Blueprints, optionally filtered by status."""
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            cursor = conn.cursor()
+            if status:
+                cursor.execute(
+                    "SELECT * FROM ai_blueprints WHERE status = ? ORDER BY defensive_moat_score DESC, rpm_estimate DESC",
+                    (status,),
+                )
+            else:
+                cursor.execute(
+                    "SELECT * FROM ai_blueprints ORDER BY defensive_moat_score DESC, rpm_estimate DESC"
+                )
+            return [dict(r) for r in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def get_ai_blueprint_by_id(blueprint_id: int, db_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """Fetches a single blueprint by ID."""
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM ai_blueprints WHERE id = ?", (blueprint_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
     finally:
         conn.close()
 

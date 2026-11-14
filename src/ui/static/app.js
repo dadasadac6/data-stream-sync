@@ -17,6 +17,7 @@ function radarApp() {
     categories: [],
     reports: [],
     logs: [],
+    blueprints: [],
     loading: false,
 
     // Input Keywords (Left Pane in Radar Feed)
@@ -173,6 +174,7 @@ function radarApp() {
       await this.loadFleetStatus();
       await this.loadReports();
       await this.loadLogs();
+      await this.loadBlueprints();
       await this.fetchAutopilotStatus();
 
       // Background telemetry polling every 4s (Telemetry & Stats only, never interrupt user scrolling)
@@ -834,6 +836,49 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
       } catch (e) {
         this.selectedReportContent = '<p class="text-red-400">Error loading report.</p>';
       }
+    },
+
+    // -------------------------------------------------------------
+    // AI STRATEGIC BLUEPRINTS
+    // -------------------------------------------------------------
+    async loadBlueprints() {
+      try {
+        const resp = await fetch('/api/blueprints');
+        this.blueprints = await resp.json();
+      } catch (e) {
+        console.error('Failed to load blueprints', e);
+      }
+    },
+
+    async triggerIntelligentCycle() {
+      try {
+        this.showToast('🧠 Dispatched Intelligent AI Exploration Cycle across 20 runners...', 'info');
+        const resp = await fetch('/api/orchestrator/run-cycle?max_batches=2', { method: 'POST' });
+        const res = await resp.json();
+        this.showToast('⚡ Autonomous Cycle Started! Fresh, non-repeating seeds queued.', 'success');
+        setTimeout(() => this.loadBlueprints(), 3000);
+      } catch (e) {
+        this.showToast('Failed to trigger AI cycle: ' + e.message, 'error');
+      }
+    },
+
+    viewBlueprintDetail(bp) {
+      this.activeBlueprint = {
+        title: bp.cluster_name,
+        category: bp.category,
+        rpm: '$' + bp.rpm_estimate + ' RPM',
+        bounty: 'Vetted by Antigravity AI (' + bp.defensive_moat_score + '/100 Moat)',
+        domains: [bp.cluster_name.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com', bp.cluster_name.toLowerCase().replace(/[^a-z0-9]/g, '') + '.org'],
+        pillar_title: bp.cluster_name + ': The Definitive Authority Guide',
+        pillar_sections: ['Regulatory & Statutory Foundation', 'Step-by-Step Exemption Screener Guide', 'IRS Form 5329 Line-by-Line Instructions', 'Common Penalties & Audit Triggers'],
+        lead_asset: bp.flagship_tool_spec,
+        cluster_articles: [
+          { title: 'Qualifying Exceptions & Exemptions Breakdown', intent: 'Transactional' },
+          { title: 'Step-by-Step Filing Checklist for Administrators', intent: 'Commercial' },
+          { title: 'Comparison: Plan Types, Hardships & IRS Waivers', intent: 'Informational' }
+        ]
+      };
+      this.showBlueprintModal = true;
     },
 
     // -------------------------------------------------------------
