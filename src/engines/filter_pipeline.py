@@ -147,10 +147,14 @@ class ExclusionShield:
         if len(tokens) <= 1:
             return True, "Query too short / single generic brand token"
 
-        # Check intent: query must match universal intent or have >= 3 words
-        has_intent = any(t in q_lower for t in UNIVERSAL_INTENT_TOKENS)
-        if not has_intent and len(tokens) < 3:
-            return True, "Lacks specific utility or technical intent"
+        # Check intent: query must have >= 3 words OR contain an explicit high-intent utility
+        is_high_intent = any(t in q_lower for t in [
+            "calculator", "converter", "generator", "template", "checklist", "tracker",
+            "schedule", "formula", "builder", "checker", "error", "workaround", "settlement",
+            "affidavit", "exemption", "deduction", "waiver", "dispute"
+        ])
+        if len(tokens) < 3 and not is_high_intent:
+            return True, "Generic 1-2 word head term lacks specific intent"
 
         # Check for non-ASCII noise
         if re.search(r"[\u4e00-\u9fff]", query):

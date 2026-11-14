@@ -184,30 +184,28 @@ class TrendsBatchHTTP:
         except Exception as e:
             logger.warning(f"Trends API in-session exploration failed: {e}. Falling back to Suggest tree.")
 
-        # Ensure all terms have data; fill gaps with Suggest tree
+        # Ensure all terms have data; only fall back to suggest tree if Trends returned zero data
         for term in batch:
             if term not in results or (not results[term].get("top") and not results[term].get("rising")):
-                logger.info(f"Extracting organic demand tree for '{term}' via free suggest stream...")
+                logger.info(f"Trends API returned no data for '{term}'. Falling back to organic intent queries...")
                 suggestions = self._get_google_suggest(term)
                 top_items = []
-                rising_items = []
 
                 for idx, s in enumerate(suggestions):
-                    is_breakout = any(w in s.lower() for w in ["error", "fix", "failed", "bug", "issue", "problem", "2026", "2025"])
+                    # Only keep high-intent, 3+ word queries
+                    if len(s.split()) < 3:
+                        continue
                     item = {
                         "query": s,
-                        "value": max(10, 100 - idx * 5),
-                        "change": "BREAKOUT" if is_breakout else f"+{max(100, 800 - idx * 40)}%",
-                        "isBreakout": is_breakout,
+                        "value": max(10, 80 - idx * 4),
+                        "change": "Organic Suggestion",
+                        "isBreakout": False,
                     }
-                    if is_breakout or idx % 2 == 1:
-                        rising_items.append(item)
-                    else:
-                        top_items.append(item)
+                    top_items.append(item)
 
                 results[term] = {
                     "top": top_items[:15],
-                    "rising": rising_items[:15],
+                    "rising": [],
                 }
 
         # Anti-detection stealth jitter

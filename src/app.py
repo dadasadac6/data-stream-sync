@@ -169,20 +169,24 @@ def run_pipeline_scan(category_filter: str = "All", limit_batches: int = 2):
                 category = niche_info["category"]
                 term_data = batch_results.get(niche_term, {})
 
+                # Prioritize genuine Google Trends data (Rising & Top queries)
                 candidates = []
                 for item in term_data.get("rising", []):
                     candidates.append({**item, "trend_type": "BREAKOUT" if item.get("isBreakout") else "RISING"})
                 for item in term_data.get("top", []):
                     candidates.append({**item, "trend_type": "TOP"})
 
-                # Enrich with Trio-Stream Suggester (DuckDuckGo + Bing + Chrome AC + Qualified Intent Trees)
-                try:
-                    suggester = MultiStreamSuggester()
-                    intent_queries = suggester.expand_seed_with_intent_trees(niche_term)
-                    for iq in intent_queries:
-                        candidates.append({"query": iq, "trend_type": "QUALIFIED_INTENT", "change": "High Intent"})
-                except Exception as ex:
-                    logger.debug(f"Suggester expansion failed for {niche_term}: {ex}")
+                # Only supplement with intent tree if Google Trends returned fewer than 5 queries
+                if len(candidates) < 5:
+                    try:
+                        suggester = MultiStreamSuggester()
+                        intent_queries = suggester.expand_seed_with_intent_trees(niche_term)
+                        for iq in intent_queries:
+                            # Strict 3+ word filter to avoid generic head terms
+                            if len(iq.split()) >= 3:
+                                candidates.append({"query": iq, "trend_type": "QUALIFIED_INTENT", "change": "High Intent"})
+                    except Exception as ex:
+                        logger.debug(f"Suggester expansion failed for {niche_term}: {ex}")
 
                 evaluated_for_niche = 0
                 for cand in candidates:

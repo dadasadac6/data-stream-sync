@@ -565,6 +565,9 @@ def get_queries(
     if verdict and verdict.lower() != "all":
         conditions.append("q.human_verdict = ?")
         params.append(verdict)
+    else:
+        # Default view: exclude dismissed / pruned generic queries
+        conditions.append("(q.human_verdict IS NULL OR q.human_verdict != 'already_served')")
 
     if search:
         conditions.append("q.keyword LIKE ?")
@@ -701,13 +704,13 @@ def get_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
     try:
         with conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) as c FROM queries")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE (human_verdict IS NULL OR human_verdict != 'already_served')")
             stats["total_queries"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE gap_score >= 85")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE gap_score >= 85 AND (human_verdict IS NULL OR human_verdict != 'already_served')")
             stats["critical_gold"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE gap_score >= 65 AND gap_score < 85")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE gap_score >= 65 AND gap_score < 85 AND (human_verdict IS NULL OR human_verdict != 'already_served')")
             stats["high_opportunity"] = cursor.fetchone()["c"]
 
             cursor.execute("SELECT COUNT(*) as c FROM queries WHERE human_verdict = 'confirmed_gold'")
@@ -716,16 +719,16 @@ def get_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
             cursor.execute("SELECT COUNT(*) as c FROM queries WHERE human_verdict = 'snoozed'")
             stats["snoozed"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE trend_type = 'BREAKOUT'")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE trend_type = 'BREAKOUT' AND (human_verdict IS NULL OR human_verdict != 'already_served')")
             stats["breakouts"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches = 0")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches = 0 AND (human_verdict IS NULL OR human_verdict != 'already_served')")
             stats["verified_voids"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches > 0")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches > 0 AND (human_verdict IS NULL OR human_verdict != 'already_served')")
             stats["competed_queries"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches IS NULL")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches IS NULL AND (human_verdict IS NULL OR human_verdict != 'already_served')")
             stats["pending_audits"] = cursor.fetchone()["c"]
 
             # Calculate intelligent top website picks (high demand cluster + 0/10 or 1/10 SERP competition)
