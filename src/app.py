@@ -20,6 +20,9 @@ from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import storage.db as db
 from engines.signal_tracer import SignalTracer, DevEvidenceCollector
 from engines.filter_pipeline import FilterPipeline, ExclusionShield
@@ -45,7 +48,7 @@ app.add_middleware(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "ui", "templates")
 STATIC_DIR = os.path.join(BASE_DIR, "ui", "static")
-REPORTS_DIR = os.path.join(BASE_DIR, "reports")
+REPORTS_DIR = os.path.join(os.path.dirname(BASE_DIR), "reports")
 
 os.makedirs(TEMPLATES_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)

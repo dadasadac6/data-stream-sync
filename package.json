@@ -1,21 +1,10 @@
 {
-  "name": "ecosystem-telemetry-probe",
+  "name": "data-stream-sync",
   "version": "1.0.0",
-  "description": "Distributed runtime health probe and dependency matrix verification",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [
-    "telemetry",
-    "matrix",
-    "probe",
-    "verification"
-  ],
-  "author": "",
-  "license": "ISC",
+  "description": "Automated data pipeline, telemetry diagnostics, and local event synchronization engine",
   "type": "module",
-  "dependencies": {
-    "playwright": "^1.65.0"
-  }
+  "scripts": {
+    "start": "python3 -m uvicorn src.app:app --host 0.0.0.0 --port 8080"
+  },
+  "license": "MIT"
 }

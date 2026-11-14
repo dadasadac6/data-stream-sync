@@ -1,19 +1,44 @@
+# Node
 node_modules/
+package-lock.json
+
+# Python
 __pycache__/
 *.pyc
-storage/*.db-shm
-storage/*.db-wal
-storage/*.db.pre_sanitization_bak
-*.bak
-config/cookies.json
+*.pyo
 .env
-.DS_Store
-.local_docs/
+.env.*
+
+# Local databases & caches
+*.db
+*.db-shm
+*.db-wal
+*.bak
+storage/*.db
+storage/*.db-*
+src/storage/*.db
+src/storage/*.db-*
+config/cookies.json
+src/config/cookies.json
+
+# Reports & scratch data
+reports/
+raw_telemetry_samples.json
 plan/
+reference/
+tools/
+scripts/
+
+# Local scripts & shims
+run_*.sh
+probe_daemon.py
+/dashboard.py
+sync_fleet.sh
 *.spec.md
 *PLAN*.md
 *PROMPT*.md
-tools/
-sync_fleet.sh
-reference/
-raw_telemetry_samples.json
+
+# OS
+.DS_Store
+.local_docs/
+*.pre_sanitization_bak
