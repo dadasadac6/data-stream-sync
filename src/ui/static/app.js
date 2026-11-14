@@ -77,6 +77,25 @@ function radarApp() {
     showBlueprintModal: false,
     activeBlueprint: {},
     copiedPrompt: false,
+    downloadedBlueprint: false,
+
+    // Global Toast Notification
+    toast: {
+      show: false,
+      message: '',
+      type: 'info',
+      timeout: null
+    },
+
+    showToast(message, type = 'info', duration = 3200) {
+      if (this.toast.timeout) clearTimeout(this.toast.timeout);
+      this.toast.message = message;
+      this.toast.type = type;
+      this.toast.show = true;
+      this.toast.timeout = setTimeout(() => {
+        this.toast.show = false;
+      }, duration);
+    },
 
     // Live Google Trends Feed
     liveTrends: [],
@@ -404,7 +423,7 @@ function radarApp() {
     async auditBatchLive() {
       const unverified = this.queries.filter(q => q.exact_title_matches === null || q.exact_title_matches === undefined);
       if (!unverified.length) {
-        alert('All visible items on this page are already verified!');
+        this.showToast('All visible items on this page are already verified!', 'info');
         return;
       }
       this.isAuditingBatch = true;
@@ -428,7 +447,7 @@ function radarApp() {
           body: JSON.stringify({ term, category: category || 'Developer & Cloud' }),
         });
         if (resp.ok) {
-          alert(`⚡ Instant live probe launched for "${term}"! Evaluating Google Trends & SERP voids in background...`);
+          this.showToast(`⚡ Instant live probe launched for "${term}"! Evaluating Google Trends & SERP voids in background...`, 'success');
           setTimeout(() => { this.loadQueries(1); this.loadInputKeywords(); this.loadStats(); }, 5000);
           setTimeout(() => { this.loadQueries(1); this.loadInputKeywords(); this.loadStats(); }, 15000);
         }
@@ -522,7 +541,7 @@ function radarApp() {
         await fetch('/api/frontier/harvest', { method: 'POST' });
         await this.loadFrontierStats();
         await this.loadInputKeywords();
-        alert('Multi-source harvester launched in background! Frontier queue expanding...');
+        this.showToast('Multi-source harvester launched in background! Frontier queue expanding...', 'info');
       } catch (e) {
         console.error('Failed to trigger harvester', e);
       }
@@ -545,6 +564,7 @@ function radarApp() {
           await this.loadFrontierStats();
           await this.loadInputKeywords();
           await this.loadFrontier(1);
+          this.showToast('New topic successfully added to Frontier scan queue!', 'success');
         }
       } catch (e) {
         console.error('Failed to add custom seed', e);
@@ -556,7 +576,7 @@ function radarApp() {
     // -------------------------------------------------------------
     exportData(format = 'csv') {
       if (!this.queries || !this.queries.length) {
-        alert('No search gap opportunities available to export.');
+        this.showToast('No search gap opportunities available to export.', 'warning');
         return;
       }
       const timestamp = new Date().toISOString().slice(0, 10);
@@ -704,6 +724,7 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
       if (this.activeBlueprint && this.activeBlueprint.prompt) {
         navigator.clipboard.writeText(this.activeBlueprint.prompt);
         this.copiedPrompt = true;
+        this.showToast('📋 AI Blueprint Prompt copied to clipboard!', 'success');
         setTimeout(() => {
           this.copiedPrompt = false;
         }, 2500);
@@ -713,7 +734,12 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
     downloadBlueprintPackage(topic) {
       const q = topic || (this.activeBlueprint ? this.activeBlueprint.keyword : '');
       if (!q) return;
+      this.downloadedBlueprint = true;
       window.location.href = `/api/blueprint/export?topic=${encodeURIComponent(q)}`;
+      this.showToast(`📥 AI Production Package downloaded for "${q}"!`, 'success');
+      setTimeout(() => {
+        this.downloadedBlueprint = false;
+      }, 3000);
     },
 
     // -------------------------------------------------------------
@@ -737,6 +763,7 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
       if (!trend || !trend.title) return;
       const key = trend.title;
       this.trendIngestStatus[key] = 'ingesting';
+      this.showToast(`🚀 Ingesting & expanding breakout trend: "${trend.title}"...`, 'info');
       try {
         const res = await fetch('/api/trends/ingest', {
           method: 'POST',
@@ -749,6 +776,7 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
         });
         const data = await res.json();
         this.trendIngestStatus[key] = 'success';
+        this.showToast(`✅ Topic "${trend.title}" ingested & clustered into Radar!`, 'success');
         await this.loadStats();
         await this.loadInputKeywords();
         setTimeout(() => {
@@ -758,6 +786,7 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
       } catch (err) {
         console.error('Trend ingest error:', err);
         this.trendIngestStatus[key] = 'error';
+        this.showToast(`Failed to ingest trend: ${err.message}`, 'error');
       }
     },
 
@@ -785,7 +814,12 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
         if (data.state) {
           this.autopilot = data.state;
         } else {
-          this.fetchAutopilotStatus();
+          await this.fetchAutopilotStatus();
+        }
+        if (this.autopilot.is_active) {
+          this.showToast('🤖 Auto-Pilot turned ON: 30-min discovery cycles active', 'success');
+        } else {
+          this.showToast('⏸️ Auto-Pilot paused', 'info');
         }
       } catch (err) {
         console.error('Failed to toggle autopilot:', err);
@@ -959,7 +993,7 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
           }),
         });
         const res = await resp.json();
-        alert(`Successfully queued ${res.added_count} targeted seeds into the Frontier!`);
+        this.showToast(`Successfully queued ${res.added_count} targeted seeds into the Frontier!`, 'success');
         this.expandedSeeds = [];
         this.newSeedTerm = '';
         this.showAddSeedModal = false;
