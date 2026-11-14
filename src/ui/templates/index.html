@@ -67,10 +67,11 @@
       </div>
     </div>
 
-    <!-- Main Navigation Tabs (High Contrast, Centered & Plain English) -->
+    <!-- Main Navigation Tabs (Clean, Spacious, Uncrowded 3-Tab Structure) -->
     <div class="flex items-center space-x-1 sm:space-x-2">
+      <!-- Tab 1: Opportunity Radar (Main Search Gap Engine & Blueprint Builder) -->
       <button @click="activeTab = 'feed'"
-              class="px-3.5 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
+              class="px-4 py-2 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
               :class="activeTab === 'feed' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-amber-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
         <span>⚡</span>
         <span>Opportunity Radar</span>
@@ -79,8 +80,9 @@
               x-text="stats.total_queries || 0">0</span>
       </button>
 
+      <!-- Tab 2: Topic Explorer (Recursive Frontier Seed Hierarchy) -->
       <button @click="activeTab = 'frontier'; loadFrontier(1)"
-              class="px-3.5 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
+              class="px-4 py-2 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
               :class="activeTab === 'frontier' ? 'bg-indigo-500/25 text-indigo-200 border border-indigo-400/50 shadow-indigo-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
         <span>🌐</span>
         <span>Topic Explorer</span>
@@ -89,37 +91,14 @@
               x-text="stats.frontier_total || 0">0</span>
       </button>
 
-      <button @click="activeTab = 'matrix'; loadQueries(1)"
-              class="px-3.5 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
-              :class="activeTab === 'matrix' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
-        <span>📊</span>
-        <span>All Opportunities</span>
-      </button>
-
-      <button @click="activeTab = 'reports'; loadReports()"
-              class="px-3.5 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
-              :class="activeTab === 'reports' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
-        <span>📝</span>
-        <span>Daily Reports</span>
-        <span class="text-xs px-2 py-0.5 rounded-full font-mono font-black"
-              :class="activeTab === 'reports' ? 'bg-cyan-400 text-slate-950' : 'bg-cyan-500/20 text-cyan-300'"
-              x-text="reports.length || 0">0</span>
-      </button>
-
-      <button @click="activeTab = 'trends'; fetchLiveTrends('US')"
-              class="px-3.5 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
-              :class="activeTab === 'trends' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
-        <span>🔥</span>
-        <span>Live Trends</span>
-        <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono font-bold animate-pulse">RSS</span>
-      </button>
-
-      <button @click="activeTab = 'fleet'; loadFleetStatus()"
-              class="px-3.5 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
-              :class="activeTab === 'fleet' ? 'bg-purple-500/20 text-purple-300 border border-purple-400/50' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
+      <!-- Tab 3: Cloud Fleet & Reports (Consolidated Cloud Scanners, Reports & Diagnostics) -->
+      <button @click="activeTab = 'fleet'; loadFleetStatus(); loadReports(); loadLogs()"
+              class="px-4 py-2 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
+              :class="activeTab === 'fleet' ? 'bg-purple-500/20 text-purple-300 border border-purple-400/50 shadow-purple-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
         <span>🚀</span>
-        <span>Cloud Scanners</span>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono font-bold">Fleet</span>
+        <span>Cloud Fleet & Reports</span>
+        <span class="text-xs px-2 py-0.5 rounded-full font-mono font-bold"
+              :class="activeTab === 'fleet' ? 'bg-purple-400 text-slate-950' : 'bg-purple-500/20 text-purple-300'">20 Runners</span>
       </button>
     </div>
 
@@ -135,7 +114,7 @@
       </button>
 
       <button @click="dispatchFleet(3)" :disabled="fleetDispatching"
-              class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer"
+              class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer"
               title="Start cloud scanners searching for new keyword gaps">
         <span>⚡</span>
         <span class="hidden sm:inline" x-show="!fleetDispatching">Run Cloud Scan</span>
@@ -143,7 +122,7 @@
       </button>
 
       <button @click="syncFleet()" :disabled="fleetSyncing"
-              class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer"
+              class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer"
               title="Pull latest discovered opportunities from all cloud workers">
         <span>🔄</span>
         <span class="hidden sm:inline" x-show="!fleetSyncing">Sync Results</span>
@@ -151,7 +130,7 @@
       </button>
 
       <button @click="showAddSeedModal = true"
-              class="px-3 py-2 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 text-xs font-bold flex items-center space-x-1 transition cursor-pointer"
+              class="px-3 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 text-xs font-bold flex items-center space-x-1 transition cursor-pointer"
               title="Add a custom topic or keyword to scan">
         <span>➕</span>
         <span class="hidden sm:inline">Add Topic</span>
@@ -1019,134 +998,7 @@
     </div>
 
     <!-- ======================================================== -->
-    <!-- TAB 3: 📊 ALL OPPORTUNITIES TABLE & BULK ACTIONS         -->
-    <!-- ======================================================== -->
-    <div x-show="activeTab === 'matrix'" class="h-full flex flex-col overflow-hidden p-4 space-y-3">
-      <!-- Bulk Toolbar -->
-      <div class="flex items-center justify-between text-xs bg-slate-900/80 p-3 rounded-xl border border-slate-800 shrink-0">
-        <div class="flex items-center space-x-3">
-          <button @click="toggleSelectAll()"
-                  class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer"
-                  x-text="selectedRows.length === queries.length ? 'Deselect All' : 'Select All Page'"></button>
-          
-          <div x-show="selectedRows.length" class="flex items-center space-x-2">
-            <span class="font-mono text-amber-400 font-bold" x-text="selectedRows.length + ' selected'"></span>
-            <button @click="executeBulkVerdict('confirmed_gold')"
-                    class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-semibold cursor-pointer">⭐ Save</button>
-            <button @click="executeBulkVerdict('snoozed')"
-                    class="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-500 text-slate-950 font-semibold cursor-pointer">⏳ Later</button>
-            <button @click="executeBulkVerdict('already_served')"
-                    class="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-semibold cursor-pointer">✕ Dismiss</button>
-          </div>
-        </div>
-
-        <!-- Export Buttons -->
-        <div class="flex items-center space-x-2">
-          <button @click="exportData('csv')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 cursor-pointer">📥 CSV</button>
-          <button @click="exportData('json')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 cursor-pointer">📥 JSON</button>
-          <button @click="exportData('markdown')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 cursor-pointer">📋 Markdown</button>
-        </div>
-      </div>
-
-      <!-- Full-Screen Matrix Table -->
-      <div class="flex-1 border border-slate-800 rounded-xl overflow-y-auto bg-slate-900/60 shadow">
-        <table class="w-full text-left text-xs text-slate-300">
-          <thead class="bg-slate-900/90 border-b border-slate-800 text-[11px] text-slate-400 uppercase tracking-wider sticky top-0 z-10">
-            <tr>
-              <th class="py-2.5 px-3 w-8"></th>
-              <th class="py-2.5 px-3 font-semibold">Score</th>
-              <th class="py-2.5 px-3 font-semibold">Search Keyword</th>
-              <th class="py-2.5 px-3 font-semibold">Tool Format</th>
-              <th class="py-2.5 px-3 font-semibold">Category</th>
-              <th class="py-2.5 px-3 font-semibold">Trend</th>
-              <th class="py-2.5 px-3 font-semibold">Google Competition</th>
-              <th class="py-2.5 px-3 font-semibold">Status</th>
-              <th class="py-2.5 px-3 font-semibold text-right">Build Plan</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-800/60 font-mono text-xs">
-            <template x-for="item in queries" :key="item.id">
-              <tr class="hover:bg-slate-800/40 transition" :class="selectedRows.includes(item.id) ? 'bg-indigo-950/30' : ''">
-                <td class="py-2 px-3">
-                  <input type="checkbox" :checked="selectedRows.includes(item.id)" @change="toggleRowSelection(item.id)"
-                         class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0 cursor-pointer">
-                </td>
-                <td class="py-2 px-3">
-                  <span class="px-2 py-0.5 rounded font-bold"
-                        :class="item.gap_score >= 85 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : (item.gap_score >= 65 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400')"
-                        x-text="item.gap_score"></span>
-                </td>
-                <td class="py-2 px-3 font-sans font-bold text-slate-100" x-text="item.keyword"></td>
-                <td class="py-2 px-3 font-sans text-indigo-300" x-text="item.archetype"></td>
-                <td class="py-2 px-3 font-sans text-slate-400" x-text="item.category"></td>
-                <td class="py-2 px-3" :class="item.trend_type === 'BREAKOUT' ? 'text-rose-400 font-bold' : 'text-slate-400'" x-text="item.trend_velocity"></td>
-                <td class="py-2 px-3">
-                  <template x-if="item.exact_title_matches !== null && item.exact_title_matches !== undefined">
-                    <span :class="item.exact_title_matches === 0 ? 'text-emerald-400 font-bold' : 'text-slate-400'"
-                          x-text="item.exact_title_matches + '/10 ' + (item.exact_title_matches === 0 ? '🛡️ Zero' : '')"></span>
-                  </template>
-                  <template x-if="item.exact_title_matches === null || item.exact_title_matches === undefined">
-                    <button @click.stop="auditSerpLive(item)" 
-                            :disabled="item._auditing"
-                            class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 cursor-pointer">
-                      <span x-show="!item._auditing">⚡ Check</span>
-                      <span x-show="item._auditing" class="animate-pulse">...</span>
-                    </button>
-                  </template>
-                </td>
-                <td class="py-2 px-3 font-sans">
-                  <span class="px-1.5 py-0.2 rounded text-[10px]"
-                        :class="{
-                          'bg-emerald-500/20 text-emerald-300': item.human_verdict === 'confirmed_gold',
-                          'bg-amber-500/20 text-amber-300': item.human_verdict === 'snoozed',
-                          'bg-rose-500/20 text-rose-300': item.human_verdict === 'already_served',
-                          'bg-slate-800 text-slate-500': item.human_verdict === 'pending'
-                        }"
-                        x-text="item.human_verdict === 'confirmed_gold' ? 'Saved' : (item.human_verdict === 'already_served' ? 'Dismissed' : (item.human_verdict === 'snoozed' ? 'Later' : 'Pending'))"></span>
-                </td>
-                <td class="py-2 px-3 text-right font-sans space-x-1">
-                  <button @click="openCompare(item.keyword)" class="text-xs px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 hover:bg-amber-500/30 cursor-pointer" title="Compare Google Results">⚖️</button>
-                  <button @click="openBlueprint(item)" class="text-xs px-2 py-0.5 rounded bg-indigo-600/30 text-indigo-300 hover:bg-indigo-600/50 cursor-pointer">Build Plan ↗</button>
-                </td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ======================================================== -->
-    <!-- TAB 4: 📝 DAILY REPORTS READER                           -->
-    <!-- ======================================================== -->
-    <div x-show="activeTab === 'reports'" class="h-full flex overflow-hidden">
-      <!-- Left Reports List -->
-      <aside class="w-72 border-r border-slate-800 bg-slate-900/50 flex flex-col shrink-0 overflow-y-auto p-3 space-y-1.5">
-        <h3 class="text-xs font-bold text-slate-300 mb-2 px-1">Saved Daily Reports</h3>
-        <template x-for="r in reports" :key="r.filename">
-          <button @click="viewReport(r.filename)"
-                  class="w-full text-left p-2.5 rounded-lg border transition cursor-pointer"
-                  :class="selectedReport === r.filename ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300' : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'">
-            <div class="flex items-center justify-between mb-1">
-              <span class="font-bold text-xs" x-text="r.date"></span>
-              <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-mono" x-text="r.repo"></span>
-            </div>
-            <div class="text-[10px] text-slate-500 flex items-center justify-between font-mono">
-              <span x-text="r.filename"></span>
-              <span x-text="Math.round(r.size_bytes / 1024) + ' KB'"></span>
-            </div>
-          </button>
-        </template>
-        <div x-show="!reports.length" class="text-xs text-slate-500 italic p-3">No daily reports generated yet.</div>
-      </aside>
-
-      <!-- Right Report Content -->
-      <section class="flex-1 overflow-y-auto p-8 bg-slate-950">
-        <div class="max-w-4xl mx-auto prose prose-invert prose-amber max-w-none" x-html="selectedReportContent"></div>
-      </section>
-    </div>
-
-    <!-- ======================================================== -->
-    <!-- TAB 5: 🚀 CLOUD SCANNERS FLEET (20 WORKERS)              -->
+    <!-- TAB 3: 🚀 CLOUD FLEET, INTELLIGENCE REPORTS & LOGS       -->
     <!-- ======================================================== -->
     <div x-show="activeTab === 'fleet'" class="h-full overflow-y-auto p-6 space-y-6">
       <!-- Fleet Header Banner -->
@@ -1157,7 +1009,7 @@
               <span class="text-2xl">🚀</span>
               <div>
                 <h3 class="text-base font-bold text-slate-100 flex items-center space-x-2">
-                  <span>20 Free Cloud Background Scanners</span>
+                  <span>20 Cloud Background Scanners</span>
                   <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs border border-emerald-500/30 font-mono">⚡ 20 Parallel Workers</span>
                   <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs border border-cyan-500/30 font-mono">100% Free Forever</span>
                 </h3>
@@ -1182,34 +1034,75 @@
       </div>
 
       <!-- Repositories Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <template x-for="repo in (fleetData.repositories || [])" :key="repo.name">
-          <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between space-y-3">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-2">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <a :href="repo.url" target="_blank" class="font-mono text-sm font-bold text-slate-200 hover:text-amber-400 transition" x-text="repo.name"></a>
+      <div>
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Worker Repositories (Public GitHub Fleet)</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <template x-for="repo in (fleetData.repositories || [])" :key="repo.name">
+            <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <a :href="repo.url" target="_blank" class="font-mono text-sm font-bold text-slate-200 hover:text-amber-400 transition" x-text="repo.name"></a>
+                  </div>
+                  <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold" x-text="'Workers ' + repo.shards.map(s => s + 1).join(', ')"></span>
                 </div>
-                <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold" x-text="'Workers ' + repo.shards.map(s => s + 1).join(', ')"></span>
+                <p class="text-xs text-slate-400 mb-2" x-text="repo.description"></p>
+                <div class="text-[11px] text-indigo-300 font-medium bg-slate-950/80 p-2 rounded-lg border border-slate-800" x-text="repo.verticals.join(' · ')"></div>
               </div>
-              <p class="text-xs text-slate-400 mb-2" x-text="repo.description"></p>
-              <div class="text-[11px] text-indigo-300 font-medium bg-slate-950/80 p-2 rounded-lg border border-slate-800" x-text="repo.verticals.join(' · ')"></div>
-            </div>
 
-            <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
-              <span class="text-slate-500 text-[11px]">4 Ubuntu Cloud Workers</span>
-              <a :href="repo.url + '/actions'" target="_blank" class="text-cyan-400 hover:underline">View Live Runs ↗</a>
+              <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
+                <span class="text-slate-500 text-[11px]">4 Ubuntu Cloud Workers</span>
+                <a :href="repo.url + '/actions'" target="_blank" class="text-cyan-400 hover:underline">View Live Runs ↗</a>
+              </div>
             </div>
-          </div>
-        </template>
+          </template>
+        </div>
       </div>
 
-      <!-- Live Terminal Logs -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <!-- Integrated Daily Reports Section -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <span class="text-xl">📝</span>
+            <h4 class="text-sm font-bold text-slate-100">Daily Intelligence & Discovery Reports</h4>
+          </div>
+          <button @click="loadReports()" class="text-xs text-amber-400 hover:underline cursor-pointer">Refresh Reports</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-[300px]">
+          <!-- Left: List of Reports -->
+          <div class="lg:col-span-1 space-y-2 max-h-96 overflow-y-auto pr-1">
+            <template x-for="r in reports" :key="r.filename">
+              <button @click="viewReport(r.filename)"
+                      class="w-full text-left p-3 rounded-xl border transition cursor-pointer"
+                      :class="selectedReport === r.filename ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300' : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="font-bold text-xs" x-text="r.date"></span>
+                  <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-mono" x-text="r.repo"></span>
+                </div>
+                <div class="text-[10px] text-slate-500 flex items-center justify-between font-mono">
+                  <span class="truncate max-w-[150px]" x-text="r.filename"></span>
+                  <span x-text="Math.round(r.size_bytes / 1024) + ' KB'"></span>
+                </div>
+              </button>
+            </template>
+            <div x-show="!reports.length" class="text-xs text-slate-500 italic p-4 text-center">No daily reports found. Run sync to pull reports from GitHub fleet.</div>
+          </div>
+
+          <!-- Right: Report Content Preview -->
+          <div class="lg:col-span-2 bg-slate-950 rounded-xl p-5 border border-slate-800/80 max-h-96 overflow-y-auto">
+            <div x-show="selectedReportContent" class="prose prose-invert prose-amber max-w-none text-xs" x-html="selectedReportContent"></div>
+            <div x-show="!selectedReportContent" class="text-slate-500 text-xs italic text-center py-16">Select a report from the left to view the discovered intelligence.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Terminal Activity Log -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl">
         <div class="flex items-center justify-between mb-3">
           <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2">
-            <span>Live Scanner Activity Log</span>
+            <span>Live Engine Activity Log</span>
             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
           </h3>
           <button @click="loadLogs()" class="text-xs text-amber-400 hover:underline cursor-pointer">Refresh Log</button>
@@ -1224,175 +1117,6 @@
           </template>
           <div x-show="!logs.length" class="text-slate-500 italic">No activity logs recorded yet.</div>
         </div>
-      </div>
-    </div>
-
-    <!-- ======================================================== -->
-    <!-- TAB 6: 🔥 LIVE GOOGLE TRENDS RSS STREAM                  -->
-    <!-- ======================================================== -->
-    <div x-show="activeTab === 'trends'" class="h-full overflow-y-auto p-6 space-y-6">
-      <!-- Trends Header Banner -->
-      <div class="bg-gradient-to-r from-slate-900 via-amber-950/30 to-slate-900 border border-amber-500/30 rounded-2xl p-6 shadow-xl">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div class="space-y-1">
-            <div class="flex items-center space-x-3">
-              <span class="text-3xl">🔥</span>
-              <div>
-                <h3 class="text-base font-bold text-slate-100 flex items-center space-x-2 flex-wrap gap-y-1">
-                  <span>Live Google Trends Breakout Harvester</span>
-                  <span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30 font-mono">⚡ Real-Time RSS</span>
-                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs border border-emerald-500/30 font-mono">$0.00 / Zero Limits</span>
-                </h3>
-                <p class="text-xs text-slate-400 mt-1 max-w-3xl">
-                  Real-time breakout search spikes across Tier-1 English markets. Ingest any breakout topic with 1-click to trigger Trio-Stream multi-engine expansion, audit SERP competition for 0/10 void gaps, and generate a turnkey Website Silo Blueprint.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Controls: Country Switcher & Refresh -->
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
-            <!-- Country Pills -->
-            <div class="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800">
-              <button @click="fetchLiveTrends('US')"
-                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer"
-                      :class="selectedTrendGeo === 'US' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'">
-                🇺🇸 US
-              </button>
-              <button @click="fetchLiveTrends('GB')"
-                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer"
-                      :class="selectedTrendGeo === 'GB' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'">
-                🇬🇧 UK
-              </button>
-              <button @click="fetchLiveTrends('CA')"
-                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer"
-                      :class="selectedTrendGeo === 'CA' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'">
-                🇨🇦 CA
-              </button>
-              <button @click="fetchLiveTrends('AU')"
-                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer"
-                      :class="selectedTrendGeo === 'AU' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'">
-                🇦🇺 AU
-              </button>
-              <button @click="fetchLiveTrends('IN')"
-                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer"
-                      :class="selectedTrendGeo === 'IN' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'">
-                🇮🇳 IN
-              </button>
-            </div>
-
-            <!-- Refresh Button -->
-            <button @click="fetchLiveTrends(selectedTrendGeo)"
-                    :disabled="isTrendsLoading"
-                    class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs flex items-center justify-center space-x-1.5 transition disabled:opacity-50 cursor-pointer">
-              <span :class="isTrendsLoading ? 'animate-spin' : ''">🔄</span>
-              <span x-text="isTrendsLoading ? 'Fetching...' : 'Refresh RSS'"></span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Filter & Search Sub-bar -->
-        <div class="mt-4 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div class="relative flex-1 max-w-md">
-            <input type="text" x-model="trendsSearch"
-                   placeholder="Filter live trends by topic or category..."
-                   class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 shadow-inner">
-            <span class="absolute left-2.5 top-2 text-slate-500 text-xs">🔍</span>
-          </div>
-          <div class="flex items-center space-x-2 text-xs text-slate-400 font-mono">
-            <span>Showing:</span>
-            <span class="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-amber-300 font-bold" x-text="(filteredLiveTrends ? filteredLiveTrends.length : 0) + ' active breakouts'"></span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Loading State Skeleton -->
-      <div x-show="isTrendsLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
-        <template x-for="i in 8" :key="i">
-          <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <div class="flex justify-between items-center">
-              <div class="h-4 w-16 bg-slate-800 rounded"></div>
-              <div class="h-4 w-20 bg-slate-800 rounded"></div>
-            </div>
-            <div class="h-5 w-3/4 bg-slate-800 rounded"></div>
-            <div class="h-8 w-full bg-slate-800 rounded-lg"></div>
-          </div>
-        </template>
-      </div>
-
-      <!-- Empty State -->
-      <div x-show="!isTrendsLoading && (!filteredLiveTrends || filteredLiveTrends.length === 0)"
-           class="p-12 text-center rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3">
-        <span class="text-4xl">📡</span>
-        <h4 class="text-sm font-bold text-slate-200">No Breakout Trends Found</h4>
-        <p class="text-xs text-slate-400 max-w-md mx-auto">
-          No live trends match your current search query or region. Try selecting a different country or resetting the filter.
-        </p>
-        <button @click="trendsSearch = ''; fetchLiveTrends(selectedTrendGeo)"
-                class="px-3.5 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition cursor-pointer">
-          Reset Filter & Reload
-        </button>
-      </div>
-
-      <!-- Live Trends Cards Grid -->
-      <div x-show="!isTrendsLoading && filteredLiveTrends && filteredLiveTrends.length > 0"
-           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        <template x-for="(trend, idx) in filteredLiveTrends" :key="trend.title + idx">
-          <div class="p-4 rounded-xl bg-slate-900/70 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 transition flex flex-col justify-between space-y-3 shadow-md group">
-            <div class="space-y-2">
-              <!-- Top Row Badges -->
-              <div class="flex items-center justify-between gap-1.5">
-                <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-mono font-bold">
-                  <span>🔥</span>
-                  <span x-text="trend.traffic || '500+ searches'"></span>
-                </span>
-                <span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px] font-medium border border-slate-700/60 truncate max-w-[130px]"
-                      x-text="trend.category || 'General'"></span>
-              </div>
-
-              <!-- Trend Title -->
-              <div>
-                <h4 class="text-sm font-bold text-slate-100 group-hover:text-amber-300 transition capitalize leading-snug line-clamp-2"
-                    x-text="trend.title"></h4>
-                <div class="text-[10px] text-slate-500 font-mono mt-1" x-text="trend.pub_date ? new Date(trend.pub_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Live Breakout'"></div>
-              </div>
-
-              <!-- Snippet / Context if available -->
-              <div x-show="trend.snippet" class="text-xs text-slate-400 line-clamp-2 bg-slate-950/60 p-2 rounded-lg border border-slate-800/60 font-sans"
-                   x-text="trend.snippet"></div>
-            </div>
-
-            <!-- Bottom Actions -->
-            <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
-              <template x-if="trend.is_ingested">
-                <span class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center justify-center space-x-1 shadow-sm">
-                  <span>✓</span>
-                  <span>Auto-Ingested to Radar</span>
-                </span>
-              </template>
-              <template x-if="!trend.is_ingested">
-                <button @click="ingestTrend(trend)"
-                        :disabled="trendIngestStatus[trend.title] === 'ingesting'"
-                        class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow cursor-pointer disabled:opacity-60"
-                        :class="trendIngestStatus[trend.title] === 'success' ? 'bg-emerald-500 text-slate-950 font-black' : (trendIngestStatus[trend.title] === 'ingesting' ? 'bg-amber-600/40 text-amber-200 border border-amber-500/50' : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-amber-500/20')">
-                  <span x-show="!trendIngestStatus[trend.title]">🚀 Ingest & Build Silo</span>
-                  <span x-show="trendIngestStatus[trend.title] === 'ingesting'" class="flex items-center space-x-1">
-                    <span class="animate-spin">⏳</span>
-                    <span>Expanding...</span>
-                  </span>
-                  <span x-show="trendIngestStatus[trend.title] === 'success'">✅ Silo Ready!</span>
-                </button>
-              </template>
-
-              <a :href="trend.link || ('https://trends.google.com/trends/explore?q=' + encodeURIComponent(trend.title))"
-                 target="_blank" rel="noopener noreferrer"
-                 title="View on Google Trends"
-                 class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 text-xs transition cursor-pointer">
-                ↗
-              </a>
-            </div>
-          </div>
-        </template>
       </div>
     </div>
 
