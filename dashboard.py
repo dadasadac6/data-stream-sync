@@ -1,7 +1,7 @@
 """
-FastAPI Dashboard Server for Search Gap Radar & Stealth Swarm (Gold Miner)
+FastAPI Dashboard Server for Data Stream Sync & Telemetry Monitor
 Serves on http://localhost:8080 (and LAN http://0.0.0.0:8080).
-Provides REST endpoints for live opportunities, verdicts, reports, export, frontier queue, and swarm controls.
+Provides REST endpoints for live opportunities, verdicts, reports, export, frontier queue, and stream controls.
 """
 
 import csv
@@ -31,7 +31,7 @@ from engines.stream_sampler import StreamSamplerHTTP, TrendsBatchHTTP, load_cook
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("dashboard")
 
-app = FastAPI(title="Search Gap Radar & Stealth Swarm", version="5.0")
+app = FastAPI(title="Data Stream Sync & Telemetry Monitor", version="5.0")
 
 # Enable CORS for LAN access
 app.add_middleware(
@@ -218,7 +218,7 @@ def index_page():
     if os.path.exists(html_file):
         with open(html_file, "r", encoding="utf-8") as f:
             return f.read()
-    return "<h1>Gold Miner UI loading... Please refresh in a moment.</h1>"
+    return "<h1>Telemetry UI loading... Please refresh in a moment.</h1>"
 
 
 @app.get("/api/stats")
@@ -275,7 +275,7 @@ def get_queries(
             except Exception:
                 item["evidence"] = {}
 
-        # Defense-in-depth: Never treat an unverified/empty scrape as exact_title_matches = 0
+        # Defense-in-depth: Never treat an unverified/empty response as exact_title_matches = 0
         raw_results = item.get("evidence", {}).get("serp", {}).get("raw_results", [])
         if not raw_results or len(raw_results) == 0:
             item["exact_title_matches"] = None
@@ -756,7 +756,7 @@ def export_data(format: str = "json", category: str = "all", min_score: int = 0)
         return Response(
             content=output.getvalue(),
             media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=gold_miner_export.csv"},
+            headers={"Content-Disposition": "attachment; filename=telemetry_export.csv"},
         )
 
     if format.lower() == "markdown":

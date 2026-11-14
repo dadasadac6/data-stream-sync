@@ -459,7 +459,7 @@ def upsert_query(data: Dict[str, Any], db_path: Optional[str] = None) -> int:
 
 
 def is_keyword_processed(keyword: str, max_age_days: int = 7, db_path: Optional[str] = None) -> bool:
-    """Checks if a keyword was evaluated within max_age_days to avoid duplicate scrapers."""
+    """Checks if a keyword was evaluated within max_age_days to avoid duplicate queries."""
     conn = get_connection(db_path)
     try:
         cursor = conn.cursor()

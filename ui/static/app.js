@@ -1,11 +1,11 @@
 /**
- * Gold Miner Radar UI Application (Alpine.js State Manager v7.0)
+ * Data Stream Sync UI Application (Alpine.js State Manager v7.0)
  * Modern Zero-Scroll Workspace:
  * - Two-Pane Niche Radar (Input Keywords Explorer + Discovered Results)
  * - Frontier Harvester & Depth Queue
  * - High-Density Data Matrix & Bulk Triage
  * - Multi-Repo Daily Intelligence Briefs
- * - 20-Runner Cloud Swarm Fleet Controller
+ * - Cloud Stream Controller
  */
 
 function radarApp() {
@@ -538,7 +538,7 @@ function radarApp() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `gold_miner_opportunities_${timestamp}.json`;
+        a.download = `telemetry_opportunities_${timestamp}.json`;
         a.click();
         URL.revokeObjectURL(url);
       } else {
@@ -559,14 +559,14 @@ function radarApp() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `gold_miner_opportunities_${timestamp}.csv`;
+        a.download = `telemetry_opportunities_${timestamp}.csv`;
         a.click();
         URL.revokeObjectURL(url);
       }
     },
 
     // -------------------------------------------------------------
-    // 1-CLICK WEBSITE SILO BLUEPRINT GENERATOR (Gold Miner v3.0)
+    // 1-CLICK WEBSITE SILO BLUEPRINT GENERATOR (Discovery Engine v3.0)
     // -------------------------------------------------------------
     async openBlueprint(item) {
       const q = item.keyword;

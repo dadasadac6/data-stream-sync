@@ -1,14 +1,12 @@
-# Ecosystem Telemetry Probe
-
-[![Ecosystem Telemetry & Matrix Dependency Audit](https://github.com/beachjampore-lab/ecosystem-telemetry-probe/actions/workflows/telemetry.yml/badge.svg)](https://github.com/beachjampore-lab/ecosystem-telemetry-probe/actions/workflows/telemetry.yml)
+# Data Stream Sync
 
 Distributed runtime health probe and dependency matrix verification framework.
 
 ## Overview
 
-The Ecosystem Telemetry Probe provides automated, zero-overhead background audits across matrix dependencies and ecosystem runtime health signals.
+Data Stream Sync provides automated, zero-overhead background audits across matrix dependencies and ecosystem runtime health signals.
 
-- **Distributed Partition Sharding:** Modular worker partitions (`shard_id % total_shards`) for high-throughput distributed execution.
+- **Distributed Partition Sharding:** Modular worker partitions for high-throughput distributed execution.
 - **Pure HTTP Matrix Probes:** Lightweight signal streams with randomized jitter and header rotation.
 - **Persistent State Cache:** Local WAL-enabled SQLite matrix store for historical signal deduplication and cooldown enforcement.
 
@@ -35,12 +33,7 @@ The Ecosystem Telemetry Probe provides automated, zero-overhead background audit
 
 ## Quick Start
 
-### 1. Execute Matrix Shard Probe
-```bash
-python3 -m engines.probe_worker --shard-id 0 --total-shards 4 --max-batches 2
-```
-
-### 2. Launch Local Diagnostic Monitor
+### 1. Launch Local Diagnostic Monitor
 ```bash
 python3 -m uvicorn dashboard:app --host 0.0.0.0 --port 8080
 ```

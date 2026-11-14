@@ -1,5 +1,5 @@
 """
-Universal Informational & Niche Website Harvester (Gold Miner v3.0)
+Universal Informational & Niche Website Harvester (Data Stream Sync v3.0)
 Harvests high-intent, high-RPM root topics across 12 universal verticals.
 Eliminates programming bug tags in favor of actionable buyer, decision, cost, and legal topics.
 Includes Google Autocomplete trees, Wikipedia classifications, and Reddit consumer problem harvesters.
@@ -314,7 +314,7 @@ class NicheIngestor:
 
     def harvest_google_autocomplete(self, root: str, letters: str = "abcdefghijklmnopqrstuvwxyz") -> List[str]:
         """
-        Scrapes Google's Autocomplete JSON endpoint for intent-rich expansions of a root term.
+        Queries Google's Autocomplete JSON endpoint for intent-rich expansions of a root term.
         Zero API keys required.
         """
         seeds = []
@@ -337,7 +337,7 @@ class NicheIngestor:
         return seeds
 
     def harvest_reddit_pain_points(self, subreddits: Optional[List[str]] = None) -> List[str]:
-        """Scrapes consumer and business problem titles from active subreddits without API keys."""
+        """Ingests consumer and business problem titles from active public forum feeds without API keys."""
         if subreddits is None:
             subreddits = [
                 "smallbusiness", "personalfinance", "legaladvice", "realestateinvesting",

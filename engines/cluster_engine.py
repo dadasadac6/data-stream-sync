@@ -1,5 +1,5 @@
 """
-Semantic Silo Clustering & Website Doability Engine (Gold Miner v3.0)
+Semantic Silo Clustering & Website Doability Engine (Data Stream Sync v3.0)
 Groups harvested queries into coherent Topical Website Silos (Pillars + Clusters).
 Calculates the Proprietary 4-Factor Website Doability Index (0-100).
 Synthesizes 1-Click Production Blueprints (Domains, Pillar, Clusters, Lead Magnet, Monetization).
