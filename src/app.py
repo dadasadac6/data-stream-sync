@@ -965,51 +965,249 @@ def get_categories():
 
 
 @app.get("/api/export")
-def export_data(format: str = "json", category: str = "all", min_score: int = 0):
-    items, _ = db.get_queries(category=category, min_score=min_score, limit=5000)
+def export_data(
+    format: str = "json",
+    scope: str = "all",
+    category: str = "all",
+    min_score: int = 0,
+    competition_status: Optional[str] = "all",
+    verdict: Optional[str] = None,
+    sort_by: str = "best_to_build",
+    limit: int = 5000,
+):
+    """
+    Comprehensive, AI-Ready Export Engine.
+    Exports full database or active filtered view with rich competitive intelligence,
+    raw SERP competitor analysis, cluster hierarchies, and monetization RPM projections.
+    """
+    cat_filter = None if (scope == "all" or category.lower() == "all") else category
+    score_filter = 0 if scope == "all" else min_score
+    comp_filter = None if (scope == "all" or competition_status == "all") else competition_status
+
+    items, total = db.get_queries(
+        category=cat_filter,
+        min_score=score_filter,
+        competition_status=comp_filter,
+        verdict=verdict if scope != "all" else None,
+        sort_by=sort_by,
+        limit=limit,
+    )
+
+    enriched_items = []
+    for it in items:
+        ev = {}
+        if it.get("evidence_json"):
+            try:
+                ev = json.loads(it["evidence_json"]) if isinstance(it["evidence_json"], str) else it["evidence_json"]
+            except Exception:
+                ev = {}
+
+        serp = ev.get("serp", {})
+        dev = ev.get("dev", {})
+        raw_serp = serp.get("raw_results", [])
+
+        cat = it.get("category", "General")
+        if cat in ("Finance & Wealth", "Legal & Compliance"):
+            rpm_est = "$60 - $150 RPM (High Value / Lead-Gen)"
+        elif cat in ("Small Business & B2B", "Real Estate & Living"):
+            rpm_est = "$40 - $90 RPM (B2B SaaS / Affiliate)"
+        elif cat in ("Health & Fitness", "Travel & Visas"):
+            rpm_est = "$30 - $70 RPM (Sponsor / AdSense)"
+        else:
+            rpm_est = "$20 - $50 RPM (Programmatic Display)"
+
+        is_zero_comp = it.get("exact_title_matches") == 0
+        exact_matches = it.get("exact_title_matches")
+        matches_label = f"{exact_matches}/10" if exact_matches is not None else "Not Checked"
+
+        enriched = {
+            "id": it.get("id"),
+            "keyword": it.get("keyword"),
+            "category": cat,
+            "gap_score": it.get("gap_score", 0),
+            "doability_rank": it.get("doability_rank", 0),
+            "tool_archetype": it.get("archetype", "Recipe"),
+            "trend_velocity": it.get("trend_velocity", "Stable"),
+            "trend_type": it.get("trend_type", "TOP"),
+            "google_exact_title_matches": matches_label,
+            "is_zero_competition_void": is_zero_comp,
+            "parent_cluster": it.get("cluster_name", cat),
+            "cluster_total_keywords": it.get("cluster_kws", 1),
+            "cluster_zero_comp_voids": it.get("cluster_zeros", 0),
+            "top_competitor_title": it.get("top_competitor_title", ""),
+            "top_competitor_url": it.get("top_competitor_url", ""),
+            "monetization_rpm_estimate": rpm_est,
+            "serp_signals": {
+                "forum_count_in_top10": serp.get("forum_count", 0),
+                "top_forum_rank": serp.get("top_forum_rank"),
+                "root_domain_in_top5": serp.get("root_domain_in_top5", False),
+                "has_stale_content": serp.get("has_stale_content", False),
+            },
+            "dev_signals": {
+                "github_issues": bool(it.get("has_github_issues")),
+                "stack_questions": bool(it.get("has_stack_questions")),
+            },
+            "top_competitors": [
+                {
+                    "rank": idx + 1,
+                    "title": r.get("title", ""),
+                    "url": r.get("url", ""),
+                    "snippet": r.get("snippet", ""),
+                }
+                for idx, r in enumerate(raw_serp[:5])
+            ],
+            "first_seen": it.get("first_seen", ""),
+            "last_updated": it.get("last_updated", ""),
+        }
+        enriched_items.append(enriched)
+
+    timestamp = datetime.utcnow().strftime("%Y-%m-%d")
 
     if format.lower() == "csv":
         output = io.StringIO()
         fieldnames = [
-            "id", "keyword", "category", "gap_score", "archetype", "trend_type",
-            "trend_velocity", "exact_title_matches", "human_verdict", "top_competitor_title",
-            "top_competitor_url", "first_seen", "last_updated"
+            "id", "keyword", "category", "gap_score", "google_exact_title_matches",
+            "is_zero_competition_void", "tool_archetype", "trend_velocity", "parent_cluster",
+            "cluster_total_keywords", "cluster_zero_comp_voids", "monetization_rpm_estimate",
+            "top_competitor_title", "top_competitor_url", "forum_count_in_top10",
+            "competitor_2_title", "competitor_2_url", "competitor_3_title", "competitor_3_url",
+            "first_seen", "last_updated"
         ]
         writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
-        for row in items:
+        for it in enriched_items:
+            comps = it.get("top_competitors", [])
+            row = {
+                "id": it["id"],
+                "keyword": it["keyword"],
+                "category": it["category"],
+                "gap_score": it["gap_score"],
+                "google_exact_title_matches": it["google_exact_title_matches"],
+                "is_zero_competition_void": "YES" if it["is_zero_competition_void"] else "NO",
+                "tool_archetype": it["tool_archetype"],
+                "trend_velocity": it["trend_velocity"],
+                "parent_cluster": it["parent_cluster"],
+                "cluster_total_keywords": it["cluster_total_keywords"],
+                "cluster_zero_comp_voids": it["cluster_zero_comp_voids"],
+                "monetization_rpm_estimate": it["monetization_rpm_estimate"],
+                "top_competitor_title": it["top_competitor_title"],
+                "top_competitor_url": it["top_competitor_url"],
+                "forum_count_in_top10": it["serp_signals"]["forum_count_in_top10"],
+                "competitor_2_title": comps[1]["title"] if len(comps) > 1 else "",
+                "competitor_2_url": comps[1]["url"] if len(comps) > 1 else "",
+                "competitor_3_title": comps[2]["title"] if len(comps) > 2 else "",
+                "competitor_3_url": comps[2]["url"] if len(comps) > 2 else "",
+                "first_seen": it["first_seen"],
+                "last_updated": it["last_updated"],
+            }
             writer.writerow(row)
         output.seek(0)
+        filename = f"search_gaps_{scope}_{timestamp}.csv"
         return Response(
             content=output.getvalue(),
             media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=telemetry_export.csv"},
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
 
-    if format.lower() == "markdown":
+    if format.lower() in ("markdown", "prompt"):
+        zero_voids = [x for x in enriched_items if x["is_zero_competition_void"]]
         lines = [
-            f"# 💎 Gold Mine Action Checklist ({datetime.utcnow().strftime('%Y-%m-%d')})",
+            f"# 🎯 Autonomous Search Void Intelligence Dossier ({timestamp})",
             "",
-            "> Exported from Autonomous Search Gap Radar",
+            "> **Generated by Data Stream Sync Autonomous Discovery Engine**",
+            f"> Scope: **{scope.upper()}** | Total Evaluated Opportunities: **{len(enriched_items)}** | Untouched Voids (0/10): **{len(zero_voids)}**",
             "",
-            "## 💎 Critical Gold Mines (Score >= 85)",
+            "---",
+            "",
+            "## 🤖 AI Execution & Evaluation Prompt (Copy & Paste to Claude / GPT / Gemini)",
+            "",
+            "```text",
+            "Act as an elite Venture Studio Director, Senior SEO Architect, and Micro-SaaS Product Manager.",
+            "I have provided a vetted intelligence dossier of uncontested search voids discovered by an automated telemetry engine.",
+            "Each opportunity represents an authentic Google search query where 0 out of 10 top pages target the exact title,",
+            "leaving the SERP vulnerable to forum threads, generic homepages, or outdated content.",
+            "",
+            "YOUR TASK:",
+            "1. Triage & Rank: Select the top 10 most commercially viable opportunities with the highest ROI and lowest build effort.",
+            "2. Product Blueprints: For each selected top opportunity, define:",
+            "   - Exact 1-Page Interactive Tool / Calculator / Template specification.",
+            "   - Cornerstone Pillar Content Outline (2,000 words, high Information Gain).",
+            "   - 3 Supporting topical cluster articles to establish topical authority.",
+            "   - Recommended monetization engine (Lead-Gen form, Affiliate, Paid API, or Programmatic).",
+            "3. Fast Deployment Roadmap: Give a 14-day execution plan to build and rank these pages.",
+            "```",
+            "",
+            "---",
+            "",
+            "## 🏆 Top Uncontested 0/10 Opportunities (Ready to Build)",
+            "",
+            "| # | Target Keyword | Vertical | Score | Tool Format | Projected RPM | Top Google Competitor |",
+            "| :--- | :--- | :--- | :---: | :--- | :--- | :--- |",
         ]
-        for it in items:
-            if it.get("gap_score", 0) >= 85:
-                lines.append(f"- [ ] **{it['keyword']}** [{it['category']} / {it['archetype']}] — Score: {it['gap_score']}/100")
 
-        lines.extend(["", "## ⚡ High Opportunities (Score 65-84)"])
-        for it in items:
-            if 65 <= it.get("gap_score", 0) < 85:
-                lines.append(f"- [ ] **{it['keyword']}** [{it['category']} / {it['archetype']}] — Score: {it['gap_score']}/100")
+        for idx, it in enumerate(zero_voids[:50]):
+            comp_short = (it['top_competitor_title'][:40] + "...") if len(it['top_competitor_title']) > 40 else it['top_competitor_title']
+            lines.append(f"| {idx+1} | **{it['keyword']}** | {it['category']} | `{it['gap_score']}/100` | {it['tool_archetype']} | {it['monetization_rpm_estimate'].split(' ')[0]} | {comp_short or 'None'} |")
 
+        lines.extend([
+            "",
+            "---",
+            "",
+            "## 🔬 Deep Opportunity Analysis (Top 15 Breakdowns)",
+            "",
+        ])
+
+        for idx, it in enumerate(zero_voids[:15]):
+            lines.extend([
+                f"### {idx+1}. `{it['keyword']}`",
+                f"- **Vertical**: {it['category']} | **Parent Cluster**: `{it['parent_cluster']}`",
+                f"- **Opportunity Score**: **{it['gap_score']}/100** | **Velocity**: `{it['trend_velocity']}`",
+                f"- **Google Competition**: **`{it['google_exact_title_matches']}` (100% Untargeted Title Void)**",
+                f"- **Recommended Asset**: {it['tool_archetype']}",
+                f"- **Monetization Projection**: {it['monetization_rpm_estimate']}",
+                f"- **SERP Vulnerability**: {it['serp_signals']['forum_count_in_top10']} forum results ranking in top 10.",
+                f"- **Top Current Competitor**: [{it['top_competitor_title'] or 'None'}]({it['top_competitor_url'] or '#'})",
+                "",
+                "```json",
+                json.dumps({
+                    "keyword": it["keyword"],
+                    "category": it["category"],
+                    "top_competitors": it["top_competitors"],
+                    "serp_signals": it["serp_signals"]
+                }, indent=2),
+                "```",
+                "",
+            ])
+
+        filename = f"search_gaps_ai_prompt_dossier_{timestamp}.md"
         return Response(
             content="\n".join(lines),
             media_type="text/markdown",
-            headers={"Content-Disposition": "attachment; filename=gold_mine_checklist.md"},
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
 
-    return JSONResponse(content=items)
+    # Default: Deep AI-Ready JSON
+    payload = {
+        "metadata": {
+            "engine": "Data Stream Sync Autonomous Radar",
+            "scope": scope,
+            "total_opportunities": len(enriched_items),
+            "zero_competition_voids": sum(1 for x in enriched_items if x["is_zero_competition_void"]),
+            "exported_at": datetime.utcnow().isoformat() + "Z",
+            "ai_prompt_instructions": (
+                "This JSON contains high-intent search gaps where Google search results fail to target the exact query title. "
+                "Evaluate opportunities with is_zero_competition_void=true and high gap_score to prioritize building single-purpose web tools, "
+                "lead generators, or topical authority clusters."
+            ),
+        },
+        "opportunities": enriched_items,
+    }
+    filename = f"search_gaps_ai_dossier_{scope}_{timestamp}.json"
+    return Response(
+        content=json.dumps(payload, indent=2),
+        media_type="application/json",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
 
 
 FLEET_REPOS = [

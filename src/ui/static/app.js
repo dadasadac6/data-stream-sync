@@ -572,44 +572,28 @@ function radarApp() {
     },
 
     // -------------------------------------------------------------
-    // EXPORT OPPORTUNITIES (CSV / JSON)
+    // EXPORT OPPORTUNITIES (AI DOSSIER JSON / FULL CSV / MARKDOWN)
     // -------------------------------------------------------------
-    exportData(format = 'csv') {
-      if (!this.queries || !this.queries.length) {
-        this.showToast('No search gap opportunities available to export.', 'warning');
-        return;
+    exportData(format = 'json', scope = 'all') {
+      let url = `/api/export?format=${format}&scope=${scope}`;
+      if (scope === 'filtered') {
+        if (this.filters.category && this.filters.category !== 'all') {
+          url += `&category=${encodeURIComponent(this.filters.category)}`;
+        }
+        if (this.filters.min_score) {
+          url += `&min_score=${this.filters.min_score}`;
+        }
+        if (this.sortBy) {
+          url += `&sort_by=${encodeURIComponent(this.sortBy)}`;
+        }
+        if (this.quickFilter === 'voids') {
+          url += '&competition_status=void';
+        } else if (this.quickFilter === 'competed') {
+          url += '&competition_status=competed';
+        }
       }
-      const timestamp = new Date().toISOString().slice(0, 10);
-      if (format === 'json') {
-        const blob = new Blob([JSON.stringify(this.queries, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `telemetry_opportunities_${timestamp}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      } else {
-        const headers = ['Search Keyword', 'Opportunity Score', 'Tool Format', 'Category', 'Trend Velocity', 'Google Top 10 Matches', 'Top Competitor Title', 'Top Competitor URL', 'Status'];
-        const rows = this.queries.map(q => [
-          `"${(q.keyword || '').replace(/"/g, '""')}"`,
-          q.gap_score || 0,
-          `"${(q.archetype || '').replace(/"/g, '""')}"`,
-          `"${(q.category || '').replace(/"/g, '""')}"`,
-          `"${(q.trend_velocity || '').replace(/"/g, '""')}"`,
-          q.exact_title_matches !== null ? `${q.exact_title_matches}/10` : 'Not Checked',
-          `"${(q.top_competitor_title || '').replace(/"/g, '""')}"`,
-          `"${(q.top_competitor_url || '').replace(/"/g, '""')}"`,
-          `"${(q.human_verdict || 'pending')}"`
-        ]);
-        const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `telemetry_opportunities_${timestamp}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
+      this.showToast(`Generating ${format.toUpperCase()} export (${scope === 'all' ? 'All 1,000+ items' : 'Filtered view'})...`, 'info');
+      window.location.href = url;
     },
 
     // -------------------------------------------------------------

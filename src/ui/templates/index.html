@@ -403,24 +403,69 @@
               <span x-show="isAuditingBatch" class="animate-pulse">Checking...</span>
             </button>
 
-            <!-- Export Dropdown -->
+            <!-- Comprehensive AI & Matrix Export Dropdown -->
             <div class="relative" x-data="{ exportOpen: false }">
               <button @click="exportOpen = !exportOpen"
-                      class="px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-slate-700 text-xs font-bold flex items-center gap-1 transition cursor-pointer shadow-sm"
-                      title="Export current opportunities">
+                      class="px-2.5 py-1 rounded-lg bg-indigo-950/70 hover:bg-indigo-900/80 text-indigo-200 border border-indigo-500/40 hover:border-indigo-400 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+                      title="Export intelligence reports for AI models or spreadsheets">
                 <span>📥</span>
-                <span class="hidden xl:inline">Export</span>
-                <span class="text-[10px]">▼</span>
+                <span>Export</span>
+                <span class="text-[9px] text-indigo-400">▼</span>
               </button>
               <div x-show="exportOpen" @click.away="exportOpen = false"
                    x-transition
-                   class="absolute right-0 mt-1 w-36 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl z-30 py-1 text-xs">
-                <button @click="exportData('csv'); exportOpen = false" class="w-full text-left px-3 py-1.5 hover:bg-slate-800 text-slate-200 flex items-center gap-2 cursor-pointer font-medium">
-                  <span>📊</span> Export CSV
-                </button>
-                <button @click="exportData('json'); exportOpen = false" class="w-full text-left px-3 py-1.5 hover:bg-slate-800 text-slate-200 flex items-center gap-2 cursor-pointer font-medium">
-                  <span>📄</span> Export JSON
-                </button>
+                   class="absolute right-0 mt-1.5 w-64 bg-slate-900/95 border border-slate-700/80 rounded-xl shadow-2xl z-40 py-2 text-xs backdrop-blur-md divide-y divide-slate-800/80">
+                
+                <!-- Section 1: Full Database (AI Ready) -->
+                <div class="pb-1.5 px-2">
+                  <div class="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">All Opportunities (1,000+ Items)</div>
+                  <button @click="exportData('json', 'all'); exportOpen = false"
+                          class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-indigo-600/25 text-slate-200 hover:text-indigo-200 flex items-center justify-between cursor-pointer transition">
+                    <span class="flex items-center gap-2">
+                      <span>🤖</span>
+                      <span class="font-semibold">AI Dossier (.json)</span>
+                    </span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">Full SERP</span>
+                  </button>
+                  <button @click="exportData('markdown', 'all'); exportOpen = false"
+                          class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-amber-600/25 text-slate-200 hover:text-amber-200 flex items-center justify-between cursor-pointer transition">
+                    <span class="flex items-center gap-2">
+                      <span>📝</span>
+                      <span class="font-semibold">AI Prompt Plan (.md)</span>
+                    </span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">Prompt</span>
+                  </button>
+                  <button @click="exportData('csv', 'all'); exportOpen = false"
+                          class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-emerald-600/25 text-slate-200 hover:text-emerald-200 flex items-center justify-between cursor-pointer transition">
+                    <span class="flex items-center gap-2">
+                      <span>📊</span>
+                      <span class="font-semibold">Full Matrix (.csv)</span>
+                    </span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">22 Cols</span>
+                  </button>
+                </div>
+
+                <!-- Section 2: Current Filtered View -->
+                <div class="pt-1.5 px-2">
+                  <div class="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">Current Filtered View</div>
+                  <button @click="exportData('json', 'filtered'); exportOpen = false"
+                          class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-between cursor-pointer transition">
+                    <span class="flex items-center gap-2">
+                      <span>📄</span>
+                      <span>Filtered Slice (.json)</span>
+                    </span>
+                    <span class="text-[10px] text-slate-500 font-mono">JSON</span>
+                  </button>
+                  <button @click="exportData('csv', 'filtered'); exportOpen = false"
+                          class="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-between cursor-pointer transition">
+                    <span class="flex items-center gap-2">
+                      <span>📑</span>
+                      <span>Filtered Slice (.csv)</span>
+                    </span>
+                    <span class="text-[10px] text-slate-500 font-mono">CSV</span>
+                  </button>
+                </div>
+
               </div>
             </div>
           </div>
