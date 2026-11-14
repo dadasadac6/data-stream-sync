@@ -34,33 +34,37 @@ DEFAULT_GEOS = ["US", "GB", "CA", "AU", "IN"]
 
 # Ephemeral Noise Filter (Discard sports matches, pop celebrities, viral gossip)
 _NOISE_PATTERNS = re.compile(
-    r"\b(fc|vs|match|score|highlights|uefa|nfl|nba|premier league|chelsea|arsenal|"
-    r"real madrid|barcelona|cricket|ipl|wwe|ufc|boxing|grammy|oscar|celebrity|"
-    r"dating|actress|actor|trailer|episode|album|concert|singer|model)\b",
+    r"\b(fc|vs|match|score|scores|highlights|uefa|nfl|nba|nhl|mlb|premier league|chelsea|arsenal|"
+    r"real madrid|barcelona|cricket|ipl|wwe|ufc|boxing|tennis|golf|football|soccer|basketball|"
+    r"grammy|oscar|celebrity|dating|actress|actor|trailer|episode|album|concert|singer|model|"
+    r"movie|series|netflix|disney|hulu|show|special forces|game|season|coach|player|quarterback|touchdown)\b",
     re.IGNORECASE,
 )
 
 # High-Value Commercial Vertical Intent Keywords
 _CATEGORY_KEYWORDS = {
-    "Finance & Wealth": ["tax", "bank", "stock", "loan", "mortgage", "fund", "interest", "debt", "insurance", "401k", "crypto", "dividend", "inflation", "recession"],
-    "Small Business & B2B": ["business", "contract", "invoice", "freelance", "incorporation", "llc", "trademark", "vendor", "wholesale", "pricing", "sba"],
-    "Legal & Compliance": ["court", "lawsuit", "settlement", "decree", "affidavit", "eviction", "attorney", "statute", "lien", "compliance", "regulation", "rights"],
-    "Real Estate & Living": ["housing", "mortgage", "rent", "lease", "property", "hoa", "zoning", "inspection", "tenant", "landlord", "appraisal"],
-    "Clean Energy & Home": ["solar", "battery", "energy", "heat pump", "generator", "electric", "insulation", "roof", "water heater", "grid"],
-    "Health & Fitness": ["diet", "health", "insurance", "fsa", "hsa", "weight", "blood", "medical", "symptom", "vaccine", "exercise", "therapy"],
-    "Travel & Visas": ["visa", "passport", "flight", "border", "customs", "travel", "embassy", "tourist", "nomad", "airline"],
-    "E-Commerce & Selling": ["amazon", "shopify", "etsy", "ebay", "shipping", "ecommerce", "seller", "tariff", "fba", "delivery"],
+    "Finance & Wealth": ["tax", "bank", "stock", "loan", "mortgage", "fund", "interest", "debt", "insurance", "401k", "crypto", "dividend", "inflation", "recession", "split", "shares", "earnings", "gold", "silver", "market", "settlement"],
+    "Small Business & B2B": ["business", "contract", "invoice", "freelance", "incorporation", "llc", "trademark", "vendor", "wholesale", "pricing", "sba", "break even", "startup"],
+    "Legal & Compliance": ["court", "lawsuit", "settlement", "decree", "affidavit", "eviction", "attorney", "statute", "lien", "compliance", "regulation", "rights", "verdict", "judge", "parole", "custody"],
+    "Real Estate & Living": ["housing", "mortgage", "rent", "lease", "property", "hoa", "zoning", "inspection", "tenant", "landlord", "appraisal", "escrow", "deed"],
+    "Clean Energy & Home": ["solar", "battery", "energy", "heat pump", "generator", "electric", "insulation", "roof", "water heater", "grid", "power", "utility"],
+    "Health & Fitness": ["diet", "health", "insurance", "fsa", "hsa", "weight", "blood", "medical", "symptom", "vaccine", "exercise", "therapy", "disease", "fda", "recall", "calculator", "prescription"],
+    "Travel & Visas": ["visa", "passport", "flight", "border", "customs", "travel", "embassy", "tourist", "nomad", "airline", "entry requirements"],
+    "Developer & Cloud": ["api", "sdk", "python", "docker", "cloud", "aws", "linux", "github", "model", "ai", "database", "security", "outage", "kubernetes"],
+    "E-Commerce & Selling": ["amazon", "shopify", "etsy", "ebay", "shipping", "ecommerce", "seller", "tariff", "fba", "delivery", "inventory"],
 }
 
 
-def classify_trend_category(title: str, snippet: str = "") -> str:
-    """Classifies a trending topic into one of the 12 evergreen verticals."""
+def classify_trend_category(title: str, snippet: str = "") -> Optional[str]:
+    """Classifies a trending topic into one of the evergreen verticals, returning None if noise."""
     text = f"{title} {snippet}".lower()
+    if _NOISE_PATTERNS.search(text):
+        return None
     for cat, kws in _CATEGORY_KEYWORDS.items():
         for kw in kws:
             if re.search(r"\b" + re.escape(kw) + r"\b", text):
                 return cat
-    return "Productivity & Work"
+    return None
 
 
 class GoogleTrendsRSSHarvester:
@@ -97,14 +101,18 @@ class GoogleTrendsRSSHarvester:
                             snippet = child.text or ""
 
                     if title:
-                        items.append({
-                            "title": title.strip(),
-                            "geo": geo,
-                            "traffic": traffic.strip(),
-                            "pub_date": pub_date,
-                            "snippet": snippet.strip(),
-                            "link": link
-                        })
+                        clean_title = title.strip()
+                        cat = classify_trend_category(clean_title, snippet.strip())
+                        if cat:
+                            items.append({
+                                "title": clean_title,
+                                "category": cat,
+                                "geo": geo,
+                                "traffic": traffic.strip(),
+                                "pub_date": pub_date,
+                                "snippet": snippet.strip(),
+                                "link": link
+                            })
         except Exception as e:
             logger.warning(f"Error fetching Google Trends RSS for geo={geo}: {e}")
 

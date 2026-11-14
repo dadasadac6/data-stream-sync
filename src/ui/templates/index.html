@@ -1364,17 +1364,25 @@
 
             <!-- Bottom Actions -->
             <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
-              <button @click="ingestTrend(trend)"
-                      :disabled="trendIngestStatus[trend.title] === 'ingesting'"
-                      class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow cursor-pointer disabled:opacity-60"
-                      :class="trendIngestStatus[trend.title] === 'success' ? 'bg-emerald-500 text-slate-950 font-black' : (trendIngestStatus[trend.title] === 'ingesting' ? 'bg-amber-600/40 text-amber-200 border border-amber-500/50' : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-amber-500/20')">
-                <span x-show="!trendIngestStatus[trend.title]">🚀 Ingest & Build Silo</span>
-                <span x-show="trendIngestStatus[trend.title] === 'ingesting'" class="flex items-center space-x-1">
-                  <span class="animate-spin">⏳</span>
-                  <span>Expanding...</span>
+              <template x-if="trend.is_ingested">
+                <span class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center justify-center space-x-1 shadow-sm">
+                  <span>✓</span>
+                  <span>Auto-Ingested to Radar</span>
                 </span>
-                <span x-show="trendIngestStatus[trend.title] === 'success'">✅ Silo Ready!</span>
-              </button>
+              </template>
+              <template x-if="!trend.is_ingested">
+                <button @click="ingestTrend(trend)"
+                        :disabled="trendIngestStatus[trend.title] === 'ingesting'"
+                        class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow cursor-pointer disabled:opacity-60"
+                        :class="trendIngestStatus[trend.title] === 'success' ? 'bg-emerald-500 text-slate-950 font-black' : (trendIngestStatus[trend.title] === 'ingesting' ? 'bg-amber-600/40 text-amber-200 border border-amber-500/50' : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-amber-500/20')">
+                  <span x-show="!trendIngestStatus[trend.title]">🚀 Ingest & Build Silo</span>
+                  <span x-show="trendIngestStatus[trend.title] === 'ingesting'" class="flex items-center space-x-1">
+                    <span class="animate-spin">⏳</span>
+                    <span>Expanding...</span>
+                  </span>
+                  <span x-show="trendIngestStatus[trend.title] === 'success'">✅ Silo Ready!</span>
+                </button>
+              </template>
 
               <a :href="trend.link || ('https://trends.google.com/trends/explore?q=' + encodeURIComponent(trend.title))"
                  target="_blank" rel="noopener noreferrer"

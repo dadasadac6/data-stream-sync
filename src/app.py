@@ -229,6 +229,17 @@ def run_pipeline_scan(category_filter: str = "All", limit_batches: int = 2):
                         if gap_score >= 75:
                             gold_discovered += 1
 
+                        # RECURSIVE DEEP DRILL-DOWN:
+                        # If query is a breakout or uncontested void (<= 1 title matches) and depth < 3:
+                        # Automatically queue it as a child seed to research even deeper!
+                        depth = niche_info.get("depth_level", 0)
+                        if depth < 3 and (serp_res.get("exact_title_matches", 10) <= 1 or cand.get("trend_type") == "BREAKOUT" or gap_score >= 55):
+                            words = query.strip().split()
+                            if 2 <= len(words) <= 5:
+                                queued = db.queue_sub_niche(query, category=category, parent=niche_term, depth=depth + 1)
+                                if queued:
+                                    logger.info(f"🌱 [RECURSIVE DRILL-DOWN (Depth {depth+1})] Queued child seed: '{query}' under root '{niche_term}'")
+
                     evaluated_for_niche += 1
 
                 db.mark_frontier_complete(niche_term, queries_extracted=evaluated_for_niche)
@@ -362,8 +373,20 @@ def get_live_trends_endpoint(geo: str = "US"):
     """Fetches real-time breakout trends from Google Trends RSS across Tier-1 English geos."""
     harvester = GoogleTrendsRSSHarvester(geos=[geo.upper()])
     items = harvester.fetch_geo_rss(geo.upper())
+
+    conn = db.get_connection()
+    c = conn.cursor()
+    c.execute("SELECT LOWER(niche_term) FROM frontier_niches")
+    existing_terms = {r[0] for r in c.fetchall()}
+    c.execute("SELECT LOWER(keyword) FROM queries")
+    existing_queries = {r[0] for r in c.fetchall()}
+    conn.close()
+
     for item in items:
         item["category"] = classify_trend_category(item["title"], item.get("snippet", ""))
+        clean_title = item["title"].lower().strip()
+        item["is_ingested"] = (clean_title in existing_terms or clean_title in existing_queries)
+
     return {"items": items, "geo": geo.upper(), "total": len(items)}
 
 
@@ -428,36 +451,55 @@ autopilot_stop_event = threading.Event()
 
 def _autopilot_worker_loop():
     logger.info("Autonomous Auto-Pilot daemon started.")
-    harvester = GoogleTrendsRSSHarvester(geos=["US", "GB"])
+    harvester = GoogleTrendsRSSHarvester(geos=["US", "GB", "CA", "AU", "IN"])
     while not autopilot_stop_event.is_set():
         try:
-            autopilot_state["current_status"] = "Harvesting Live Google Trends RSS..."
+            autopilot_state["current_status"] = "Harvesting Live Google Trends Breakouts (US, GB, CA, AU, IN)..."
             autopilot_state["last_run"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             trends = harvester.harvest_all_geos()
 
+            # Automatically queue high-value commercial trends into frontier
             ingested = 0
-            for t in trends[:6]:
-                if t.get("category") in ["Finance & Wealth", "Legal & Compliance", "Small Business & B2B", "Real Estate & Living", "Health & Fitness"]:
-                    db.queue_sub_niche(t["title"], category=t["category"], depth=0)
-                    ingested += 1
+            for t in trends:
+                cat = t.get("category", "")
+                if cat in [
+                    "Finance & Wealth", "Legal & Compliance", "Small Business & B2B",
+                    "Real Estate & Living", "Health & Fitness", "Clean Energy & Home",
+                    "Travel & Visas", "Productivity & Work", "Developer & Cloud"
+                ]:
+                    title = t.get("title", "").strip()
+                    if title and db.queue_sub_niche(title, category=cat, depth=0):
+                        ingested += 1
 
-            autopilot_state["current_status"] = "Mining frontier seeds via Trio-Stream Suggester..."
-            run_pipeline_scan(category_filter="All", limit_batches=1)
+            autopilot_state["current_status"] = "Drilling into frontier queue (Recursive Depth Scan)..."
+            run_pipeline_scan(category_filter="All", limit_batches=2)
 
             autopilot_state["cycles_completed"] += 1
-            autopilot_state["current_status"] = f"Sleeping (Cycle {autopilot_state['cycles_completed']} done, {ingested} breakouts queued)"
+            autopilot_state["current_status"] = f"Active (Cycle {autopilot_state['cycles_completed']} done, {ingested} breakouts queued)"
         except Exception as e:
             logger.error(f"Auto-pilot cycle error: {e}")
             autopilot_state["current_status"] = f"Cycle paused: {e}"
 
-        # Sleep 1800s (30 mins) with 5s wake checks
-        for _ in range(360):
+        # Sleep 300s (5 minutes) with 5s wake checks
+        for _ in range(60):
             if autopilot_stop_event.is_set():
                 break
             time.sleep(5)
 
     autopilot_state["current_status"] = "Stopped"
     autopilot_state["is_active"] = False
+
+
+@app.on_event("startup")
+def startup_event():
+    """Starts the autonomous recursive discovery daemon automatically on application boot."""
+    global autopilot_thread, autopilot_stop_event
+    if not autopilot_state["is_active"]:
+        autopilot_stop_event.clear()
+        autopilot_state["is_active"] = True
+        autopilot_thread = threading.Thread(target=_autopilot_worker_loop, daemon=True)
+        autopilot_thread.start()
+        logger.info("⚡ Autonomous Discovery Auto-Pilot automatically started on startup!")
 
 
 @app.get("/api/autopilot/status")
