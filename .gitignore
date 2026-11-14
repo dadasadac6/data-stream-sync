@@ -16,3 +16,4 @@ plan/
 tools/
 sync_fleet.sh
 reference/
+raw_telemetry_samples.json
