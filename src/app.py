@@ -23,6 +23,8 @@ from pydantic import BaseModel
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import re
+import time
 import storage.db as db
 from engines.signal_tracer import SignalTracer, DevEvidenceCollector
 from engines.filter_pipeline import FilterPipeline, ExclusionShield
@@ -30,6 +32,9 @@ from engines.taxonomy_loader import VERTICALS
 from engines.evaluator import compute_composite_score
 from engines.index_auditor import IndexAuditor, SerpSieve
 from engines.stream_sampler import StreamSamplerHTTP, TrendsBatchHTTP, load_cookie_pool
+from engines.trends_rss_harvester import GoogleTrendsRSSHarvester, classify_trend_category
+from engines.multi_suggester import MultiStreamSuggester
+from engines.cluster_engine import get_doable_website_ideas, generate_markdown_production_package
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("dashboard")
@@ -116,6 +121,16 @@ class ScanRequest(BaseModel):
     limit_batches: Optional[int] = 2
 
 
+class TrendIngestRequest(BaseModel):
+    title: str
+    category: Optional[str] = "General"
+    geo: Optional[str] = "US"
+
+
+class AutopilotToggleRequest(BaseModel):
+    enabled: bool
+
+
 def run_pipeline_scan(category_filter: str = "All", limit_batches: int = 2):
     """Background task to run trends batch extraction from frontier queue."""
     global scan_state
@@ -159,6 +174,15 @@ def run_pipeline_scan(category_filter: str = "All", limit_batches: int = 2):
                     candidates.append({**item, "trend_type": "BREAKOUT" if item.get("isBreakout") else "RISING"})
                 for item in term_data.get("top", []):
                     candidates.append({**item, "trend_type": "TOP"})
+
+                # Enrich with Trio-Stream Suggester (DuckDuckGo + Bing + Chrome AC + Qualified Intent Trees)
+                try:
+                    suggester = MultiStreamSuggester()
+                    intent_queries = suggester.expand_seed_with_intent_trees(niche_term)
+                    for iq in intent_queries:
+                        candidates.append({"query": iq, "trend_type": "QUALIFIED_INTENT", "change": "High Intent"})
+                except Exception as ex:
+                    logger.debug(f"Suggester expansion failed for {niche_term}: {ex}")
 
                 evaluated_for_niche = 0
                 for cand in candidates:
@@ -295,11 +319,165 @@ def get_queries(
 @app.get("/api/website-ideas")
 def get_website_ideas_endpoint(limit: int = 60, min_score: int = 50, category: Optional[str] = "all"):
     """Returns clustered, high-doability website ideas with blueprints."""
-    from engines.cluster_engine import get_doable_website_ideas
     ideas = get_doable_website_ideas(limit=limit, min_score=min_score)
     if category and category.lower() != "all":
         ideas = [i for i in ideas if i.get("category", "").lower() == category.lower()]
     return {"ideas": ideas, "total": len(ideas)}
+
+
+@app.get("/api/blueprint/export")
+def export_blueprint_endpoint(topic: str = Query(...)):
+    """Generates and downloads a complete turnkey AI production package for a topic."""
+    ideas = get_doable_website_ideas(limit=120, min_score=30)
+    target_idea = None
+    topic_clean = topic.strip().lower()
+    for idea in ideas:
+        p_kw = idea.get("pillar_keyword", "").lower()
+        if p_kw == topic_clean or topic_clean in p_kw:
+            target_idea = idea
+            break
+
+    if not target_idea and ideas:
+        target_idea = ideas[0]
+
+    if not target_idea:
+        raise HTTPException(status_code=404, detail="Topic blueprint not found")
+
+    pkg_content = generate_markdown_production_package(target_idea)
+    slug = re.sub(r"[^a-z0-9]+", "_", target_idea.get("pillar_keyword", "topic").lower()).strip("_")
+    filename = f"{slug}_ai_production_package.md"
+    return Response(
+        content=pkg_content,
+        media_type="text/markdown",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+
+@app.get("/api/trends/live")
+def get_live_trends_endpoint(geo: str = "US"):
+    """Fetches real-time breakout trends from Google Trends RSS across Tier-1 English geos."""
+    harvester = GoogleTrendsRSSHarvester(geos=[geo.upper()])
+    items = harvester.fetch_geo_rss(geo.upper())
+    for item in items:
+        item["category"] = classify_trend_category(item["title"], item.get("snippet", ""))
+    return {"items": items, "geo": geo.upper(), "total": len(items)}
+
+
+@app.post("/api/trends/ingest")
+def ingest_trend_endpoint(req: TrendIngestRequest, background_tasks: BackgroundTasks):
+    """Ingests a live breakout trend, runs Trio-Stream expansion & SERP audit, and clusters it."""
+    title = req.title.strip()
+    category = req.category or "General"
+    if not title:
+        raise HTTPException(status_code=400, detail="Title cannot be empty")
+
+    added = db.queue_sub_niche(title, category=category, depth=0)
+
+    def _process_trend_now(kw: str, cat: str):
+        try:
+            suggester = MultiStreamSuggester()
+            sieve = SerpSieve()
+            collector = DevEvidenceCollector()
+            sub_queries = suggester.expand_seed_with_intent_trees(kw)
+            for sq in sub_queries[:12]:
+                serp_res = sieve.audit(sq)
+                dev_res = collector.collect(sq)
+                score_data = compute_composite_score(
+                    serp_score=serp_res["serp_score"],
+                    dev_score=dev_res["dev_score"],
+                    trend_type="BREAKOUT",
+                    trend_velocity="10,000+ Searches",
+                    keyword=sq,
+                    serp_data=serp_res
+                )
+                db.upsert_query({
+                    "keyword": sq,
+                    "category": cat,
+                    "trend_type": "BREAKOUT",
+                    "trend_velocity": "High Breakout",
+                    "gap_score": score_data["gap_score"],
+                    "archetype": score_data["archetype"],
+                    "exact_title_matches": serp_res.get("exact_title_matches", 0),
+                    "has_github_issues": False,
+                    "has_stack_questions": False,
+                    "top_competitor_title": serp_res.get("top_competitor_title", ""),
+                    "top_competitor_url": serp_res.get("top_competitor_url", ""),
+                    "evidence": {"serp": serp_res, "dev": dev_res, "score_breakdown": score_data["breakdown"]},
+                })
+        except Exception as e:
+            logger.error(f"Error processing trend {kw}: {e}")
+
+    background_tasks.add_task(_process_trend_now, title, category)
+    return {"status": "ok", "message": f"Trend '{title}' queued for immediate silo generation", "added": added}
+
+
+autopilot_state = {
+    "is_active": False,
+    "last_run": None,
+    "cycles_completed": 0,
+    "items_discovered": 0,
+    "current_status": "Idle"
+}
+autopilot_thread = None
+autopilot_stop_event = threading.Event()
+
+
+def _autopilot_worker_loop():
+    logger.info("Autonomous Auto-Pilot daemon started.")
+    harvester = GoogleTrendsRSSHarvester(geos=["US", "GB"])
+    while not autopilot_stop_event.is_set():
+        try:
+            autopilot_state["current_status"] = "Harvesting Live Google Trends RSS..."
+            autopilot_state["last_run"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            trends = harvester.harvest_all_geos()
+
+            ingested = 0
+            for t in trends[:6]:
+                if t.get("category") in ["Finance & Wealth", "Legal & Compliance", "Small Business & B2B", "Real Estate & Living", "Health & Fitness"]:
+                    db.queue_sub_niche(t["title"], category=t["category"], depth=0)
+                    ingested += 1
+
+            autopilot_state["current_status"] = "Mining frontier seeds via Trio-Stream Suggester..."
+            run_pipeline_scan(category_filter="All", limit_batches=1)
+
+            autopilot_state["cycles_completed"] += 1
+            autopilot_state["current_status"] = f"Sleeping (Cycle {autopilot_state['cycles_completed']} done, {ingested} breakouts queued)"
+        except Exception as e:
+            logger.error(f"Auto-pilot cycle error: {e}")
+            autopilot_state["current_status"] = f"Cycle paused: {e}"
+
+        # Sleep 1800s (30 mins) with 5s wake checks
+        for _ in range(360):
+            if autopilot_stop_event.is_set():
+                break
+            time.sleep(5)
+
+    autopilot_state["current_status"] = "Stopped"
+    autopilot_state["is_active"] = False
+
+
+@app.get("/api/autopilot/status")
+def get_autopilot_status():
+    return autopilot_state
+
+
+@app.post("/api/autopilot/toggle")
+def toggle_autopilot(req: AutopilotToggleRequest):
+    global autopilot_thread, autopilot_stop_event
+    if req.enabled:
+        if not autopilot_state["is_active"]:
+            autopilot_stop_event.clear()
+            autopilot_state["is_active"] = True
+            autopilot_thread = threading.Thread(target=_autopilot_worker_loop, daemon=True)
+            autopilot_thread.start()
+            return {"status": "ok", "message": "Autonomous Auto-Pilot enabled", "state": autopilot_state}
+        return {"status": "ok", "message": "Auto-Pilot already running", "state": autopilot_state}
+    else:
+        if autopilot_state["is_active"]:
+            autopilot_stop_event.set()
+            autopilot_state["is_active"] = False
+            return {"status": "ok", "message": "Autonomous Auto-Pilot stopping...", "state": autopilot_state}
+        return {"status": "ok", "message": "Auto-Pilot already stopped", "state": autopilot_state}
 
 
 @app.get("/api/input-keywords")

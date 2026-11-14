@@ -78,6 +78,21 @@ function radarApp() {
     activeBlueprint: {},
     copiedPrompt: false,
 
+    // Live Google Trends Feed
+    liveTrends: [],
+    selectedTrendGeo: 'US',
+    trendsSearch: '',
+    isTrendsLoading: false,
+    trendIngestStatus: {},
+
+    // Autonomous Auto-Pilot
+    autopilot: {
+      is_active: false,
+      last_run: null,
+      cycles_completed: 0,
+      current_status: 'Idle'
+    },
+
     // Cookie & Fleet Swarm Status
     cookieStatus: {},
     fleetData: { repositories: [], total_concurrent_runners: 20 },
@@ -114,6 +129,16 @@ function radarApp() {
       return item ? (item.status === 'pending' && !item.queries_extracted) : false;
     },
 
+    get filteredLiveTrends() {
+      if (!this.trendsSearch || !this.trendsSearch.trim()) return this.liveTrends;
+      const q = this.trendsSearch.trim().toLowerCase();
+      return (this.liveTrends || []).filter(t => 
+        (t.title && t.title.toLowerCase().includes(q)) || 
+        (t.category && t.category.toLowerCase().includes(q)) ||
+        (t.snippet && t.snippet.toLowerCase().includes(q))
+      );
+    },
+
     init() {
       this.initApp();
     },
@@ -129,10 +154,12 @@ function radarApp() {
       await this.loadFleetStatus();
       await this.loadReports();
       await this.loadLogs();
+      await this.fetchAutopilotStatus();
 
       // Background telemetry polling every 4s
       setInterval(() => {
         this.loadStats();
+        this.fetchAutopilotStatus();
         if (this.scanState.is_scanning) {
           this.loadQueries(this.page);
           this.loadInputKeywords();
@@ -680,6 +707,88 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
         setTimeout(() => {
           this.copiedPrompt = false;
         }, 2500);
+      }
+    },
+
+    downloadBlueprintPackage(topic) {
+      const q = topic || (this.activeBlueprint ? this.activeBlueprint.keyword : '');
+      if (!q) return;
+      window.location.href = `/api/blueprint/export?topic=${encodeURIComponent(q)}`;
+    },
+
+    // -------------------------------------------------------------
+    // LIVE GOOGLE TRENDS RSS STREAM
+    // -------------------------------------------------------------
+    async fetchLiveTrends(geo = 'US') {
+      this.selectedTrendGeo = geo;
+      this.isTrendsLoading = true;
+      try {
+        const res = await fetch(`/api/trends/live?geo=${geo}`);
+        const data = await res.json();
+        this.liveTrends = data.items || [];
+      } catch (err) {
+        console.error('Failed to fetch live trends:', err);
+      } finally {
+        this.isTrendsLoading = false;
+      }
+    },
+
+    async ingestTrend(trend) {
+      if (!trend || !trend.title) return;
+      const key = trend.title;
+      this.trendIngestStatus[key] = 'ingesting';
+      try {
+        const res = await fetch('/api/trends/ingest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: trend.title,
+            category: trend.category || 'General',
+            geo: this.selectedTrendGeo
+          })
+        });
+        const data = await res.json();
+        this.trendIngestStatus[key] = 'success';
+        await this.loadStats();
+        await this.loadInputKeywords();
+        setTimeout(() => {
+          this.activeTab = 'feed';
+          this.loadQueries(1);
+        }, 1200);
+      } catch (err) {
+        console.error('Trend ingest error:', err);
+        this.trendIngestStatus[key] = 'error';
+      }
+    },
+
+    // -------------------------------------------------------------
+    // AUTOPILOT
+    // -------------------------------------------------------------
+    async fetchAutopilotStatus() {
+      try {
+        const res = await fetch('/api/autopilot/status');
+        this.autopilot = await res.json();
+      } catch (err) {
+        console.error('Failed to fetch autopilot status:', err);
+      }
+    },
+
+    async toggleAutopilot() {
+      const nextState = !this.autopilot.is_active;
+      try {
+        const res = await fetch('/api/autopilot/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: nextState })
+        });
+        const data = await res.json();
+        if (data.state) {
+          this.autopilot = data.state;
+        } else {
+          this.fetchAutopilotStatus();
+        }
+      } catch (err) {
+        console.error('Failed to toggle autopilot:', err);
       }
     },
 

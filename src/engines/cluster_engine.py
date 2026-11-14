@@ -240,6 +240,113 @@ def get_doable_website_ideas(limit: int = 50, min_score: int = 60) -> List[Dict[
     return qualified[:limit]
 
 
+def generate_markdown_production_package(idea: Dict[str, Any]) -> str:
+    """Synthesizes a complete turnkey AI production package for the given website silo idea."""
+    pillar = idea.get("pillar_keyword", "Niche Topic").title()
+    category = idea.get("category", "General")
+    doability = idea.get("doability_score", 0)
+    rpm_label = idea.get("rpm_label", "$45 - $90 RPM")
+    serp = idea.get("serp_status", "Low Competition")
+    bp = idea.get("blueprint", {})
+    domains = bp.get("suggested_domains", [])
+    pillar_page = bp.get("pillar_page", {})
+    cluster_articles = bp.get("cluster_articles", [])
+    lead_asset = bp.get("interactive_asset", "Worksheet")
+    monetization = bp.get("monetization", {})
+
+    domains_md = "\n".join([f"- **`{d}`** (Suggested primary brand domain)" for d in domains])
+    sections_md = "\n".join([f"  - {s}" for s in pillar_page.get("core_sections", [])])
+    
+    clusters_md = ""
+    for idx, ca in enumerate(cluster_articles, 1):
+        clusters_md += f"""
+### Cluster Article #{idx}: {ca.get('title')}
+- **Target Query:** `{ca.get('target_query')}`
+- **Article Format:** {ca.get('format')} (1,200 words)
+- **Role:** Supporting deep dive. Links directly to the Pillar Page using anchor text *"{ca.get('target_query')}"*.
+- **Claude / GPT-4o Writing Prompt:**
+  ```text
+  You are an expert technical SEO copywriter and industry authority. Write an exhaustive, 1,200-word guide on "{ca.get('title')}".
+  Target keyword: "{ca.get('target_query')}".
+  Guidelines:
+  1. Do NOT write generic conversational filler. Start directly with an actionable summary table or 3-step answer.
+  2. Include concrete examples, statutory deadlines, cost figures, and practical caveats.
+  3. Format with clean H2 and H3 markdown headings, comparison tables, and bulleted takeaways.
+  4. Include a dedicated FAQ section addressing long-tail user pain points.
+  ```
+"""
+
+    md_content = f"""# 🚀 Complete Production Blueprint & AI Execution Package
+## Niche Website Silo: {pillar}
+
+---
+
+### 1. Executive Intelligence Dossier
+- **Pillar Topic:** `{pillar}`
+- **Evergreen Vertical:** {category}
+- **Website Doability Index:** **{doability} / 100**
+- **Monetization RPM Potential:** {rpm_label} ({monetization.get('affiliate_bounty', '$50 - $100 / lead')})
+- **SERP Gap Status:** {serp}
+- **Cluster Depth:** {idea.get('cluster_size', 1)} harvested keywords in this semantic silo
+
+---
+
+### 2. Recommended Domain Names
+{domains_md}
+
+---
+
+### 3. Cornerstone Pillar Guide (2,500 Words)
+- **Pillar Title:** {pillar_page.get('title', f'The Complete Guide to {pillar}')}
+- **Target Search Query:** `{pillar_page.get('target_query', pillar)}`
+- **Target Word Count:** 2,500+ words
+- **Architectural Sections:**
+{sections_md}
+
+#### 📋 Turnkey AI Generation Prompt for Pillar Article:
+```text
+Act as an elite authority writer in {category}. Write an authoritative, 2,500-word comprehensive cornerstone guide titled:
+"{pillar_page.get('title')}"
+Target Query: "{pillar_page.get('target_query')}"
+
+Structure the article using these exact H2/H3 headings:
+{sections_md}
+
+Requirements:
+- High Information Gain: Do not summarize existing superficial blog posts. Include specific dollar figures, statutory references, timeline estimations, and contractual clauses.
+- Visual Structuring: Include at least 2 detailed Markdown comparison tables and 1 step-by-step checklist.
+- Tone: Objective, authoritative, highly structured, and trustworthy.
+- Add an exhaustive FAQ section at the end with 5 high-intent long-tail questions.
+```
+
+---
+
+### 4. Supporting Topical Cluster Articles (1,200 Words Each)
+{clusters_md}
+
+---
+
+### 5. High-Converting Interactive Lead Asset
+- **Asset Concept:** {lead_asset}
+- **Conversion Strategy:** Embed directly above the fold on the Cornerstone Pillar page and within each cluster post.
+- **Lead Capture:** Offer instant downloadable PDF results / summary in exchange for email newsletter subscription.
+
+---
+
+### 6. Monetization Playbook
+- **Display Ads:** {monetization.get('display_rpm', '$45 - $90 RPM')} via Mediavine, Raptive, or Google AdSense.
+- **Affiliate Partners:** {monetization.get('affiliate_bounty', 'Top Tier Lead Gen')}
+- **Primary Model:** {monetization.get('primary_model', 'High-Ticket Lead Generation')}
+- **Internal Linking Formula:**
+  - Every Cluster Article links up to the Pillar Page using exact target anchor text.
+  - The Pillar Page links out to all 4 Cluster Articles in the "Related In-Depth Guides" section.
+
+---
+*Generated autonomously by Data Stream Sync (Discovery Engine v3.0)*
+"""
+    return md_content.strip()
+
+
 if __name__ == "__main__":
     print("Testing Topic Clustering & Doability Engine on existing DB queries...")
     ideas = get_doable_website_ideas(limit=10, min_score=50)

@@ -105,17 +105,34 @@
               x-text="reports.length || 0">0</span>
       </button>
 
+      <button @click="activeTab = 'trends'; fetchLiveTrends('US')"
+              class="px-3.5 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
+              :class="activeTab === 'trends' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
+        <span>🔥</span>
+        <span>Live Trends</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono font-bold animate-pulse">RSS</span>
+      </button>
+
       <button @click="activeTab = 'fleet'; loadFleetStatus()"
               class="px-3.5 py-1.5 rounded-xl text-xs lg:text-sm font-bold transition flex items-center space-x-2 cursor-pointer shadow-sm"
               :class="activeTab === 'fleet' ? 'bg-purple-500/20 text-purple-300 border border-purple-400/50' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'">
         <span>🚀</span>
         <span>Cloud Scanners</span>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono font-bold">20</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono font-bold">Fleet</span>
       </button>
     </div>
 
     <!-- Global Quick Actions -->
     <div class="flex items-center space-x-2 shrink-0">
+      <!-- Autonomous Auto-Pilot Toggle -->
+      <button @click="toggleAutopilot()"
+              class="px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
+              :class="autopilot.is_active ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300' : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200'"
+              :title="autopilot.current_status">
+        <span class="w-2 h-2 rounded-full" :class="autopilot.is_active ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'"></span>
+        <span x-text="autopilot.is_active ? 'Auto-Pilot: ON' : 'Auto-Pilot: OFF'"></span>
+      </button>
+
       <button @click="dispatchFleet(3)" :disabled="fleetDispatching"
               class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 flex items-center space-x-1.5 transition disabled:opacity-50 cursor-pointer"
               title="Start cloud scanners searching for new keyword gaps">
@@ -1197,6 +1214,167 @@
       </div>
     </div>
 
+    <!-- ======================================================== -->
+    <!-- TAB 6: 🔥 LIVE GOOGLE TRENDS RSS STREAM                  -->
+    <!-- ======================================================== -->
+    <div x-show="activeTab === 'trends'" class="h-full overflow-y-auto p-6 space-y-6">
+      <!-- Trends Header Banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-amber-950/30 to-slate-900 border border-amber-500/30 rounded-2xl p-6 shadow-xl">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center space-x-3">
+              <span class="text-3xl">🔥</span>
+              <div>
+                <h3 class="text-base font-bold text-slate-100 flex items-center space-x-2 flex-wrap gap-y-1">
+                  <span>Live Google Trends Breakout Harvester</span>
+                  <span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30 font-mono">⚡ Real-Time RSS</span>
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs border border-emerald-500/30 font-mono">$0.00 / Zero Limits</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-1 max-w-3xl">
+                  Real-time breakout search spikes across Tier-1 English markets. Ingest any breakout topic with 1-click to trigger Trio-Stream multi-engine expansion, audit SERP competition for 0/10 void gaps, and generate a turnkey Website Silo Blueprint.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Controls: Country Switcher & Refresh -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+            <!-- Country Pills -->
+            <div class="inline-flex rounded-xl bg-slate-950 p-1 border border-slate-800">
+              <button @click="fetchLiveTrends('US')"
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer"
+                      :class="selectedTrendGeo === 'US' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'">
+                🇺🇸 US
+              </button>
+              <button @click="fetchLiveTrends('GB')"
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer"
+                      :class="selectedTrendGeo === 'GB' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'">
+                🇬🇧 UK
+              </button>
+              <button @click="fetchLiveTrends('CA')"
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer"
+                      :class="selectedTrendGeo === 'CA' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'">
+                🇨🇦 CA
+              </button>
+              <button @click="fetchLiveTrends('AU')"
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer"
+                      :class="selectedTrendGeo === 'AU' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'">
+                🇦🇺 AU
+              </button>
+              <button @click="fetchLiveTrends('IN')"
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer"
+                      :class="selectedTrendGeo === 'IN' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'">
+                🇮🇳 IN
+              </button>
+            </div>
+
+            <!-- Refresh Button -->
+            <button @click="fetchLiveTrends(selectedTrendGeo)"
+                    :disabled="isTrendsLoading"
+                    class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs flex items-center justify-center space-x-1.5 transition disabled:opacity-50 cursor-pointer">
+              <span :class="isTrendsLoading ? 'animate-spin' : ''">🔄</span>
+              <span x-text="isTrendsLoading ? 'Fetching...' : 'Refresh RSS'"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Search Sub-bar -->
+        <div class="mt-4 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div class="relative flex-1 max-w-md">
+            <input type="text" x-model="trendsSearch"
+                   placeholder="Filter live trends by topic or category..."
+                   class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 shadow-inner">
+            <span class="absolute left-2.5 top-2 text-slate-500 text-xs">🔍</span>
+          </div>
+          <div class="flex items-center space-x-2 text-xs text-slate-400 font-mono">
+            <span>Showing:</span>
+            <span class="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-amber-300 font-bold" x-text="(filteredLiveTrends ? filteredLiveTrends.length : 0) + ' active breakouts'"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State Skeleton -->
+      <div x-show="isTrendsLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
+        <template x-for="i in 8" :key="i">
+          <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
+            <div class="flex justify-between items-center">
+              <div class="h-4 w-16 bg-slate-800 rounded"></div>
+              <div class="h-4 w-20 bg-slate-800 rounded"></div>
+            </div>
+            <div class="h-5 w-3/4 bg-slate-800 rounded"></div>
+            <div class="h-8 w-full bg-slate-800 rounded-lg"></div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Empty State -->
+      <div x-show="!isTrendsLoading && (!filteredLiveTrends || filteredLiveTrends.length === 0)"
+           class="p-12 text-center rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3">
+        <span class="text-4xl">📡</span>
+        <h4 class="text-sm font-bold text-slate-200">No Breakout Trends Found</h4>
+        <p class="text-xs text-slate-400 max-w-md mx-auto">
+          No live trends match your current search query or region. Try selecting a different country or resetting the filter.
+        </p>
+        <button @click="trendsSearch = ''; fetchLiveTrends(selectedTrendGeo)"
+                class="px-3.5 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition cursor-pointer">
+          Reset Filter & Reload
+        </button>
+      </div>
+
+      <!-- Live Trends Cards Grid -->
+      <div x-show="!isTrendsLoading && filteredLiveTrends && filteredLiveTrends.length > 0"
+           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <template x-for="(trend, idx) in filteredLiveTrends" :key="trend.title + idx">
+          <div class="p-4 rounded-xl bg-slate-900/70 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 transition flex flex-col justify-between space-y-3 shadow-md group">
+            <div class="space-y-2">
+              <!-- Top Row Badges -->
+              <div class="flex items-center justify-between gap-1.5">
+                <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-mono font-bold">
+                  <span>🔥</span>
+                  <span x-text="trend.traffic || '500+ searches'"></span>
+                </span>
+                <span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px] font-medium border border-slate-700/60 truncate max-w-[130px]"
+                      x-text="trend.category || 'General'"></span>
+              </div>
+
+              <!-- Trend Title -->
+              <div>
+                <h4 class="text-sm font-bold text-slate-100 group-hover:text-amber-300 transition capitalize leading-snug line-clamp-2"
+                    x-text="trend.title"></h4>
+                <div class="text-[10px] text-slate-500 font-mono mt-1" x-text="trend.pub_date ? new Date(trend.pub_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Live Breakout'"></div>
+              </div>
+
+              <!-- Snippet / Context if available -->
+              <div x-show="trend.snippet" class="text-xs text-slate-400 line-clamp-2 bg-slate-950/60 p-2 rounded-lg border border-slate-800/60 font-sans"
+                   x-text="trend.snippet"></div>
+            </div>
+
+            <!-- Bottom Actions -->
+            <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2">
+              <button @click="ingestTrend(trend)"
+                      :disabled="trendIngestStatus[trend.title] === 'ingesting'"
+                      class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow cursor-pointer disabled:opacity-60"
+                      :class="trendIngestStatus[trend.title] === 'success' ? 'bg-emerald-500 text-slate-950 font-black' : (trendIngestStatus[trend.title] === 'ingesting' ? 'bg-amber-600/40 text-amber-200 border border-amber-500/50' : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-amber-500/20')">
+                <span x-show="!trendIngestStatus[trend.title]">🚀 Ingest & Build Silo</span>
+                <span x-show="trendIngestStatus[trend.title] === 'ingesting'" class="flex items-center space-x-1">
+                  <span class="animate-spin">⏳</span>
+                  <span>Expanding...</span>
+                </span>
+                <span x-show="trendIngestStatus[trend.title] === 'success'">✅ Silo Ready!</span>
+              </button>
+
+              <a :href="trend.link || ('https://trends.google.com/trends/explore?q=' + encodeURIComponent(trend.title))"
+                 target="_blank" rel="noopener noreferrer"
+                 title="View on Google Trends"
+                 class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 text-xs transition cursor-pointer">
+                ↗
+              </a>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
   </main>
 
   <!-- ======================================================== -->
@@ -1291,13 +1469,19 @@
 
         <!-- AI Prompt Box -->
         <div>
-          <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center justify-between mb-1.5 flex-wrap gap-2">
             <span class="text-slate-400 font-medium">Ready-to-Use Website Generation Prompt:</span>
-            <button @click="copyBlueprintPrompt()"
-                    class="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center space-x-1 cursor-pointer shadow">
-              <span x-show="!copiedPrompt">📋 Copy AI Prompt</span>
-              <span x-show="copiedPrompt" class="text-emerald-950 font-black">✓ Copied to Clipboard!</span>
-            </button>
+            <div class="flex items-center space-x-2">
+              <button @click="downloadBlueprintPackage()"
+                      class="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition flex items-center space-x-1 cursor-pointer shadow text-xs">
+                <span>📥 Download Full AI Package (.md)</span>
+              </button>
+              <button @click="copyBlueprintPrompt()"
+                      class="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition flex items-center space-x-1 cursor-pointer shadow text-xs">
+                <span x-show="!copiedPrompt">📋 Copy AI Prompt</span>
+                <span x-show="copiedPrompt" class="text-emerald-950 font-black">✓ Copied to Clipboard!</span>
+              </button>
+            </div>
           </div>
           <pre class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 font-mono text-slate-300 whitespace-pre-wrap max-h-40 overflow-y-auto text-[11px]" x-text="activeBlueprint.prompt"></pre>
         </div>
