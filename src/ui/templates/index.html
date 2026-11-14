@@ -542,14 +542,15 @@
 
                 <!-- Card Header: Badges & Category -->
                 <div>
-                  <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center space-x-1.5 flex-wrap gap-y-1">
+                  <!-- Line 1: Primary Metrics & Category -->
+                  <div class="flex items-center justify-between gap-2 mb-2">
+                    <div class="flex items-center space-x-1.5 shrink-0">
                       <!-- Score Badge (Large, Bold, High Contrast) -->
                       <span class="px-2.5 py-1 rounded-lg font-mono font-black text-sm shadow-sm"
                             :class="{
-                              'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950': item.gap_score >= 85,
-                              'bg-emerald-500/25 text-emerald-300 border border-emerald-400/50': item.gap_score >= 65 && item.gap_score < 85,
-                              'bg-slate-800 text-slate-300 border border-slate-700': item.gap_score < 65
+                              'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black shadow-amber-500/20': item.gap_score >= 85,
+                              'bg-emerald-500/25 text-emerald-300 border border-emerald-400/60 font-black': item.gap_score >= 65 && item.gap_score < 85,
+                              'bg-slate-800 text-slate-300 border border-slate-700 font-bold': item.gap_score < 65
                             }" x-text="item.gap_score + '/100'"></span>
 
                       <!-- Top Build Pick Badge -->
@@ -563,39 +564,43 @@
                       <span class="px-2 py-0.5 rounded-md text-xs font-mono font-bold"
                             :class="item.trend_type === 'BREAKOUT' ? 'bg-rose-500/25 text-rose-300 border border-rose-500/40 animate-pulse' : 'bg-slate-800 text-slate-300 border border-slate-700/80'"
                             x-text="item.trend_velocity"></span>
-
-                      <!-- Archetype Badge -->
-                      <span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-indigo-500/20 text-indigo-200 border border-indigo-500/35"
-                            x-text="item.archetype"></span>
                     </div>
 
-                    <!-- Category & Cluster Pill -->
-                    <div class="flex items-center space-x-1.5 shrink-0">
-                      <template x-if="item.cluster_name">
-                        <span class="text-[11px] px-2 py-0.5 rounded bg-slate-950/80 border border-slate-800 text-slate-300 font-medium hidden sm:flex items-center gap-1"
-                              :title="'Cluster: ' + item.cluster_name + ' (' + (item.cluster_kws || 1) + ' keywords, ' + (item.cluster_zeros || 0) + ' zero-comp voids)'">
-                          <span class="text-indigo-400">📦</span>
-                          <span class="text-slate-200 font-semibold max-w-[90px] truncate" x-text="item.cluster_name"></span>
-                          <span class="text-slate-400 font-mono text-[10px]" x-text="'(' + (item.cluster_kws || 1) + 'k · ' + (item.cluster_zeros || 0) + 'v)'"></span>
-                        </span>
-                      </template>
-                      <span class="text-xs text-slate-300 font-bold truncate max-w-[100px]" x-text="item.category"></span>
-                    </div>
+                    <!-- Clean Category Pill -->
+                    <span class="text-xs px-2.5 py-0.5 rounded-md bg-slate-800/90 border border-slate-700 text-slate-200 font-bold truncate max-w-[150px] shrink-0"
+                          x-text="item.category"></span>
+                  </div>
+
+                  <!-- Line 2: Archetype & Sub-Cluster Meta -->
+                  <div class="flex items-center space-x-2 text-xs mb-2">
+                    <!-- Archetype Badge -->
+                    <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-500/20 text-indigo-200 border border-indigo-500/35 shrink-0"
+                          x-text="item.archetype"></span>
+
+                    <!-- Sub-Cluster (Only if distinct from category) -->
+                    <template x-if="item.cluster_name && item.cluster_name.toLowerCase() !== (item.category || '').toLowerCase()">
+                      <span class="text-[11px] px-2 py-0.5 rounded bg-slate-950/90 border border-slate-800 text-slate-300 font-medium flex items-center gap-1 truncate"
+                            :title="'Cluster: ' + item.cluster_name + ' (' + (item.cluster_kws || 1) + ' keywords, ' + (item.cluster_zeros || 0) + ' zero-comp voids)'">
+                        <span class="text-indigo-400">📦</span>
+                        <span class="text-slate-300 font-medium truncate" x-text="item.cluster_name"></span>
+                        <span class="text-slate-500 font-mono text-[10px] shrink-0" x-text="'(' + (item.cluster_kws || 1) + 'k · ' + (item.cluster_zeros || 0) + 'v)'"></span>
+                      </span>
+                    </template>
                   </div>
 
                   <!-- Keyword Title (Large, Clear, Readable from Afar) -->
-                  <h3 class="text-base lg:text-lg font-black text-white my-2 leading-snug break-words tracking-tight group-hover:text-amber-300 transition-colors"
+                  <h3 class="text-lg lg:text-xl font-black text-white my-2.5 leading-snug break-words tracking-tight group-hover:text-amber-300 transition-colors capitalize drop-shadow-sm"
                       x-text="item.keyword"></h3>
 
                   <!-- Google Top 10 Competition Breakdown (Truthful 10-Slot Meter) -->
-                  <div class="space-y-2 mb-3 bg-slate-950/80 p-3 rounded-xl border border-slate-800/90 shadow-inner">
+                  <div class="space-y-2 mb-3 bg-slate-950/90 p-3.5 rounded-xl border border-slate-800/90 shadow-inner">
                     <div class="flex items-center justify-between text-xs">
-                      <span class="text-slate-300 text-xs font-bold uppercase tracking-wider">Google Top 10 Competition:</span>
+                      <span class="text-slate-300 text-xs font-bold uppercase tracking-wider">Google Top 10:</span>
 
                       <!-- Verified Zero Competition (0/10) -->
                       <template x-if="item.exact_title_matches === 0">
                         <span class="font-mono text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                          <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/50 font-black">0/10</span>
+                          <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/60 font-black ring-1 ring-emerald-500/30">0/10</span>
                           <span class="text-emerald-300 font-black">🛡️ Zero Competition</span>
                           <button @click.stop="auditSerpLive(item)" 
                                   :disabled="item._auditing"
@@ -653,11 +658,11 @@
                     </div>
 
                     <!-- 10-Slot SERP Slot Competition Meter (Positions #1 to #10 on Google) -->
-                    <div class="flex items-center space-x-1.5 py-1" title="Top 10 Google positions: red=competitor targeting title, dark=open slot">
+                    <div class="flex items-center space-x-1.5 py-1" title="Top 10 Google positions: red=competitor targeting title, green=uncontested open slot">
                       <template x-for="slot in 10" :key="slot">
                         <div class="h-3.5 flex-1 rounded-sm transition-all"
                              :class="{
-                               'bg-slate-800/70 border border-emerald-400/40 shadow-xs': item.exact_title_matches === 0,
+                               'bg-emerald-500/30 border border-emerald-400/60 shadow-xs shadow-emerald-500/20': item.exact_title_matches === 0,
                                'bg-rose-500 shadow-sm shadow-rose-500/60': item.exact_title_matches > 0 && slot <= item.exact_title_matches,
                                'bg-slate-800/80 border border-slate-700/60': item.exact_title_matches > 0 && slot > item.exact_title_matches,
                                'bg-slate-900 border border-dashed border-slate-700/80': item.exact_title_matches === null || item.exact_title_matches === undefined
@@ -668,7 +673,7 @@
                     <!-- Meaningful Context Subtitle -->
                     <div class="text-xs flex items-center justify-between text-slate-300">
                       <template x-if="item.exact_title_matches === 0">
-                        <span class="text-emerald-300 font-semibold flex items-center gap-1">
+                        <span class="text-emerald-300 font-bold flex items-center gap-1">
                           <span>✨</span> 100% Uncontested — None of top 10 Google results target this title
                         </span>
                       </template>
@@ -691,48 +696,55 @@
                   </div>
                 </div>
 
-                <!-- Card Actions Footer (Clean, Single-Row Horizontal Links & Buttons) -->
-                <div class="pt-2.5 border-t border-slate-800 flex items-center justify-between mt-1 text-xs">
-                  <!-- Verification Links as Clean Micro-Pills -->
-                  <div class="flex items-center space-x-1 text-xs flex-nowrap shrink-0">
-                    <a :href="item.google_verify_url" target="_blank"
-                       class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-amber-300 hover:text-amber-200 font-bold border border-slate-700/80 transition shadow-xs text-xs">Google</a>
-                    <a :href="item.google_allintitle_url" target="_blank"
-                       class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-emerald-300 hover:text-emerald-200 font-bold border border-slate-700/80 transition shadow-xs text-xs"
-                       title="Verify exact title matches on Google with allintitle:">Title Check</a>
-                    <a :href="item.ddg_verify_url" target="_blank"
-                       class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 transition shadow-xs text-xs">DDG</a>
-                    <a :href="item.trends_verify_url" target="_blank"
-                       class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-indigo-300 hover:text-indigo-200 font-bold border border-slate-700/80 transition shadow-xs text-xs">Trends</a>
+                <!-- Card Actions Footer (Spacious 2-Tier Layout: Zero Overlap / Zero Clipping) -->
+                <div class="pt-2.5 border-t border-slate-800/80 flex flex-col space-y-2 text-xs">
+                  <!-- Row 1: External Verification Links -->
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Verify:</span>
+                    <div class="flex items-center space-x-1.5">
+                      <a :href="item.google_verify_url" target="_blank"
+                         class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-amber-300 hover:text-amber-200 font-bold border border-slate-700/80 transition text-xs flex items-center gap-0.5">
+                        <span>Google</span><span class="text-[10px]">↗</span>
+                      </a>
+                      <a :href="item.google_allintitle_url" target="_blank"
+                         class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-emerald-300 hover:text-emerald-200 font-bold border border-slate-700/80 transition text-xs flex items-center gap-0.5"
+                         title="Verify exact title matches on Google with allintitle:">
+                        <span>Title Check</span><span class="text-[10px]">↗</span>
+                      </a>
+                      <a :href="item.trends_verify_url" target="_blank"
+                         class="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-indigo-300 hover:text-indigo-200 font-bold border border-slate-700/80 transition text-xs flex items-center gap-0.5">
+                        <span>Trends</span><span class="text-[10px]">↗</span>
+                      </a>
+                    </div>
                   </div>
 
-                  <!-- Right Action Buttons -->
-                  <div class="flex items-center space-x-1 shrink-0">
-                    <!-- AI Build Plan Trigger -->
+                  <!-- Row 2: Action Buttons (Build Plan Full-Width, Actions Padded) -->
+                  <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-800/50">
+                    <!-- AI Build Plan Button -->
                     <button @click="openBlueprint(item)"
-                            class="px-2.5 py-1 rounded-lg bg-indigo-600/35 hover:bg-indigo-600/55 text-indigo-200 border border-indigo-400/50 text-xs font-bold transition flex items-center space-x-1 cursor-pointer shadow-md shadow-indigo-950"
-                            title="Generate 1-click prompt to build this tool with AI">
+                            class="flex-1 py-1 px-3 rounded-lg bg-indigo-600/35 hover:bg-indigo-600/55 text-indigo-200 border border-indigo-400/50 text-xs font-bold transition flex items-center justify-center space-x-1.5 cursor-pointer shadow-md shadow-indigo-950">
                       <span>🤖</span>
                       <span class="text-xs">Build Plan</span>
                     </button>
 
-                    <!-- SERP Comparison Trigger -->
-                    <button @click="openCompare(item.keyword)"
-                            class="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs transition cursor-pointer"
-                            title="Compare Google results with another term">
-                      <span>⚖️</span>
-                    </button>
+                    <!-- Comparison & Triage Buttons -->
+                    <div class="flex items-center space-x-1 shrink-0">
+                      <button @click="openCompare(item.keyword)"
+                              class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs transition cursor-pointer"
+                              title="Compare Google results with another term">
+                        <span>⚖️</span>
+                      </button>
 
-                    <!-- Quick Triage Actions -->
-                    <button @click="setVerdict(item.id, 'confirmed_gold')"
-                            class="p-1 rounded-lg hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-300 text-xs transition cursor-pointer"
-                            :class="item.human_verdict === 'confirmed_gold' ? 'text-emerald-400 font-bold bg-emerald-500/25 ring-1 ring-emerald-400' : ''"
-                            title="Save as Opportunity">⭐</button>
+                      <button @click="setVerdict(item.id, 'confirmed_gold')"
+                              class="p-1.5 rounded-lg hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-300 text-xs transition cursor-pointer"
+                              :class="item.human_verdict === 'confirmed_gold' ? 'text-emerald-400 font-bold bg-emerald-500/25 ring-1 ring-emerald-400' : ''"
+                              title="Save as Opportunity">⭐</button>
 
-                    <button @click="setVerdict(item.id, 'already_served')"
-                            class="p-1 rounded-lg hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 text-xs transition cursor-pointer"
-                            :class="item.human_verdict === 'already_served' ? 'text-rose-400 font-bold bg-rose-500/25 ring-1 ring-rose-400' : ''"
-                            title="Dismiss">✕</button>
+                      <button @click="setVerdict(item.id, 'already_served')"
+                              class="p-1.5 rounded-lg hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 text-xs transition cursor-pointer"
+                              :class="item.human_verdict === 'already_served' ? 'text-rose-400 font-bold bg-rose-500/25 ring-1 ring-rose-400' : ''"
+                              title="Dismiss">✕</button>
+                    </div>
                   </div>
                 </div>
 
