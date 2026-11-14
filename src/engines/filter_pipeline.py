@@ -74,9 +74,17 @@ EXCLUSION_PATTERNS = [
     r"\bapp store\b",
     r"\bgoogle play\b",
 
-    # External Portals
+    # External Portals & Social Forums (Prevents False 0/10 Voids)
     r"\bwikipedia\b",
     r"\byoutube\b",
+    r"\breddit\b",
+    r"\bquora\b",
+    r"\btiktok\b",
+    r"\btwitter\b",
+    r"\bfacebook\b",
+    r"\binstagram\b",
+    r"\bpinterest\b",
+    r"\bmedium\b",
 ]
 
 # Institutional TLDs where official authority dominates SERPs
