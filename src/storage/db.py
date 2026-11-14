@@ -655,19 +655,19 @@ def get_queries(
                     COALESCE(c.cluster_zeros, 0) as cluster_zeros,
                     (
                         (CASE WHEN q.exact_title_matches = 0 THEN 450
-                              WHEN q.exact_title_matches = 1 THEN 250
-                              WHEN q.exact_title_matches = 2 THEN 100
+                              WHEN q.exact_title_matches = 1 THEN 200
+                              WHEN q.exact_title_matches = 2 THEN 80
                               WHEN q.exact_title_matches IS NULL THEN 40
                               ELSE 0 END)
                         + (q.gap_score * 3)
-                        + (COALESCE(c.cluster_zeros, 0) * 35)
-                        + (COALESCE(c.cluster_kws, 1) * 6)
-                        + (CASE WHEN q.trend_type = 'BREAKOUT' THEN 75 ELSE 0 END)
-                        + (CASE WHEN q.archetype IN ('Micro-Tool', 'Cost Estimator', 'Config Generator', 'Workaround') THEN 40 ELSE 0 END)
-                        + (CASE WHEN q.category IN ('Finance & Wealth', 'Legal & Compliance', 'Small Business & B2B', 'Clean Energy & Home') THEN 80
-                                WHEN q.category IN ('Real Estate & Living', 'Health & Fitness', 'Travel & Visas') THEN 50
-                                ELSE 15 END)
-                        + (CASE WHEN q.top_competitor_url LIKE '%reddit%' OR q.top_competitor_url LIKE '%quora%' THEN 100 ELSE 0 END)
+                        + (CASE WHEN q.top_competitor_url LIKE '%reddit.com%' OR q.top_competitor_url LIKE '%quora.com%' OR q.top_competitor_title LIKE '%Reddit%' THEN 220 ELSE 0 END)
+                        + (CASE WHEN q.category IN ('Legal & Compliance', 'Finance & Wealth', 'Small Business & B2B') THEN 120
+                                WHEN q.category IN ('Real Estate & Living', 'Health & Fitness', 'Travel & Visas') THEN 90
+                                ELSE 40 END)
+                        + (CASE WHEN q.keyword LIKE '%rules%' OR q.keyword LIKE '%form%' OR q.keyword LIKE '%affidavit%' OR q.keyword LIKE '%settlement%' OR q.keyword LIKE '%deduction%' OR q.keyword LIKE '%exemption%' OR q.keyword LIKE '%calculator%' OR q.keyword LIKE '%template%' OR q.keyword LIKE '%checklist%' OR q.keyword LIKE '%requirements%' OR q.keyword LIKE '%process%' OR q.keyword LIKE '%cost%' THEN 130 ELSE 0 END)
+                        + (CASE WHEN (LENGTH(q.keyword) - LENGTH(REPLACE(q.keyword, ' ', ''))) >= 2 THEN 70 ELSE -350 END)
+                        + (CASE WHEN q.keyword LIKE '%2020%' OR q.keyword LIKE '%2021%' OR q.keyword LIKE '%2022%' OR q.keyword LIKE '%2023%' OR q.keyword LIKE '%2024%' THEN -600 ELSE 0 END)
+                        + (CASE WHEN q.keyword LIKE '%google%' OR q.keyword LIKE '%download%' OR q.keyword LIKE '%login%' OR q.keyword IN ('short error', 'load file meaning') THEN -600 ELSE 0 END)
                     ) as doability_rank
                 FROM queries q
                 LEFT JOIN cluster_stats c ON c.c_niche = COALESCE(json_extract(q.evidence_json, '$.parent_niche'), q.category)
