@@ -968,39 +968,46 @@ def export_data(format: str = "json", category: str = "all", min_score: int = 0)
 
 FLEET_REPOS = [
     {
-        "name": "ecosystem-telemetry-probe",
-        "description": "Distributed runtime health probe and dependency matrix verification",
+        "name": "web-metric-evaluator",
+        "description": "Automated web performance latency and endpoint metric collector",
         "shards": [0, 1, 2, 3],
         "verticals": ["Media & Converters", "Productivity & Work"],
-        "url": "https://github.com/beachjampore-lab/ecosystem-telemetry-probe"
+        "url": "https://github.com/dadasadac6/web-metric-evaluator"
     },
     {
-        "name": "matrix-stream-probe",
-        "description": "Distributed streaming matrix benchmark and telemetry probes",
+        "name": "stream-pipeline-core",
+        "description": "High-throughput stream processing pipeline and event transformation framework",
         "shards": [4, 5, 6, 7],
         "verticals": ["Developer & Cloud", "AI/LLM", "Databases"],
-        "url": "https://github.com/beachjampore-lab/matrix-stream-probe"
+        "url": "https://github.com/dadasadac6/stream-pipeline-core"
     },
     {
-        "name": "runtime-audit-probe",
-        "description": "Runtime service health auditor and entropy monitoring matrix",
+        "name": "network-pulse-monitor",
+        "description": "Distributed network reachability monitor and synthetic latency probe",
         "shards": [8, 9, 10, 11],
         "verticals": ["Finance & Wealth", "Small Business & B2B", "Legal & Compliance"],
-        "url": "https://github.com/beachjampore-lab/runtime-audit-probe"
+        "url": "https://github.com/dadasadac6/network-pulse-monitor"
     },
     {
-        "name": "node-matrix-sampler",
-        "description": "High-throughput node sampling matrix and distributed state probe",
+        "name": "edge-latency-bench",
+        "description": "Endpoint latency benchmark, health probe, and availability evaluator",
         "shards": [12, 13, 14, 15],
         "verticals": ["Health & Fitness", "Real Estate & Living"],
-        "url": "https://github.com/beachjampore-lab/node-matrix-sampler"
+        "url": "https://github.com/dadasadac6/edge-latency-bench"
     },
     {
-        "name": "distributed-signal-core",
-        "description": "Distributed telemetry signal core and matrix evaluation suite",
+        "name": "endpoint-telemetry-node",
+        "description": "Distributed endpoint telemetry runner and synthetic signal aggregator",
         "shards": [16, 17, 18, 19],
         "verticals": ["Gaming & Entertainment", "Travel & Visas", "Academic & Education", "E-Commerce & Selling"],
-        "url": "https://github.com/beachjampore-lab/distributed-signal-core"
+        "url": "https://github.com/dadasadac6/endpoint-telemetry-node"
+    },
+    {
+        "name": "data-stream-sync",
+        "description": "Automated data pipeline, telemetry diagnostics, and local event synchronization engine",
+        "shards": [20],
+        "verticals": ["Central Aggregation", "Niche Radar"],
+        "url": "https://github.com/dadasadac6/data-stream-sync"
     }
 ]
 
