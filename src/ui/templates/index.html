@@ -501,16 +501,24 @@
         <!-- RESULTS CONTENT VIEWPORT (SCROLLABLE INSIDE) -->
         <div class="flex-1 overflow-y-auto p-4">
           
-          <!-- Loading State -->
-          <div x-show="loading" class="flex items-center justify-center py-16 space-x-2 text-slate-400 text-sm">
+          <!-- Initial Loading State (Only when no items are loaded yet) -->
+          <div x-show="loading && (!queries || queries.length === 0)" class="flex items-center justify-center py-16 space-x-2 text-slate-400 text-sm">
             <span class="w-3.5 h-3.5 rounded-full bg-amber-400 animate-ping"></span>
             <span class="font-medium">Filtering search gaps...</span>
+          </div>
+
+          <!-- Non-Intrusive Floating Refresh Indicator (Preserves Scroll Position & Never Collapses DOM) -->
+          <div x-show="loading && queries && queries.length > 0" class="sticky top-0 z-30 flex items-center justify-center py-1.5 px-3 mb-3 bg-slate-900/90 border border-amber-500/40 rounded-lg text-amber-300 text-xs font-semibold backdrop-blur-md shadow-lg w-max mx-auto">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping mr-2"></span>
+            <span>Filtering search gaps...</span>
           </div>
 
           <!-- ============================================== -->
           <!-- CARDS VIEW MODE (Optimal 3-Column Width)       -->
           <!-- ============================================== -->
-          <div x-show="!loading && feedView === 'cards'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4.5">
+          <div x-show="feedView === 'cards'"
+               :class="loading ? 'opacity-50 transition-opacity duration-200' : 'opacity-100 transition-opacity duration-200'"
+               class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4.5">
             <template x-for="item in queries" :key="item.id">
               <div class="p-4 rounded-xl border transition flex flex-col justify-between shadow-lg relative group"
                    :class="{
@@ -734,7 +742,9 @@
           <!-- ============================================== -->
           <!-- COMPACT DENSITY LIST VIEW MODE                 -->
           <!-- ============================================== -->
-          <div x-show="!loading && feedView === 'compact'" class="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/60 shadow-lg">
+          <div x-show="feedView === 'compact'"
+               :class="loading ? 'opacity-50 transition-opacity duration-200' : 'opacity-100 transition-opacity duration-200'"
+               class="border border-slate-800 rounded-xl overflow-hidden bg-slate-900/60 shadow-lg">
             <table class="w-full text-left text-xs text-slate-200">
               <thead class="bg-slate-900/95 border-b border-slate-800 text-xs text-slate-300 uppercase tracking-wider sticky top-0">
                 <tr>

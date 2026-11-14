@@ -175,13 +175,11 @@ function radarApp() {
       await this.loadLogs();
       await this.fetchAutopilotStatus();
 
-      // Background telemetry polling every 4s
+      // Background telemetry polling every 4s (Telemetry & Stats only, never interrupt user scrolling)
       setInterval(() => {
         this.loadStats();
         this.fetchAutopilotStatus();
         if (this.scanState.is_scanning) {
-          this.loadQueries(this.page);
-          this.loadInputKeywords();
           this.loadFrontierStats();
           this.loadLogs();
         }
@@ -267,8 +265,10 @@ function radarApp() {
     // -------------------------------------------------------------
     // DISCOVERED SEARCH GAPS (RIGHT PANE / MATRIX)
     // -------------------------------------------------------------
-    async loadQueries(targetPage = 1) {
-      this.loading = true;
+    async loadQueries(targetPage = 1, isSilent = false) {
+      if (!isSilent) {
+        this.loading = true;
+      }
       this.page = targetPage;
 
       let effectiveMinScore = this.filters.min_score;
