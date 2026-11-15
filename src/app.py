@@ -1403,6 +1403,12 @@ def run_market_strategist(background_tasks: BackgroundTasks, sector: Optional[st
     return {"status": "started", "message": f"Autonomous Market Strategist started for sector: {sector or 'All Commercial Sectors'}"}
 
 
+@app.get("/api/strategist/runs")
+def get_strategist_runs():
+    """Returns the history of Autonomous Market Intelligence Strategist execution runs."""
+    return db.get_recent_strategist_runs(limit=15)
+
+
 if __name__ == "__main__":
     import uvicorn
     # Bind to 0.0.0.0 for localhost and LAN (192.168.100.75:8080)

@@ -19,6 +19,10 @@ function radarApp() {
     logs: [],
     blueprints: [],
     blueprintSector: 'all',
+    strategistRuns: [],
+    showRunsModal: false,
+    lastBlueprintCount: null,
+    lastRunTimestamp: null,
     loading: false,
 
     // Input Keywords (Left Pane in Radar Feed)
@@ -176,6 +180,7 @@ function radarApp() {
       await this.loadReports();
       await this.loadLogs();
       await this.loadBlueprints();
+      await this.loadStrategistRuns();
       await this.fetchAutopilotStatus();
 
       // Background telemetry polling every 4s (Telemetry & Stats only, never interrupt user scrolling)
@@ -185,6 +190,10 @@ function radarApp() {
         if (this.scanState.is_scanning) {
           this.loadFrontierStats();
           this.loadLogs();
+        }
+        // Poll for fresh AI blueprints and strategist runs
+        if (this.activeTab === 'blueprints' || this.activeTab === 'fleet') {
+          this.loadBlueprints();
         }
       }, 4000);
     },
@@ -845,9 +854,32 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
     async loadBlueprints() {
       try {
         const resp = await fetch('/api/blueprints');
-        this.blueprints = await resp.json();
+        const data = await resp.json();
+        if (this.lastBlueprintCount !== null && data.length > this.lastBlueprintCount) {
+          const diff = data.length - this.lastBlueprintCount;
+          this.showToast(`✨ New Market Intelligence Data Arrived! (+${diff} new AI blueprints published)`, 'success', 6000);
+        }
+        this.lastBlueprintCount = data.length;
+        this.blueprints = data;
+        await this.loadStrategistRuns();
       } catch (e) {
         console.error('Failed to load blueprints', e);
+      }
+    },
+
+    async loadStrategistRuns() {
+      try {
+        const resp = await fetch('/api/strategist/runs');
+        const runs = await resp.json();
+        if (this.lastRunTimestamp && runs.length && runs[0]?.timestamp !== this.lastRunTimestamp) {
+          this.showToast(`📡 Autonomous Horizon Scan Completed: ${runs[0].zero_comp_voids_found} new 0/10 voids captured in ${runs[0].duration_seconds}s!`, 'info', 6000);
+        }
+        if (runs.length) {
+          this.lastRunTimestamp = runs[0]?.timestamp;
+        }
+        this.strategistRuns = runs;
+      } catch (e) {
+        console.error('Failed to load strategist runs', e);
       }
     },
 

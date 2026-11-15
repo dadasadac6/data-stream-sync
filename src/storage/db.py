@@ -111,6 +111,22 @@ def init_db(db_path: Optional[str] = None) -> None:
 
             CREATE INDEX IF NOT EXISTS idx_blueprint_score ON ai_blueprints(defensive_moat_score DESC);
             CREATE INDEX IF NOT EXISTS idx_blueprint_cat ON ai_blueprints(category);
+
+            CREATE TABLE IF NOT EXISTS ai_strategist_runs (
+                id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+                run_type                TEXT NOT NULL,
+                sectors_surveyed        TEXT NOT NULL,
+                input_hypotheses        TEXT NOT NULL,
+                duration_seconds        REAL NOT NULL,
+                queries_probed          INTEGER DEFAULT 0,
+                zero_comp_voids_found   INTEGER DEFAULT 0,
+                blueprints_created      INTEGER DEFAULT 0,
+                blueprints_json         TEXT,
+                summary_text            TEXT,
+                timestamp               TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_run_time ON ai_strategist_runs(timestamp DESC);
             """
         )
     conn.close()
@@ -903,6 +919,73 @@ def get_ai_blueprint_by_id(blueprint_id: int, db_path: Optional[str] = None) -> 
             cursor.execute("SELECT * FROM ai_blueprints WHERE id = ?", (blueprint_id,))
             row = cursor.fetchone()
             return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def log_strategist_run(run_data: Dict[str, Any], db_path: Optional[str] = None) -> int:
+    """Logs an execution run of the Autonomous Market Intelligence Strategist with full telemetry."""
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO ai_strategist_runs (
+                    run_type, sectors_surveyed, input_hypotheses, duration_seconds,
+                    queries_probed, zero_comp_voids_found, blueprints_created,
+                    blueprints_json, summary_text
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    run_data.get("run_type", "horizon_scan"),
+                    json.dumps(run_data.get("sectors_surveyed", [])),
+                    json.dumps(run_data.get("input_hypotheses", [])),
+                    float(run_data.get("duration_seconds", 0.0)),
+                    int(run_data.get("queries_probed", 0)),
+                    int(run_data.get("zero_comp_voids_found", 0)),
+                    int(run_data.get("blueprints_created", 0)),
+                    json.dumps(run_data.get("blueprints_json", [])),
+                    run_data.get("summary_text", "")
+                )
+            )
+            return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def get_recent_strategist_runs(limit: int = 15, db_path: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Returns the most recent strategist execution runs with parsed JSON metadata."""
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT * FROM ai_strategist_runs 
+                ORDER BY timestamp DESC 
+                LIMIT ?
+                """,
+                (limit,)
+            )
+            rows = cursor.fetchall()
+            runs = []
+            for r in rows:
+                item = dict(r)
+                try:
+                    item["sectors_surveyed"] = json.loads(item["sectors_surveyed"])
+                except Exception:
+                    item["sectors_surveyed"] = []
+                try:
+                    item["input_hypotheses"] = json.loads(item["input_hypotheses"])
+                except Exception:
+                    item["input_hypotheses"] = []
+                try:
+                    item["blueprints_json"] = json.loads(item["blueprints_json"])
+                except Exception:
+                    item["blueprints_json"] = []
+                runs.append(item)
+            return runs
     finally:
         conn.close()
 

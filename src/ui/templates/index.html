@@ -65,6 +65,14 @@
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span class="font-mono text-xs text-emerald-400 font-semibold">Stream Engine Active</span>
       </div>
+
+      <div class="hidden 2xl:flex items-center space-x-2 text-xs text-slate-400 pl-3 border-l border-slate-800 cursor-pointer hover:text-cyan-300 transition"
+           @click="activeTab = 'blueprints'; showRunsModal = true"
+           title="Click to view AI Strategist Run History & Input Audit">
+        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+        <span class="text-slate-400">AI Horizon:</span>
+        <span class="font-mono text-cyan-300 font-bold" x-text="strategistRuns && strategistRuns.length ? strategistRuns[0].timestamp.split(' ')[1] : 'Active'"></span>
+      </div>
     </div>
 
     <!-- Main Navigation Tabs (Clean, Spacious, Uncrowded 3-Tab Structure) -->
@@ -1099,6 +1107,46 @@
         <div x-show="fleetMessage" class="mt-4 p-3 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-mono" x-text="fleetMessage"></div>
       </div>
 
+      <!-- GitHub Fleet Telemetry & Swarm Dispatch Hub -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800/80 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
+            <span class="font-bold text-slate-100 text-sm">GitHub Actions Fleet Telemetry & Swarm Parameters</span>
+          </div>
+          <div class="flex items-center gap-2 font-mono text-[11px]">
+            <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">Platform: Ubuntu 24.04 LTS (x86_64)</span>
+            <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">20 Parallel Runners</span>
+            <span class="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">Cost: $0.00 Free Tier</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
+            <span class="text-slate-400 text-[11px] block mb-1">Target Repositories:</span>
+            <span class="font-mono text-cyan-300 font-bold">5 Public Repos</span>
+            <p class="text-[10px] text-slate-500 mt-1">4 concurrent Ubuntu VMs per repository</p>
+          </div>
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
+            <span class="text-slate-400 text-[11px] block mb-1">Triggered Workflow:</span>
+            <span class="font-mono text-amber-300 font-bold">.github/workflows/telemetry.yml</span>
+            <p class="text-[10px] text-slate-500 mt-1">workflow_dispatch with max_batches=3</p>
+          </div>
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
+            <span class="text-slate-400 text-[11px] block mb-1">Anti-Duplication Protocol:</span>
+            <span class="font-mono text-emerald-300 font-bold">90-Day Cooldown Barrier</span>
+            <p class="text-[10px] text-slate-500 mt-1">Never repeats already surveyed niches</p>
+          </div>
+          <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
+            <span class="text-slate-400 text-[11px] block mb-1">Live Status Dashboard:</span>
+            <a href="https://github.com/dadasadac6?tab=repositories" target="_blank" class="font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 mt-0.5">
+              <span>View GitHub Fleet ↗</span>
+            </a>
+            <p class="text-[10px] text-slate-500 mt-1">Real-time VM logs on GitHub Actions</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Repositories Grid -->
       <div>
         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Worker Repositories (Public GitHub Fleet)</h4>
@@ -1243,6 +1291,49 @@
         <button @click="blueprintSector = 'Clean Energy & Home'" 
                 :class="blueprintSector === 'Clean Energy & Home' ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/10' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
                 class="px-3 py-1.5 rounded-xl transition shrink-0 cursor-pointer">Clean Energy & Home</button>
+      </div>
+
+      <!-- AI Strategist Telemetry Status Strip -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3 text-xs shadow-md">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+            <span class="font-bold text-slate-100 shrink-0">Latest AI Horizon Scan:</span>
+            <template x-if="strategistRuns && strategistRuns.length">
+              <div class="flex flex-wrap items-center gap-2 text-slate-300">
+                <span class="px-2 py-0.5 rounded bg-slate-800 font-mono text-[11px] text-slate-200 border border-slate-700" x-text="strategistRuns[0].timestamp"></span>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 font-semibold border border-emerald-500/30" x-text="'⏱️ Duration: ' + strategistRuns[0].duration_seconds + 's'"></span>
+                <span class="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 font-medium border border-indigo-500/30">💻 Engine: Google Trends RSS + SERP Auditor</span>
+                <span class="px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 font-medium border border-purple-500/30" x-text="strategistRuns[0].sectors_surveyed.length + ' Sectors Surveyed'"></span>
+                <span class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 font-bold border border-amber-500/30" x-text="strategistRuns[0].zero_comp_voids_found + ' 0/10 Voids Captured'"></span>
+              </div>
+            </template>
+            <template x-if="!strategistRuns || !strategistRuns.length">
+              <span class="text-slate-500 italic">No automated scans logged yet. Run a horizon scan to see live telemetry.</span>
+            </template>
+          </div>
+
+          <button @click="showRunsModal = true; loadStrategistRuns()" 
+                  class="px-3.5 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 font-bold border border-indigo-500/40 transition shrink-0 cursor-pointer flex items-center gap-1.5 shadow-sm">
+            <span>📜 AI Scan History & Inputs</span>
+          </button>
+        </div>
+
+        <!-- Latest AI Hypotheses Preview Bar -->
+        <template x-if="strategistRuns && strategistRuns.length && strategistRuns[0].input_hypotheses && strategistRuns[0].input_hypotheses.length">
+          <div class="pt-2.5 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="flex items-center gap-2 overflow-x-auto text-[11px]">
+              <span class="text-slate-400 font-semibold shrink-0">🧠 Seeds Dispatched by AI:</span>
+              <template x-for="hyp in strategistRuns[0].input_hypotheses" :key="hyp">
+                <span class="px-2 py-0.5 rounded bg-slate-950 text-slate-300 font-mono border border-slate-800 shrink-0" x-text="hyp"></span>
+              </template>
+            </div>
+            <div class="flex items-center gap-2 shrink-0 text-[10px] font-mono text-emerald-400">
+              <span class="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">🛡️ 90-Day Deduplication Active</span>
+              <span class="px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">🚫 Monopolies Blocked</span>
+            </div>
+          </div>
+        </template>
       </div>
 
       <!-- Blueprints Grid -->
@@ -1603,6 +1694,81 @@
             </template>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL 3: AI STRATEGIST EXECUTION HISTORY & INPUT AUDIT   -->
+  <!-- ======================================================== -->
+  <div x-show="showRunsModal"
+       @keydown.escape.window="showRunsModal = false"
+       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md"
+       x-transition.opacity>
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-4xl w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col"
+         @click.away="showRunsModal = false">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0 mb-4">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <span>📡 AI Strategist Execution History & Input Audit</span>
+          </h2>
+          <p class="text-xs text-slate-400">Complete transparency log: timestamps, duration, sector choices, input hypotheses, and output voids.</p>
+        </div>
+        <button @click="showRunsModal = false" class="text-slate-400 hover:text-white text-lg cursor-pointer">✕</button>
+      </div>
+
+      <div class="overflow-y-auto space-y-4 pr-1">
+        <template x-for="run in strategistRuns" :key="run.id">
+          <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold uppercase" x-text="run.run_type"></span>
+                <span class="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 font-mono text-[10px]" x-text="run.run_type === 'horizon_scan' ? '💻 Platform: Google Live SERPs & Trends' : '☁️ Platform: GitHub Actions (20 Ubuntu Runners)'"></span>
+                <span class="font-mono text-xs text-slate-300 font-semibold" x-text="run.timestamp"></span>
+              </div>
+              <div class="flex items-center gap-3 text-xs font-mono">
+                <span class="text-emerald-400 font-bold" x-text="'⏱️ ' + run.duration_seconds + 's'"></span>
+                <span class="text-amber-300" x-text="'✨ ' + run.zero_comp_voids_found + ' Voids'"></span>
+                <span class="text-indigo-300" x-text="'🏆 ' + run.blueprints_created + ' Blueprints'"></span>
+              </div>
+            </div>
+
+            <!-- Defensive Safeguards & Cooldown Bar -->
+            <div class="flex flex-wrap items-center gap-2 text-[10px] font-mono">
+              <span class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">🛡️ 90-Day Anti-Duplication Active (No repeats)</span>
+              <span class="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20">🚫 Corporate Monopolies Blocked (Bankrate, LawDepot, Zillow, WebMD excluded)</span>
+              <span class="px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">⚖️ AI-Proof Defensive Moat Enforced</span>
+            </div>
+
+            <!-- Sectors Surveyed -->
+            <div class="text-xs">
+              <span class="text-slate-400 font-semibold">Sectors Surveyed: </span>
+              <template x-for="sec in run.sectors_surveyed" :key="sec">
+                <span class="inline-block px-1.5 py-0.5 mr-1 rounded bg-slate-800 text-slate-200 text-[10px] font-mono border border-slate-700" x-text="sec"></span>
+              </template>
+            </div>
+
+            <!-- Input Hypotheses Given to Engine -->
+            <div class="p-3 bg-slate-900 rounded-lg text-xs font-mono text-slate-300 border border-slate-800">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-slate-300 font-bold">Inputs & Hypotheses Given by AI Agent:</span>
+                <span class="text-[10px] text-slate-500" x-text="run.input_hypotheses.length + ' inputs dispatched'"></span>
+              </div>
+              <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-300">
+                <template x-for="hyp in run.input_hypotheses" :key="hyp">
+                  <li class="hover:text-emerald-300 transition" x-text="hyp"></li>
+                </template>
+              </ul>
+            </div>
+
+            <!-- Blueprints Published -->
+            <div class="text-[11px] text-slate-400">
+              <span class="font-semibold text-emerald-400">Blueprints Created: </span>
+              <span x-text="run.blueprints_json.join(' • ')"></span>
+            </div>
+          </div>
+        </template>
+        <div x-show="!strategistRuns.length" class="text-slate-500 text-xs text-center py-10">No execution runs logged yet. Click 'Horizon Scan' to trigger the first run.</div>
       </div>
     </div>
   </div>

@@ -275,24 +275,54 @@ Identified **{len(zero_comp_queries)} verified search queries with 0/10 exact ti
         return vetted_blueprints
 
     def run_full_horizon_scan(self, sectors: Optional[List[str]] = None) -> Dict[str, Any]:
-        """Runs the Autonomous Market Intelligence Strategist across all commercial sectors."""
+        """Runs the Autonomous Market Intelligence Strategist across all commercial sectors and records execution telemetry."""
         target_sectors = sectors or list(SECTOR_PAIN_CATALOG.keys())
         total_blueprints = []
+        all_hypotheses = []
+        total_voids = 0
+        total_queries = 0
         start_time = time.time()
 
         logger.info(f"🚀 Starting Autonomous Horizon Scan across {len(target_sectors)} commercial sectors...")
 
         for sector in target_sectors:
+            catalog = SECTOR_PAIN_CATALOG.get(sector, [])
+            for item in catalog[:2]:
+                all_hypotheses.append(f"[{sector}] {item['seed']}")
             bps = self.evaluate_sector(sector, max_probes_per_sector=2)
             total_blueprints.extend(bps)
+            for b in bps:
+                total_voids += b.get("zero_comp_count", 0)
+                total_queries += b.get("total_queries", 0)
 
         duration = round(time.time() - start_time, 2)
+        summary = f"Autonomous Horizon Scan completed in {duration}s across {len(target_sectors)} sectors. Discovered {total_voids} zero-comp voids and published {len(total_blueprints)} AI Blueprints."
+
+        run_log = {
+            "run_type": "horizon_scan",
+            "sectors_surveyed": target_sectors,
+            "input_hypotheses": all_hypotheses,
+            "duration_seconds": duration,
+            "queries_probed": total_queries,
+            "zero_comp_voids_found": total_voids,
+            "blueprints_created": len(total_blueprints),
+            "blueprints_json": [b["cluster_name"] for b in total_blueprints],
+            "summary_text": summary
+        }
+
+        try:
+            db.log_strategist_run(run_log, db_path=self.db_path)
+        except Exception as e:
+            logger.error(f"Failed to log strategist run: {e}")
+
         return {
             "status": "completed",
             "duration_sec": duration,
             "sectors_evaluated": len(target_sectors),
             "new_blueprints_published": len(total_blueprints),
-            "blueprints": [b["cluster_name"] for b in total_blueprints]
+            "blueprints": [b["cluster_name"] for b in total_blueprints],
+            "input_hypotheses": all_hypotheses,
+            "summary": summary
         }
 
 
