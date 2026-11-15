@@ -18,6 +18,7 @@ function radarApp() {
     reports: [],
     logs: [],
     blueprints: [],
+    blueprintSector: 'all',
     loading: false,
 
     // Input Keywords (Left Pane in Radar Feed)
@@ -847,6 +848,24 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
         this.blueprints = await resp.json();
       } catch (e) {
         console.error('Failed to load blueprints', e);
+      }
+    },
+
+    get filteredBlueprints() {
+      if (!this.blueprints) return [];
+      if (this.blueprintSector === 'all') return this.blueprints;
+      return this.blueprints.filter(b => b.category === this.blueprintSector);
+    },
+
+    async triggerStrategistScan(sector = 'All') {
+      try {
+        this.showToast(`🌐 Autonomous Strategist surveying sector: ${sector}...`, 'info');
+        const resp = await fetch(`/api/strategist/run?sector=${encodeURIComponent(sector)}`, { method: 'POST' });
+        const res = await resp.json();
+        this.showToast('🚀 Horizon Scan Launched! Probing SERPs and checking monopolies.', 'success');
+        setTimeout(() => this.loadBlueprints(), 5000);
+      } catch (e) {
+        this.showToast('Failed to start Strategist: ' + e.message, 'error');
       }
     },
 

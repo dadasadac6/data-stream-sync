@@ -1208,9 +1208,9 @@
         </div>
 
         <div class="flex items-center gap-3 shrink-0">
-          <button @click="triggerIntelligentCycle()" 
-                  class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition flex items-center gap-2">
-            <span>⚡ Run Autonomous AI Cycle</span>
+          <button @click="triggerStrategistScan('All')" 
+                  class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition flex items-center gap-2">
+            <span>🌐 Horizon Scan (All Sectors)</span>
           </button>
           <button @click="loadBlueprints()" 
                   class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition">
@@ -1219,9 +1219,35 @@
         </div>
       </div>
 
+      <!-- Sector Filter Bar -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <span class="text-slate-400 font-semibold shrink-0">Sector:</span>
+        <button @click="blueprintSector = 'all'" 
+                :class="blueprintSector === 'all' ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/10' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                class="px-3 py-1.5 rounded-xl transition shrink-0 cursor-pointer">All Sectors</button>
+        <button @click="blueprintSector = 'Finance & Wealth'" 
+                :class="blueprintSector === 'Finance & Wealth' ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/10' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                class="px-3 py-1.5 rounded-xl transition shrink-0 cursor-pointer">Finance & Wealth</button>
+        <button @click="blueprintSector = 'Legal & Compliance'" 
+                :class="blueprintSector === 'Legal & Compliance' ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/10' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                class="px-3 py-1.5 rounded-xl transition shrink-0 cursor-pointer">Legal & Compliance</button>
+        <button @click="blueprintSector = 'Small Business & B2B'" 
+                :class="blueprintSector === 'Small Business & B2B' ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/10' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                class="px-3 py-1.5 rounded-xl transition shrink-0 cursor-pointer">Small Business & B2B</button>
+        <button @click="blueprintSector = 'Real Estate & Living'" 
+                :class="blueprintSector === 'Real Estate & Living' ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/10' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                class="px-3 py-1.5 rounded-xl transition shrink-0 cursor-pointer">Real Estate & Living</button>
+        <button @click="blueprintSector = 'Health & Fitness'" 
+                :class="blueprintSector === 'Health & Fitness' ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/10' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                class="px-3 py-1.5 rounded-xl transition shrink-0 cursor-pointer">Health & Fitness</button>
+        <button @click="blueprintSector = 'Clean Energy & Home'" 
+                :class="blueprintSector === 'Clean Energy & Home' ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/10' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                class="px-3 py-1.5 rounded-xl transition shrink-0 cursor-pointer">Clean Energy & Home</button>
+      </div>
+
       <!-- Blueprints Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
-        <template x-for="bp in blueprints" :key="bp.id">
+        <template x-for="bp in filteredBlueprints" :key="bp.id">
           <div class="bg-slate-900 border border-slate-800 hover:border-emerald-500/40 rounded-2xl p-5 shadow-xl transition-all flex flex-col justify-between space-y-4">
             <div>
               <div class="flex items-start justify-between gap-2 mb-2">

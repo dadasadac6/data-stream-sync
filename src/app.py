@@ -1393,6 +1393,16 @@ def run_orchestrator_cycle(background_tasks: BackgroundTasks, max_batches: int =
     return {"status": "started", "message": f"Intelligent discovery cycle started (batches={max_batches})"}
 
 
+@app.post("/api/strategist/run")
+def run_market_strategist(background_tasks: BackgroundTasks, sector: Optional[str] = None):
+    """Triggers the domain-agnostic Autonomous Market Intelligence Strategist across any/all sectors."""
+    from engines.market_intelligence_strategist import MarketIntelligenceStrategist
+    strat = MarketIntelligenceStrategist()
+    sectors = [sector] if sector and sector.lower() != "all" else None
+    background_tasks.add_task(strat.run_full_horizon_scan, sectors=sectors)
+    return {"status": "started", "message": f"Autonomous Market Strategist started for sector: {sector or 'All Commercial Sectors'}"}
+
+
 if __name__ == "__main__":
     import uvicorn
     # Bind to 0.0.0.0 for localhost and LAN (192.168.100.75:8080)
