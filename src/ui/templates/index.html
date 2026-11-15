@@ -123,6 +123,15 @@
 
     <!-- Global Quick Actions -->
     <div class="flex items-center space-x-2 shrink-0">
+      <!-- Predefined Keywords & Clean Slate Toggle -->
+      <button @click="togglePredefined()"
+              class="px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
+              :class="predefinedEnabled ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:text-white' : 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 shadow-emerald-500/10'"
+              :title="predefinedEnabled ? 'Earlier predefined keyword results are visible. Click to disable them and work on a clean slate.' : 'Earlier predefined keyword results are DISABLED. You are on a 100% clean slate! Click to restore historical data.'">
+        <span class="w-2 h-2 rounded-full" :class="predefinedEnabled ? 'bg-slate-400' : 'bg-emerald-400 animate-pulse'"></span>
+        <span x-text="predefinedEnabled ? '📚 Predefined: ON' : '🌟 Clean Slate: ACTIVE'"></span>
+      </button>
+
       <!-- Autonomous Auto-Pilot Toggle -->
       <button @click="toggleAutopilot()"
               class="px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
@@ -245,6 +254,15 @@
 
         <!-- Scrollable List of Target Topics (Vibrant Color-Coded, Readable from Distance) -->
         <div class="flex-1 overflow-y-auto p-2 space-y-2">
+          <!-- Empty State (Clean Slate Mode) -->
+          <div x-show="!inputKeywords || inputKeywords.length === 0" class="p-6 text-center text-slate-400 space-y-3">
+            <div class="text-3xl">🌟</div>
+            <div class="text-sm font-bold text-slate-200">Clean Slate Queue</div>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              All 1,005 earlier predefined keywords are disabled. Ready for fresh autonomous discoveries!
+            </p>
+          </div>
+
           <template x-for="item in inputKeywords" :key="item.id">
             <div @click="selectRootTerm(item.niche_term)"
                  class="p-3 rounded-xl border transition cursor-pointer relative group text-left shadow-sm"
@@ -1291,6 +1309,18 @@
         <button @click="blueprintSector = 'Clean Energy & Home'" 
                 :class="blueprintSector === 'Clean Energy & Home' ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/10' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
                 class="px-3 py-1.5 rounded-xl transition shrink-0 cursor-pointer">Clean Energy & Home</button>
+      </div>
+
+      <!-- Clean Slate Status Banner (When Predefined Keywords are Disabled) -->
+      <div x-show="!predefinedEnabled" class="bg-emerald-950/40 border border-emerald-500/40 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs text-emerald-300 shadow-lg">
+        <div class="flex items-center gap-2">
+          <span class="text-base">🌟</span>
+          <span class="font-bold">Clean Slate Active:</span>
+          <span class="text-slate-300">All earlier predefined keywords (mortgage, calorie, etc.) and older blueprints are disabled. Only your fresh explorations are shown.</span>
+        </div>
+        <button @click="togglePredefined()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold border border-slate-700 cursor-pointer transition">
+          Restore Predefined Data
+        </button>
       </div>
 
       <!-- AI Strategist Telemetry Status Strip (Large Readable Typography) -->

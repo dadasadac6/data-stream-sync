@@ -21,6 +21,7 @@ function radarApp() {
     blueprintSector: 'all',
     strategistRuns: [],
     showRunsModal: false,
+    predefinedEnabled: true,
     lastBlueprintCount: null,
     lastRunTimestamp: null,
     loading: false,
@@ -182,6 +183,7 @@ function radarApp() {
       await this.loadBlueprints();
       await this.loadStrategistRuns();
       await this.fetchAutopilotStatus();
+      await this.fetchPredefinedStatus();
 
       // Background telemetry polling every 4s (Telemetry & Stats only, never interrupt user scrolling)
       setInterval(() => {
@@ -813,12 +815,45 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
           await this.fetchAutopilotStatus();
         }
         if (this.autopilot.is_active) {
-          this.showToast('🤖 Auto-Pilot turned ON: 30-min discovery cycles active', 'success');
+          this.showToast('🤖 Auto-Pilot turned ON: Autonomous Horizon Scan active', 'success');
         } else {
           this.showToast('⏸️ Auto-Pilot paused', 'info');
         }
       } catch (err) {
         console.error('Failed to toggle autopilot:', err);
+      }
+    },
+
+    // -------------------------------------------------------------
+    // PREDEFINED KEYWORDS & CLEAN SLATE CONTROLS
+    // -------------------------------------------------------------
+    async fetchPredefinedStatus() {
+      try {
+        const resp = await fetch('/api/predefined/status');
+        const data = await resp.json();
+        this.predefinedEnabled = data.predefined_enabled;
+      } catch (err) {
+        console.error('Failed to fetch predefined status:', err);
+      }
+    },
+
+    async togglePredefined() {
+      try {
+        const nextState = !this.predefinedEnabled;
+        this.showToast(nextState ? 'Restoring earlier predefined keyword results...' : 'Disabling earlier predefined keywords (Clean slate active)...', 'info');
+        const resp = await fetch(`/api/predefined/toggle?enabled=${nextState}`, { method: 'POST' });
+        const res = await resp.json();
+        this.predefinedEnabled = res.predefined_enabled;
+        this.showToast(res.message, res.predefined_enabled ? 'info' : 'success');
+
+        // Immediately refresh all dashboard views
+        await this.loadStats();
+        await this.loadInputKeywords();
+        await this.loadQueries(1);
+        await this.loadFrontier(1);
+        await this.loadBlueprints();
+      } catch (err) {
+        this.showToast('Failed to toggle predefined results: ' + err.message, 'error');
       }
     },
 

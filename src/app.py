@@ -471,11 +471,13 @@ def _autopilot_worker_loop():
                     if title and db.queue_sub_niche(title, category=cat, depth=0):
                         ingested += 1
 
-            autopilot_state["current_status"] = "Drilling into frontier queue (Recursive Depth Scan)..."
-            run_pipeline_scan(category_filter="All", limit_batches=2)
+            autopilot_state["current_status"] = "Running Autonomous Market Intelligence Horizon Scan..."
+            from engines.market_intelligence_strategist import MarketIntelligenceStrategist
+            strategist = MarketIntelligenceStrategist()
+            scan_res = strategist.run_full_horizon_scan()
 
             autopilot_state["cycles_completed"] += 1
-            autopilot_state["current_status"] = f"Active (Cycle {autopilot_state['cycles_completed']} done, {ingested} breakouts queued)"
+            autopilot_state["current_status"] = f"Active (Cycle {autopilot_state['cycles_completed']} done: {scan_res.get('zero_comp_voids_found', 0)} voids found)"
         except Exception as e:
             logger.error(f"Auto-pilot cycle error: {e}")
             autopilot_state["current_status"] = f"Cycle paused: {e}"
@@ -523,6 +525,18 @@ def toggle_autopilot(req: AutopilotToggleRequest):
         return {"status": "ok", "message": "Auto-Pilot already stopped", "state": autopilot_state}
 
 
+@app.get("/api/predefined/status")
+def get_predefined_status():
+    """Returns whether earlier predefined keyword results are enabled or disabled."""
+    return db.get_predefined_data_status()
+
+
+@app.post("/api/predefined/toggle")
+def toggle_predefined_data(enabled: bool = Query(...)):
+    """Enables or disables earlier predefined keyword results."""
+    return db.set_predefined_data_status(enabled)
+
+
 @app.get("/api/input-keywords")
 def get_input_keywords(
     category: Optional[str] = "all",
@@ -543,6 +557,8 @@ def get_input_keywords(
         if status and status.lower() != "all":
             conditions.append("f.status = ?")
             params.append(status)
+        else:
+            conditions.append("f.status NOT LIKE 'predefined_%'")
         if search:
             conditions.append("f.niche_term LIKE ?")
             params.append(f"%{search}%")
@@ -561,6 +577,7 @@ def get_input_keywords(
                     SUM(CASE WHEN gap_score >= 65 THEN 1 ELSE 0 END) as high_scores,
                     MAX(gap_score) as max_score
                 FROM queries
+                WHERE (human_verdict IS NULL OR human_verdict != 'predefined_disabled')
                 GROUP BY topic
             )
         """

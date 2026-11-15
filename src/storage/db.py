@@ -353,10 +353,10 @@ def get_frontier_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
     try:
         with conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) as c FROM frontier_niches")
+            cursor.execute("SELECT COUNT(*) as c FROM frontier_niches WHERE status NOT LIKE 'predefined_%'")
             stats["total"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT status, COUNT(*) as c FROM frontier_niches GROUP BY status")
+            cursor.execute("SELECT status, COUNT(*) as c FROM frontier_niches WHERE status NOT LIKE 'predefined_%' GROUP BY status")
             for r in cursor.fetchall():
                 st = r["status"]
                 if st in stats:
@@ -365,11 +365,11 @@ def get_frontier_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
             cursor.execute("SELECT COUNT(*) as c FROM explored_signatures WHERE explored_at >= ?", (cutoff,))
             stats["cooldown_active"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT category, COUNT(*) as c FROM frontier_niches GROUP BY category")
+            cursor.execute("SELECT category, COUNT(*) as c FROM frontier_niches WHERE status NOT LIKE 'predefined_%' GROUP BY category")
             for r in cursor.fetchall():
                 stats["by_category"][r["category"]] = r["c"]
 
-            cursor.execute("SELECT depth_level, COUNT(*) as c FROM frontier_niches GROUP BY depth_level")
+            cursor.execute("SELECT depth_level, COUNT(*) as c FROM frontier_niches WHERE status NOT LIKE 'predefined_%' GROUP BY depth_level")
             for r in cursor.fetchall():
                 stats["by_depth"][str(r["depth_level"])] = r["c"]
     finally:
@@ -395,7 +395,9 @@ def get_frontier_page(
         conditions.append("category = ?")
         params.append(category)
 
-    if status and status.lower() != "all":
+    if not status or status.lower() == "all":
+        conditions.append("status NOT LIKE 'predefined_%'")
+    else:
         conditions.append("status = ?")
         params.append(status)
 
@@ -602,8 +604,8 @@ def get_queries(
         conditions.append("q.human_verdict = ?")
         params.append(verdict)
     else:
-        # Default view: exclude dismissed / pruned generic queries
-        conditions.append("(q.human_verdict IS NULL OR q.human_verdict != 'already_served')")
+        # Default view: exclude dismissed / pruned generic queries and predefined disabled queries
+        conditions.append("(q.human_verdict IS NULL OR (q.human_verdict != 'already_served' AND q.human_verdict != 'predefined_disabled'))")
 
     if search:
         conditions.append("q.keyword LIKE ?")
@@ -668,6 +670,7 @@ def get_queries(
                 COUNT(*) as cluster_kws,
                 SUM(CASE WHEN exact_title_matches = 0 THEN 1 ELSE 0 END) as cluster_zeros
             FROM queries
+            WHERE (human_verdict IS NULL OR (human_verdict != 'already_served' AND human_verdict != 'predefined_disabled'))
             GROUP BY c_niche
         )
     """
@@ -741,13 +744,13 @@ def get_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
     try:
         with conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE (human_verdict IS NULL OR human_verdict != 'already_served')")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE (human_verdict IS NULL OR human_verdict != 'already_served') AND (human_verdict IS NULL OR human_verdict != 'predefined_disabled')")
             stats["total_queries"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE gap_score >= 85 AND (human_verdict IS NULL OR human_verdict != 'already_served')")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE gap_score >= 85 AND (human_verdict IS NULL OR human_verdict != 'already_served') AND (human_verdict IS NULL OR human_verdict != 'predefined_disabled')")
             stats["critical_gold"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE gap_score >= 65 AND gap_score < 85 AND (human_verdict IS NULL OR human_verdict != 'already_served')")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE gap_score >= 65 AND gap_score < 85 AND (human_verdict IS NULL OR human_verdict != 'already_served') AND (human_verdict IS NULL OR human_verdict != 'predefined_disabled')")
             stats["high_opportunity"] = cursor.fetchone()["c"]
 
             cursor.execute("SELECT COUNT(*) as c FROM queries WHERE human_verdict = 'confirmed_gold'")
@@ -756,16 +759,16 @@ def get_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
             cursor.execute("SELECT COUNT(*) as c FROM queries WHERE human_verdict = 'snoozed'")
             stats["snoozed"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE trend_type = 'BREAKOUT' AND (human_verdict IS NULL OR human_verdict != 'already_served')")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE trend_type = 'BREAKOUT' AND (human_verdict IS NULL OR human_verdict != 'already_served') AND (human_verdict IS NULL OR human_verdict != 'predefined_disabled')")
             stats["breakouts"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches = 0 AND (human_verdict IS NULL OR human_verdict != 'already_served')")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches = 0 AND (human_verdict IS NULL OR human_verdict != 'already_served') AND (human_verdict IS NULL OR human_verdict != 'predefined_disabled')")
             stats["verified_voids"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches > 0 AND (human_verdict IS NULL OR human_verdict != 'already_served')")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches > 0 AND (human_verdict IS NULL OR human_verdict != 'already_served') AND (human_verdict IS NULL OR human_verdict != 'predefined_disabled')")
             stats["competed_queries"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches IS NULL AND (human_verdict IS NULL OR human_verdict != 'already_served')")
+            cursor.execute("SELECT COUNT(*) as c FROM queries WHERE exact_title_matches IS NULL AND (human_verdict IS NULL OR human_verdict != 'already_served') AND (human_verdict IS NULL OR human_verdict != 'predefined_disabled')")
             stats["pending_audits"] = cursor.fetchone()["c"]
 
             # Calculate intelligent top website picks (high demand cluster + 0/10 or 1/10 SERP competition)
@@ -776,6 +779,7 @@ def get_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
                         COUNT(*) as cluster_kws,
                         SUM(CASE WHEN exact_title_matches = 0 THEN 1 ELSE 0 END) as cluster_zeros
                     FROM queries
+                    WHERE (human_verdict IS NULL OR (human_verdict != 'already_served' AND human_verdict != 'predefined_disabled'))
                     GROUP BY c_niche
                 )
                 SELECT COUNT(*) as c
@@ -784,19 +788,20 @@ def get_stats(db_path: Optional[str] = None) -> Dict[str, Any]:
                 WHERE (q.exact_title_matches <= 1)
                   AND (c.cluster_zeros >= 2)
                   AND (c.cluster_kws >= 8)
+                  AND (q.human_verdict IS NULL OR (q.human_verdict != 'already_served' AND q.human_verdict != 'predefined_disabled'))
             """)
             stats["best_picks"] = cursor.fetchone()["c"]
 
-            cursor.execute("SELECT archetype, COUNT(*) as c FROM queries GROUP BY archetype")
+            cursor.execute("SELECT archetype, COUNT(*) as c FROM queries WHERE (human_verdict IS NULL OR (human_verdict != 'already_served' AND human_verdict != 'predefined_disabled')) GROUP BY archetype")
             for r in cursor.fetchall():
                 stats["by_archetype"][r["archetype"]] = r["c"]
 
-            cursor.execute("SELECT category, COUNT(*) as c FROM queries GROUP BY category")
+            cursor.execute("SELECT category, COUNT(*) as c FROM queries WHERE (human_verdict IS NULL OR (human_verdict != 'already_served' AND human_verdict != 'predefined_disabled')) GROUP BY category")
             for r in cursor.fetchall():
                 stats["by_category"][r["category"]] = r["c"]
 
             # Frontier stats
-            cursor.execute("SELECT COUNT(*) as c FROM frontier_niches")
+            cursor.execute("SELECT COUNT(*) as c FROM frontier_niches WHERE status NOT LIKE 'predefined_%'")
             stats["frontier_total"] = cursor.fetchone()["c"]
 
             cursor.execute("SELECT COUNT(*) as c FROM frontier_niches WHERE status = 'pending'")
@@ -908,7 +913,7 @@ def get_all_ai_blueprints(status: Optional[str] = None, db_path: Optional[str] =
                 )
             else:
                 cursor.execute(
-                    "SELECT * FROM ai_blueprints ORDER BY defensive_moat_score DESC, rpm_estimate DESC"
+                    "SELECT * FROM ai_blueprints WHERE (status IS NULL OR status != 'predefined_disabled') ORDER BY defensive_moat_score DESC, rpm_estimate DESC"
                 )
             rows = cursor.fetchall()
             blueprints = []
@@ -1007,6 +1012,79 @@ def get_recent_strategist_runs(limit: int = 15, db_path: Optional[str] = None) -
                     item["blueprints_json"] = []
                 runs.append(item)
             return runs
+    finally:
+        conn.close()
+
+
+def set_predefined_data_status(enabled: bool, db_path: Optional[str] = None) -> Dict[str, Any]:
+    """Enables or disables earlier predefined keyword results across queries, frontier_niches, and ai_blueprints."""
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            cursor = conn.cursor()
+            if not enabled:
+                # Disable earlier predefined results
+                cursor.execute(
+                    "UPDATE queries SET human_verdict = 'predefined_disabled' WHERE is_predefined = 1 AND (human_verdict IS NULL OR human_verdict = 'pending')"
+                )
+                cursor.execute(
+                    "UPDATE frontier_niches SET status = 'predefined_' || status WHERE is_predefined = 1 AND status NOT LIKE 'predefined_%'"
+                )
+                cursor.execute(
+                    "UPDATE ai_blueprints SET status = 'predefined_disabled' WHERE is_predefined = 1 AND status = 'active'"
+                )
+            else:
+                # Restore earlier predefined results
+                cursor.execute(
+                    "UPDATE queries SET human_verdict = 'pending' WHERE is_predefined = 1 AND human_verdict = 'predefined_disabled'"
+                )
+                cursor.execute(
+                    "UPDATE frontier_niches SET status = SUBSTR(status, 12) WHERE is_predefined = 1 AND status LIKE 'predefined_%'"
+                )
+                cursor.execute(
+                    "UPDATE ai_blueprints SET status = 'active' WHERE is_predefined = 1 AND status = 'predefined_disabled'"
+                )
+
+            q_active = cursor.execute(
+                "SELECT count(*) FROM queries WHERE (human_verdict IS NULL OR human_verdict != 'already_served') AND human_verdict != 'predefined_disabled'"
+            ).fetchone()[0]
+            bp_active = cursor.execute("SELECT count(*) FROM ai_blueprints WHERE status = 'active'").fetchone()[0]
+            fn_pending = cursor.execute("SELECT count(*) FROM frontier_niches WHERE status = 'pending'").fetchone()[0]
+
+            return {
+                "predefined_enabled": enabled,
+                "message": "Predefined keyword results enabled" if enabled else "Predefined keyword results disabled (Clean slate active)",
+                "active_queries": q_active,
+                "active_blueprints": bp_active,
+                "pending_topics": fn_pending
+            }
+    finally:
+        conn.close()
+
+
+def get_predefined_data_status(db_path: Optional[str] = None) -> Dict[str, Any]:
+    """Returns current status of predefined keyword results."""
+    conn = get_connection(db_path)
+    try:
+        with conn:
+            cursor = conn.cursor()
+            disabled_count = cursor.execute(
+                "SELECT count(*) FROM queries WHERE is_predefined = 1 AND human_verdict = 'predefined_disabled'"
+            ).fetchone()[0]
+            is_enabled = disabled_count == 0
+
+            q_active = cursor.execute(
+                "SELECT count(*) FROM queries WHERE (human_verdict IS NULL OR human_verdict != 'already_served') AND human_verdict != 'predefined_disabled'"
+            ).fetchone()[0]
+            bp_active = cursor.execute("SELECT count(*) FROM ai_blueprints WHERE status = 'active'").fetchone()[0]
+            fn_pending = cursor.execute("SELECT count(*) FROM frontier_niches WHERE status = 'pending'").fetchone()[0]
+
+            return {
+                "predefined_enabled": is_enabled,
+                "active_queries": q_active,
+                "active_blueprints": bp_active,
+                "pending_topics": fn_pending
+            }
     finally:
         conn.close()
 
