@@ -25,6 +25,7 @@ function radarApp() {
     lastBlueprintCount: null,
     lastRunTimestamp: null,
     loading: false,
+    sidebarOpen: true,
 
     // Input Keywords (Left Pane in Radar Feed)
     inputKeywords: [],
