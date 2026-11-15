@@ -860,7 +860,16 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
           this.showToast(`✨ New Market Intelligence Data Arrived! (+${diff} new AI blueprints published)`, 'success', 6000);
         }
         this.lastBlueprintCount = data.length;
-        this.blueprints = data;
+        this.blueprints = (data || []).map(b => {
+          let rk = b.raw_keywords;
+          if (typeof rk === 'string') {
+            try { rk = JSON.parse(rk); } catch(e) { rk = []; }
+          }
+          if (!rk && b.raw_keywords_json) {
+            try { rk = JSON.parse(b.raw_keywords_json); } catch(e) { rk = []; }
+          }
+          return { ...b, raw_keywords: Array.isArray(rk) ? rk : [] };
+        });
         await this.loadStrategistRuns();
       } catch (e) {
         console.error('Failed to load blueprints', e);
@@ -914,20 +923,79 @@ Generate the complete, production-ready Pillar Page markdown content with FAQ sc
     },
 
     viewBlueprintDetail(bp) {
+      const cleanName = (bp.cluster_name || '')
+        .replace('Authority Hub & Screener', '')
+        .replace('Authority Hub', '')
+        .trim();
+      
+      const words = cleanName.split(/\s+/).filter(w => w.length > 2);
+      const shortBrand = (words.slice(0, 2).join('') || 'authority').toLowerCase();
+
+      // Clean, brandable, realistic domains
+      const domains = [
+        shortBrand + 'calc.org',
+        shortBrand + 'guide.com',
+        shortBrand + 'portal.net'
+      ];
+
+      // Formulate complete AI Generation Prompt
+      const rawKwList = bp.raw_keywords && bp.raw_keywords.length 
+        ? bp.raw_keywords 
+        : (typeof bp.raw_keywords_json === 'string' ? JSON.parse(bp.raw_keywords_json || '[]') : []);
+
+      const fullPrompt = `You are a Senior Full-Stack Engineer and Elite Technical SEO Architect.
+Build a complete, production-ready, high-converting Single-Page Application (SPA) for:
+"${bp.cluster_name}"
+
+TARGET VERTICAL: ${bp.category}
+MONETIZATION RPM: $${bp.rpm_estimate} / 1,000 visitors
+DEFENSIVE MOAT: ${bp.defensive_moat_score}/100
+
+0/10 GOOGLE EXACT TITLE SEARCH VOIDS (RAW KEYWORDS):
+${rawKwList.map((k, i) => `${i + 1}. "${k.keyword}" (0/10 exact titles on Google, Score: ${k.gap_score}/100)`).join('\n')}
+
+FLAGSHIP TOOL SPECIFICATION:
+${bp.flagship_tool_spec}
+
+COMPETITOR VULNERABILITY ANALYSIS:
+${bp.competitor_landscape}
+
+TECHNICAL REQUIREMENTS:
+1. Pure Client-Side SPA using modern HTML5, Tailwind CSS, and vanilla reactive JavaScript.
+2. Step-by-step interactive questionnaire / calculation engine matching the commercial pain point.
+3. Instant client-side printable PDF / letter generation button with dynamic state pre-filled.
+4. Schema.org structured data (WebApplication & FAQPage) targeting the 0/10 raw keywords.
+5. Zero backend dependencies: 100% hostable on GitHub Pages or Cloudflare Pages.`;
+
       this.activeBlueprint = {
+        id: bp.id,
         title: bp.cluster_name,
+        keyword: cleanName,
         category: bp.category,
         rpm: '$' + bp.rpm_estimate + ' RPM',
-        bounty: 'Vetted by Antigravity AI (' + bp.defensive_moat_score + '/100 Moat)',
-        domains: [bp.cluster_name.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com', bp.cluster_name.toLowerCase().replace(/[^a-z0-9]/g, '') + '.org'],
-        pillar_title: bp.cluster_name + ': The Definitive Authority Guide',
-        pillar_sections: ['Regulatory & Statutory Foundation', 'Step-by-Step Exemption Screener Guide', 'IRS Form 5329 Line-by-Line Instructions', 'Common Penalties & Audit Triggers'],
+        bounty: 'Defensive Moat: ' + bp.defensive_moat_score + '/100',
+        moat_score: bp.defensive_moat_score,
+        zero_comp_count: bp.zero_comp_count,
+        competitor_landscape: bp.competitor_landscape,
+        flagship_tool_spec: bp.flagship_tool_spec,
+        domains: domains,
+        raw_keywords: rawKwList,
+        pillar_title: cleanName + ': The Definitive Authority Guide & Statutory Reference',
+        pillar_sections: [
+          'Statutory Foundations & Regulatory Exceptions',
+          'Interactive Qualifying Screener & Decision Logic',
+          'Line-by-Line Form & Documentation Filing Guide',
+          'Common Calculation Pitfalls & Custodian Audit Triggers'
+        ],
         lead_asset: bp.flagship_tool_spec,
         cluster_articles: [
-          { title: 'Qualifying Exceptions & Exemptions Breakdown', intent: 'Transactional' },
-          { title: 'Step-by-Step Filing Checklist for Administrators', intent: 'Commercial' },
-          { title: 'Comparison: Plan Types, Hardships & IRS Waivers', intent: 'Informational' }
-        ]
+          'Qualifying Exceptions & Complete Exemption Matrix',
+          'Step-by-Step Filing Checklist for Administrators & Individuals',
+          'Comparison: Statutory Rules vs Custodian Policy Limitations'
+        ],
+        prompt: fullPrompt,
+        prototype_url: bp.prototype_url,
+        full_markdown: bp.full_dossier_markdown
       };
       this.showBlueprintModal = true;
     },

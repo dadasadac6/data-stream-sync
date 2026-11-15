@@ -851,13 +851,16 @@ def save_ai_blueprint(blueprint_data: Dict[str, Any], db_path: Optional[str] = N
     try:
         with conn:
             cursor = conn.cursor()
+            raw_kw = blueprint_data.get("raw_keywords_json")
+            if isinstance(raw_kw, (list, dict)):
+                raw_kw = json.dumps(raw_kw)
             cursor.execute(
                 """
                 INSERT INTO ai_blueprints (
                     cluster_name, category, rpm_estimate, zero_comp_count, 
                     total_queries, defensive_moat_score, competitor_landscape, 
-                    flagship_tool_spec, prototype_url, full_dossier_markdown, status, last_updated
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    flagship_tool_spec, prototype_url, full_dossier_markdown, raw_keywords_json, status, last_updated
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(cluster_name) DO UPDATE SET
                     category = excluded.category,
                     rpm_estimate = excluded.rpm_estimate,
@@ -868,6 +871,7 @@ def save_ai_blueprint(blueprint_data: Dict[str, Any], db_path: Optional[str] = N
                     flagship_tool_spec = excluded.flagship_tool_spec,
                     prototype_url = excluded.prototype_url,
                     full_dossier_markdown = excluded.full_dossier_markdown,
+                    raw_keywords_json = excluded.raw_keywords_json,
                     status = excluded.status,
                     last_updated = CURRENT_TIMESTAMP
                 """,
@@ -882,6 +886,7 @@ def save_ai_blueprint(blueprint_data: Dict[str, Any], db_path: Optional[str] = N
                     blueprint_data.get("flagship_tool_spec", ""),
                     blueprint_data.get("prototype_url", ""),
                     blueprint_data.get("full_dossier_markdown", ""),
+                    raw_kw or "[]",
                     blueprint_data.get("status", "active"),
                 ),
             )
@@ -891,7 +896,7 @@ def save_ai_blueprint(blueprint_data: Dict[str, Any], db_path: Optional[str] = N
 
 
 def get_all_ai_blueprints(status: Optional[str] = None, db_path: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Fetches all AI Blueprints, optionally filtered by status."""
+    """Fetches all AI Blueprints, optionally filtered by status, with parsed raw keywords."""
     conn = get_connection(db_path)
     try:
         with conn:
@@ -905,20 +910,36 @@ def get_all_ai_blueprints(status: Optional[str] = None, db_path: Optional[str] =
                 cursor.execute(
                     "SELECT * FROM ai_blueprints ORDER BY defensive_moat_score DESC, rpm_estimate DESC"
                 )
-            return [dict(r) for r in cursor.fetchall()]
+            rows = cursor.fetchall()
+            blueprints = []
+            for r in rows:
+                item = dict(r)
+                try:
+                    item["raw_keywords"] = json.loads(item["raw_keywords_json"]) if item.get("raw_keywords_json") else []
+                except Exception:
+                    item["raw_keywords"] = []
+                blueprints.append(item)
+            return blueprints
     finally:
         conn.close()
 
 
 def get_ai_blueprint_by_id(blueprint_id: int, db_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    """Fetches a single blueprint by ID."""
+    """Fetches a single blueprint by ID with parsed raw keywords."""
     conn = get_connection(db_path)
     try:
         with conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM ai_blueprints WHERE id = ?", (blueprint_id,))
             row = cursor.fetchone()
-            return dict(row) if row else None
+            if not row:
+                return None
+            item = dict(row)
+            try:
+                item["raw_keywords"] = json.loads(item["raw_keywords_json"]) if item.get("raw_keywords_json") else []
+            except Exception:
+                item["raw_keywords"] = []
+            return item
     finally:
         conn.close()
 
