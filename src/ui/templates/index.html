@@ -591,6 +591,37 @@
             <span class="font-medium">Filtering search gaps...</span>
           </div>
 
+          <!-- Clean Slate / Empty State Screen (Zero Historical Data Shown) -->
+          <div x-show="!loading && (!queries || queries.length === 0)" class="flex flex-col items-center justify-center py-16 px-4 text-center max-w-lg mx-auto space-y-4">
+            <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-3xl shadow-xl shadow-emerald-500/10">
+              🌟
+            </div>
+            <div class="space-y-1.5">
+              <h3 class="text-lg lg:text-xl font-black text-white">Clean Slate Mode Active</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                All 3,324 earlier queries and previous test discoveries are safely disabled. Your screen is 100% clean.
+              </p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 space-y-2 w-full text-left">
+              <div class="font-bold text-emerald-400 flex items-center gap-1.5">
+                <span>⚡</span> Ready to run the Autonomous Market Intelligence Strategist:
+              </div>
+              <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
+                <li>Zero hardcoded or predefined keywords</li>
+                <li>Autonomous multi-sector SERP auditing with 0/10 void verification</li>
+                <li>Monopoly elimination & instant turnkey blueprint generation</li>
+              </ul>
+            </div>
+            <div class="flex items-center gap-2 pt-1 flex-wrap justify-center">
+              <button @click="activeTab = 'blueprints'; triggerStrategistScan('All')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer">
+                🌐 Run Autonomous Horizon Scan
+              </button>
+              <button @click="togglePredefined()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition cursor-pointer">
+                Restore Previous Data (3,324 items)
+              </button>
+            </div>
+          </div>
+
           <!-- Non-Intrusive Floating Refresh Indicator (Preserves Scroll Position & Never Collapses DOM) -->
           <div x-show="loading && queries && queries.length > 0" class="sticky top-0 z-30 flex items-center justify-center py-1.5 px-3 mb-3 bg-slate-900/90 border border-amber-500/40 rounded-lg text-amber-300 text-xs font-semibold backdrop-blur-md shadow-lg w-max mx-auto">
             <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping mr-2"></span>
@@ -1374,8 +1405,27 @@
         </template>
       </div>
 
+      <!-- Clean Slate / Empty State Screen for Blueprints -->
+      <div x-show="!filteredBlueprints || filteredBlueprints.length === 0" class="bg-slate-900/90 border-2 border-dashed border-slate-800 rounded-3xl p-12 text-center max-w-2xl mx-auto space-y-5 my-8">
+        <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-3xl mx-auto shadow-xl shadow-emerald-500/10">
+          🤖
+        </div>
+        <div class="space-y-2">
+          <h3 class="text-xl font-black text-white">Clean Slate: 0 Blueprints Active</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            All 27 earlier blueprints and historical tests have been disabled. Click below to launch the Autonomous Market Intelligence Strategist.
+          </p>
+        </div>
+        <div class="flex items-center justify-center gap-3 pt-2">
+          <button @click="triggerStrategistScan('All')" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center gap-2">
+            <span>🌐</span>
+            <span>Execute Autonomous Horizon Scan</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Blueprints Grid (Large High-Legibility Cards with Direct Raw Keywords Explorer) -->
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-12">
+      <div x-show="filteredBlueprints && filteredBlueprints.length > 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-12">
         <template x-for="bp in filteredBlueprints" :key="bp.id">
           <div class="bg-slate-900/95 border-2 border-slate-800 hover:border-emerald-500/60 rounded-2xl p-6 shadow-2xl transition-all flex flex-col justify-between space-y-4">
             <div class="space-y-3.5">
